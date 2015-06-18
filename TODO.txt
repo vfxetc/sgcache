@@ -1,0 +1,18 @@
+
+- URLS could include the real shotgun server:
+    >>> sg = Shotgun('http://localhost:8000/next=keystone.shotgunstudio.com/', 'xxx', 'yyy')
+    The trailing slash is required for it to not get parsed out.
+
+- Can we instead exist as the http_proxy kwarg?
+
+- framework for forwarding the query to the real Shotgun if we don't know
+  how to deal with it
+
+- how to track in database which fields we do and don't have
+    - it doesn't seem like we can do NULL since there are very many field
+      types that need a NULL themsleves
+    - only track full entitites
+
+- are we supposed to be a complete mirror?
+
+- are there Shotgun events for schema changes?
