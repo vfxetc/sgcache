@@ -1,0 +1,191 @@
+
+
+
+
+NOTES
+-----
+
+
+
+
+- JSON of find_one:
+    {
+    "method_name": "read", 
+    "params": [
+        {
+            "script_key": "script_key", 
+            "script_name": "script_name"
+        }, 
+        {
+            "api_return_image_urls": true, 
+            "filters": {
+                "conditions": [
+                    {
+                        "path": "field", 
+                        "relation": "is", 
+                        "values": [
+                            // int:
+                            123
+                            // when datetime:
+                            "2015-07-01T00:51:10Z"
+                        ]
+                    }
+                ], 
+                "logical_operator": "and"
+            }, 
+            "paging": {
+                "current_page": 1, 
+                "entities_per_page": 1
+            }, 
+            "return_fields": [
+                "field_I_want"
+            ], 
+            "return_only": "active", 
+            "return_paging_info": false, 
+            "type": "Task"
+        }
+    ]
+}
+
+
+
+fetching event logs with DisplayColumn fields:
+    >>> sg.find_one('EventLogEntry', [('id', 'is', 1996927)], ['entity.DisplayColumn.entity_type'])
+    {'entity.DisplayColumn.entity_type': 'CustomEntity02', 'type': 'EventLogEntry', 'id': 1996927}
+
+
+- the safest thing to do is likely to watch for schema changes, and refresh the
+whole schema via read_schema, and manually look for changes
+
+
+- multi-entities are represented via a AssetAssetConnection entity (which is
+queryable)
+    - they are not simply alphabetical: PerformerMocapTakeConnection
+
+- when you create a multi-entity, it automatically makes a column on the other entity
+
+  - they are named strangly: TestEntity03.sg_test_entity_link <-> TestEntity2.custom_entity03_sg_test_entity_link_custom_entity03s
+  - if I make another identical one, they remain separate
+  - they do not reference each other as backrefs:
+
+    >>> sg.schema_field_read('CustomEntity03', 'sg_test_entity_link')
+    {'sg_test_entity_link': {'mandatory': {'editable': False, 'value': False}, 'name': {'editable': True, 'value': 'test entity link'}, 'data_type': {'editable': False, 'value': 'multi_entity'}, 'entity_type': {'editable': False, 'value': 'CustomEntity03'}, 'editable': {'editable': False, 'value': True}, 'visible': {'editable': False, 'value': True}, 'unique': {'editable': False, 'value': False}, 'properties': {'default_value': {'editable': False, 'value': None}, 'summary_default': {'editable': True, 'value': 'none'}, 'valid_types': {'editable': False, 'value': ['CustomEntity02']}}, 'description': {'editable': True, 'value': ''}}}
+    >>> sg.schema_field_read('CustomEntity02', 'custom_entity03_sg_test_entity_link_custom_entity03s')
+    {'custom_entity03_sg_test_entity_link_custom_entity03s': {'mandatory': {'editable': False, 'value': False}, 'name': {'editable': True, 'value': 'Test Entity 3s <-> test entity link'}, 'data_type': {'editable': False, 'value': 'multi_entity'}, 'entity_type': {'editable': False, 'value': 'CustomEntity02'}, 'editable': {'editable': False, 'value': True}, 'visible': {'editable': False, 'value': True}, 'unique': {'editable': False, 'value': False}, 'properties': {'default_value': {'editable': False, 'value': None}, 'summary_default': {'editable': True, 'value': 'none'}, 'valid_types': {'editable': False, 'value': ['CustomEntity03']}}, 'description': {'editable': True, 'value': ''}}}
+
+  - there are *Connection entities created in the backend: in schema.js:
+        CustomEntity03_sg_test_entity_link_Connection
+  - they can even be queried via the API, but they don't spell out what we
+    need to know
+
+  - there are "inverse_association" keys in the schema.js, but NOT in the
+    public API
+
+  - how to deal with this?!
+    - do auto-detection, which will work 95% of the time
+    - ignore them, and let the auto-population work
+
+- there are a few circumstances where the connection objects are valuble,
+  e.g. the order of Version(s) in a Playlist:
+  https://github.com/shotgunsoftware/python-api/wiki/Example:-Connection-Entities
+
+- so, we might be able to just infer what we can from these, and just not be
+  able to cache more complex data
+
+
+
+
+
+
+- many fields with "current_user" in them are per-user, but that doesn't
+  show up in the public API
+    - the private schema notes that "has_custom_filter": true
+
+
+
+
+
+
+
+
+
+
+
+
+creating a new text column
+--------------------------
+
+{'attribute_name': None,
+ 'cached_display_name': None,
+ 'created_at': datetime.datetime(2015, 6, 30, 14, 33, 18, tzinfo=<shotgun_api3.lib.sgtimezone.LocalTimezone object at 0x10d177510>),
+ 'description': 'Mike Boers created new Field sg_text_field_1',
+ 'entity': {'id': 2836, 'name': 'sg_text_field_1', 'type': 'DisplayColumn'},
+ 'event_type': 'Shotgun_DisplayColumn_New',
+ 'id': 1996918,
+ 'meta': {'entity_id': 2836,
+          'entity_type': 'DisplayColumn',
+          'type': 'new_entity'},
+ 'type': 'EventLogEntry',
+ 'user': {'id': 108, 'name': 'Mike Boers', 'type': 'HumanUser'}}
+
+# NOTE: Does not mention CustomEntity02
+
+
+converting a text column into a number column
+---------------------------------------------
+
+{'attribute_name': 'human_name',
+ 'cached_display_name': None,
+ 'created_at': datetime.datetime(2015, 6, 30, 14, 35, 20, tzinfo=<shotgun_api3.lib.sgtimezone.LocalTimezone object at 0x10d177510>),
+ 'description': 'Mike Boers changed "Field" from "text_field_1" to "text_to_number_field" on Field sg_text_field_1',
+ 'entity': {'id': 2836, 'name': 'sg_text_field_1', 'type': 'DisplayColumn'},
+ 'event_type': 'Shotgun_DisplayColumn_Change',
+ 'id': 1996927,
+ 'meta': {'attribute_name': 'human_name',
+          'entity_id': 2836,
+          'entity_type': 'DisplayColumn',
+          'field_data_type': 'text',
+          'new_value': 'text_to_number_field',
+          'old_value': 'text_field_1',
+          'type': 'attribute_change'},
+ 'type': 'EventLogEntry',
+ 'user': {'id': 108, 'name': 'Mike Boers', 'type': 'HumanUser'}}
+{'attribute_name': 'data_type',
+ 'cached_display_name': None,
+ 'created_at': datetime.datetime(2015, 6, 30, 14, 35, 20, tzinfo=<shotgun_api3.lib.sgtimezone.LocalTimezone object at 0x10d177510>),
+ 'description': 'Mike Boers changed "Data Type" from "text" to "number" on Field sg_text_field_1',
+ 'entity': {'id': 2836, 'name': 'sg_text_field_1', 'type': 'DisplayColumn'},
+ 'event_type': 'Shotgun_DisplayColumn_Change',
+ 'id': 1996928,
+ 'meta': {'attribute_name': 'data_type',
+          'entity_id': 2836,
+          'entity_type': 'DisplayColumn',
+          'field_data_type': 'text',
+          'new_value': 'number',
+          'old_value': 'text',
+          'type': 'attribute_change'},
+ 'type': 'EventLogEntry',
+ 'user': {'id': 108, 'name': 'Mike Boers', 'type': 'HumanUser'}}
+{'attribute_name': 'properties',
+ 'cached_display_name': None,
+ 'created_at': datetime.datetime(2015, 6, 30, 14, 35, 20, tzinfo=<shotgun_api3.lib.sgtimezone.LocalTimezone object at 0x10d177510>),
+ 'description': 'Mike Boers changed "Properties" from "{"data_type_properties"=>nil}" to "{:configurable=>true, :summary_default=>:none, :data_type_properties=>{}}" on Field sg_text_field_1',
+ 'entity': {'id': 2836, 'name': 'sg_text_field_1', 'type': 'DisplayColumn'},
+ 'event_type': 'Shotgun_DisplayColumn_Change',
+ 'id': 1996929,
+ 'meta': {'attribute_name': 'properties',
+          'entity_id': 2836,
+          'entity_type': 'DisplayColumn',
+          'new_value': {'configurable': True,
+                        'data_type_properties': {},
+                        'summary_default': 'none'},
+          'old_value': {'data_type_properties': None},
+          'type': 'attribute_change'},
+ 'type': 'EventLogEntry',
+ 'user': {'id': 108, 'name': 'Mike Boers', 'type': 'HumanUser'}}
+
+
+deleting a column
+-----------------
+no change
+

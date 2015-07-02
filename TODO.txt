@@ -1,4 +1,95 @@
 
+potential architectures:
+
+1. do all of the main processing in memory, and have a disk store for
+   swapping out to.
+
+   - can reuse much of the sgsession logic, and might even refactor that
+     into a more general cache. Make it injest log events, and be able to
+     respond to queries, and you are good to go
+   - this could be absolutely cripping on memory if the filters aren't very
+     specific; e.g. searching for a task by its name, with no other restrictions
+
+2. graph database; e.g. neo4j
+   - can write queries that the database will completely handle
+   - are easily able to express that we have a partial set of data
+   - it might be slower than Postgres
+
+3. SQL database; e.g. postgres
+   - can write queries that the database will completely handle
+   - have to work quite a bit harder to make sure your schema is good.
+     You will be using the current schema to formulate your queries, since
+     you need to know how to handle unset fields from uncached fields for
+     all of the different schema types
+   - it is more work, but not too bad, to have a partial set of data (since
+     your nullable fields can have a FIELD__is_set flag)
+
+   - single entity:
+      - one type: e.g. project, as single "project"
+      - multi-type: e.g. sg_link, as sg_link__type and sg_link__id columns
+   - multi entity, e.g. task_assigees, as Task_task_assignees table
+
+how to handle schema changes:
+  - if we don't understand a field, just don't store it and don't satisfy
+    queries with it
+  - anytime there is a schema change, just drop any data in affected fields.
+    this will take a big of re-caching, but it is the safest thing to do
+
+
+
+----
+
+- first steps:
+    - dump-schema.py which creates a schema.json
+    - dump-data.py which takes a schema.json, and a $TYPE.json (which is an
+      entity per line, json encoded)
+    - sphinx docs for everything that we learn as we test it
+    √ ask Shotgun how much it costs to host our own
+
+- daemons:
+    - master server which holds the last_event_id lock
+    - tiny web app
+    - one sgevent server (which could be another project)
+    - multiple API servers (because Python threads suck)
+
+- how to build monstrous Neo4j queries to represent the common logic we want
+  - define all relationships in the MATCH:
+      MATCH (p:Project {id: 66}),(t:Task),t-[e:project]->p RETURN p, e, t LIMIT 1
+      MATCH (e:Task), (e_project:Project {id: 66}), e-[:project]->e_project RETURN e, e_project LIMIT 1
+
+      MATCH (e:Task), (e_project:Project {id: 66}), e-[:project]->e_project
+          OPTIONAL MATCH (e_entity)<-[:entity]-(e)
+          OPTIONAL MATCH (e_step)<-[:step]-(e)
+          RETURN e, e_entity, e_step
+
+      MATCH
+          (t:Task),
+          (h:Shot),
+          (q:Sequence),
+          (p:Project {id: 66}),
+          (u:HumanUser {name: "Mike Boers"}),
+          t-[:task_assignees]->u,
+          t-[:project]->p,
+          t-[:entity]->h,
+          h-[:sg_sequence]->q
+        RETURN t, p, u, h, q
+        LIMIT 10
+
+      MATCH (task:Task), (shot:Shot), task-[:entity]->shot
+      RETURN task, shot as task_entity
+      UNION ALL
+      MATCH (task:Task), (asset:Asset), task-[:entity]->asset
+      RETURN task, asset as task_entity
+      LIMIT 10
+
+- what must be do for `s3_uploads_enabled` in server info?
+
+- store links as `!!entity Type id` so that we know that they exists
+
+- how to pull apart the results of those queries
+
+- YAML-style encoding of non-native types, e.g. a datetime: !!timestamp "2015-06-22 15:46:09.625815"
+
 - URLS could include the real shotgun server:
     >>> sg = Shotgun('http://localhost:8000/next=keystone.shotgunstudio.com/', 'xxx', 'yyy')
     The trailing slash is required for it to not get parsed out.
@@ -8,11 +99,4 @@
 - framework for forwarding the query to the real Shotgun if we don't know
   how to deal with it
 
-- how to track in database which fields we do and don't have
-    - it doesn't seem like we can do NULL since there are very many field
-      types that need a NULL themsleves
-    - only track full entitites
-
-- are we supposed to be a complete mirror?
-
-- are there Shotgun events for schema changes?
+- listen for schema changes, and use that to invalidate data

@@ -32,7 +32,6 @@ def create_or_update_node(entity):
         elif isinstance(value, (list, tuple)):
             _create_or_update_link(tx, entity, key, delete=True)
             for v2 in value:
-                print key, v2
                 assert isinstance(v2, Entity)
                 _create_or_update_link(tx, entity, key, v2, delete=False)
         else:
@@ -81,15 +80,15 @@ if False:
         print e
         create_or_update_node(e)
 
-if False:
-    for e in sg.find('Shot', [('project', 'is', {'type': 'Project', 'id': 66})], (
+if True:
+    for e in sg.find('Shot', [('project', 'is', {'type': 'Project', 'id': 115})], (
         'sg_sequence',
     )):
         print e
         create_or_update_node(e)
 
 if True:
-    for e in sg.find('Task', [('project', 'is', {'type': 'Project', 'id': 66})], (
+    for e in sg.find('Task', [('project', 'is', {'type': 'Project', 'id': 115})], (
         'step', 'entity', 'task_assignees'
     )):
         print e

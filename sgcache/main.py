@@ -1,5 +1,17 @@
 import json
 from wsgiref.simple_server import make_server
+import logging
+
+
+logging.getLogger(None).setLevel(100)
+
+
+# from py2neo import Graph, Node, Relationship
+from shotgun_api3_registry import connect
+
+# db = Graph('http://neo4j:password@sg55.keystone:7474/db/data')
+
+
 
 
 def app(environ, start_response):
@@ -49,13 +61,28 @@ def info(req):
 
 @method
 def read(req):
+
+    paging = req['paging']
+    page = paging['current_page']
+    per_page = paging['entities_per_page']
+
+    entities = []
+    for row in db.cypher.execute('''
+        MATCH (e:%s), (p:Project {id: 66})
+        WHERE e --> p
+        RETURN e, p
+        ORDER BY id(e)
+        SKIP %d
+        LIMIT %d
+    ''' % (req['type'], (page - 1) * per_page, per_page)):
+        entity = dict(row.e.properties)
+        entity['project'] = row.p.properties
+        entities.append(entity)
+
     return {
-        'entities': [{
-            'type': req['type'],
-            'id': 1234
-        }],
+        'entities': entities,
         'paging_info': {
-            'entity_count': 1,
+            'entity_count': len(entities),
         }
     }
 
