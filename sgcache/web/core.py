@@ -2,12 +2,20 @@ import json
 import logging
 
 import requests
-from flask import Flask, request
+from flask import Flask, request, Response
+
+from ..schema.core import Schema
+from ..database.core import Database
 
 
 log = logging.getLogger(__name__)
 app = Flask(__name__)
 
+db = Database.from_url('postgresql://127.0.0.1/sgcache')
+db.update_schema()
+
+schema = Schema(db)
+schema.assert_exists()
 
 _api_methods = {}
 def api_method(func):
@@ -33,13 +41,12 @@ def json_api(params=None):
 
     # TODO: pull server URL from params
 
-    encoded_payload = request.data
-    payload = json.loads(encoded_payload)
+    payload = json.loads(request.data)
 
     if not isinstance(payload, dict):
         return '', 400, []
 
-    print encoded_payload
+    print json.dumps(payload, sort_keys=True, indent=4)
 
     try:
         method_name = payload['method_name']
@@ -47,31 +54,42 @@ def json_api(params=None):
         return '', 400, []
 
     try:
-        
-        try:
-            method = _api_methods[method_name]
-        except KeyError as e:
-            raise Passthrough('unknown API method %s' % e.args[0])
+        method = _api_methods[method_name]
+    except KeyError as e:
+        return passthrough()
 
+    try:
         res = method(payload['params'][1] if len(payload['params']) > 1 else {})
-        res = json.dumps(res)
-        return res, 200, [('Content-Type', 'application/json')]
-
     except Passthrough as pt:
+        return passthrough()
 
-        log.info('passthrough request')
+    res = json.dumps(res)
+    return res, 200, [('Content-Type', 'application/json')]
 
-        # our "Host" is different than theirs
-        headers = dict(request.headers)
-        headers.pop('Host')
 
-        res = http_session.post(FALLBACK_URL, data=encoded_payload, headers=headers)
-        # we don't need to go as efficient as possible returning the un-decoded
-        # body since we intend to inspect it anyways to update our own information
-        # TODO: return a generator that buffers the response via res.iter_content(),
-        # and updates our data-stores at the end
+def passthrough():
+
+    log.info('passthrough request')
+
+    # our "Host" is different than theirs
+    headers = dict(request.headers)
+    headers.pop('Host')
+
+    res = http_session.post(FALLBACK_URL, data=request.data, headers=headers, stream=True)
+
+    if res.status_code == 200:
+        return Response(_process_passthrough_response(res), mimetype='application/json')
+    else:
         return res.text, res.status_code, [('Content-Type', 'application/json')]
 
 
+def _process_passthrough_response(res):
+
+    buffer_ = []
+    for chunk in res.iter_content(512):
+        yield chunk
+        buffer_.append(chunk)
+
+    # TODO: analyze it here
 
 

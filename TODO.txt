@@ -1,43 +1,17 @@
 
-potential architectures:
 
-1. do all of the main processing in memory, and have a disk store for
-   swapping out to.
-
-   - can reuse much of the sgsession logic, and might even refactor that
-     into a more general cache. Make it injest log events, and be able to
-     respond to queries, and you are good to go
-   - this could be absolutely cripping on memory if the filters aren't very
-     specific; e.g. searching for a task by its name, with no other restrictions
-
-2. graph database; e.g. neo4j
-   - can write queries that the database will completely handle
-   - are easily able to express that we have a partial set of data
-   - it might be slower than Postgres
-
-3. SQL database; e.g. postgres
-   - can write queries that the database will completely handle
-   - have to work quite a bit harder to make sure your schema is good.
-     You will be using the current schema to formulate your queries, since
-     you need to know how to handle unset fields from uncached fields for
-     all of the different schema types
-   - it is more work, but not too bad, to have a partial set of data (since
-     your nullable fields can have a FIELD__is_set flag)
-
-   - single entity:
-      - one type: e.g. project, as single "project"
-      - multi-type: e.g. sg_link, as sg_link__type and sg_link__id columns
-   - multi entity, e.g. task_assigees, as Task_task_assignees table
-
-how to handle schema changes:
-  - if we don't understand a field, just don't store it and don't satisfy
-    queries with it
-  - anytime there is a schema change, just drop any data in affected fields.
-    this will take a big of re-caching, but it is the safest thing to do
+- ReadQuery
+  - parses the filters and return fields, slowly building up
+    the tables to join, columns to return, and names to refer to them by (so
+    that we can have assets joined to assets).
+  - The various fields are asked to
+    prepare their parts, and they are given the names that they represent in
+    that query (so that the aliases in the query can be sensical, e.g.:
+    entity_Task_step_Step_code)
+  - the fields also give a callback which is given each database row and the
+    final entity, and must copy from one to the other
 
 
-
-----
 
 - first steps:
     - dump-schema.py which creates a schema.json
