@@ -28,7 +28,7 @@ def format_path(path, head=False, tail=True):
     return '.'.join(parts)
 
 
-class ReadRequest(object):
+class ReadHandler(object):
 
     def __init__(self, request):
 

@@ -1,4 +1,9 @@
 
+- exception to signal that a required entity doesn't exist: EntityMissing
+- exception to signal that a required field doesn't exist: FieldMissing
+- exception to signal that we can't process the requested filter: FilterNotImplemented
+- exception to signal non-error that requeted data doesn't exist: NoFieldData
+
 
 - dump-schema.py which creates a schema.json
 - dump-data.py which takes a schema.json, and a $TYPE.json (which is an
@@ -12,39 +17,7 @@
     - one sgevent server (which could be another project)
     - multiple API servers (because Python threads suck)
 
-- how to build monstrous Neo4j queries to represent the common logic we want
-  - define all relationships in the MATCH:
-      MATCH (p:Project {id: 66}),(t:Task),t-[e:project]->p RETURN p, e, t LIMIT 1
-      MATCH (e:Task), (e_project:Project {id: 66}), e-[:project]->e_project RETURN e, e_project LIMIT 1
-
-      MATCH (e:Task), (e_project:Project {id: 66}), e-[:project]->e_project
-          OPTIONAL MATCH (e_entity)<-[:entity]-(e)
-          OPTIONAL MATCH (e_step)<-[:step]-(e)
-          RETURN e, e_entity, e_step
-
-      MATCH
-          (t:Task),
-          (h:Shot),
-          (q:Sequence),
-          (p:Project {id: 66}),
-          (u:HumanUser {name: "Mike Boers"}),
-          t-[:task_assignees]->u,
-          t-[:project]->p,
-          t-[:entity]->h,
-          h-[:sg_sequence]->q
-        RETURN t, p, u, h, q
-        LIMIT 10
-
-      MATCH (task:Task), (shot:Shot), task-[:entity]->shot
-      RETURN task, shot as task_entity
-      UNION ALL
-      MATCH (task:Task), (asset:Asset), task-[:entity]->asset
-      RETURN task, asset as task_entity
-      LIMIT 10
-
 - what must be do for `s3_uploads_enabled` in server info?
-
-- store links as `!!entity Type id` so that we know that they exists
 
 - how to pull apart the results of those queries
 

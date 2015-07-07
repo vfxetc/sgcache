@@ -3,7 +3,7 @@ import logging
 import sqlalchemy as sa
 
 from sgcache.schema.core import Schema
-from sgcache.schema.read import ReadRequest
+from sgcache.apimethods.read import ReadHandler
 
 
 # disable our loggers
@@ -69,7 +69,7 @@ raw_request = {
     "type": "Task"
 }
 
-req = ReadRequest(raw_request)
+req = ReadHandler(raw_request)
 res = req(schema)
 
 print res
