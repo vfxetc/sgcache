@@ -46,8 +46,8 @@ class Base(object):
         req.select_fields.append(column)
         return column
 
-    def extract_select(self, req, path, column, res):
-        return res[column]
+    def extract_select(self, req, path, row, column):
+        return row[column]
 
     def prepare_filter(self, req, path, relation, values):
         column = getattr(req.get_table(path).c, self.name)
@@ -151,14 +151,12 @@ class DateTime(Text):
 @sg_field_type
 class Entity(Base):
 
-    type_name = 'entity'
-
     def __init__(self, entity, name, entity_types):
         super(Entity, self).__init__(entity, name)
         self.entity_types = tuple(entity_types)
 
     def _create_sql(self, table):
-        self.type_column = self._create_or_check(table, sa.Column('%s__type' % self.name, sa.Enum(self.entity_types)))
+        self.type_column = self._create_or_check(table, sa.Column('%s__type' % self.name, sa.Enum(*self.entity_types)))
         self.id_column   = self._create_or_check(table, sa.Column('%s__id' % self.name, sa.Integer))
 
     def prepare_join(self, req, self_path, next_path):
@@ -176,17 +174,59 @@ class Entity(Base):
         req.select_fields.extend((type_column, id_column))
         return type_column, id_column
 
-    def extract_select(self, req, path, state, res):
+    def extract_select(self, req, path, row, state):
         type_column, id_column = state
-        if res[type_column] is None:
+        if row[type_column] is None:
             raise KeyError(path)
-        return {'type': res[type_column], 'id': res[id_column]}
+        return {'type': row[type_column], 'id': row[id_column]}
 
 
 
 @sg_field_type
 class MultiEntity(Base):
-    pass
+
+    def __init__(self, entity, name, entity_types):
+        super(MultiEntity, self).__init__(entity, name)
+        self.entity_types = tuple(entity_types)
+
+    def _create_sql(self, table):
+        self.assoc_table_name = '%s_%s' % (table.name, self.name)
+        self.assoc_table = table.metadata.tables.get(self.assoc_table_name)
+        if self.assoc_table is None:
+            self.assoc_table = sa.Table(self.assoc_table_name, table.metadata,
+                sa.Column('id', sa.Integer, primary_key=True),
+                sa.Column('parent_id', sa.Integer, sa.ForeignKey(table.name + '.id'), nullable=False),
+                sa.Column('child_type', sa.Enum(*self.entity_types), nullable=False),
+                sa.Column('child_id', sa.Integer, nullable=False)
+            )
+            self.assoc_table.create()
+
+    def prepare_join(self, req, self_path, next_path):
+        raise ValueError('you cant join through a multi-entity')
+
+    def prepare_select(self, req, path):
+
+        table = req.get_table(path)
+        alias_name = '%s_%s_xref' % (table.name, self.name)
+        assoc_alias = self.assoc_table.alias(alias_name)
+
+        req.join(assoc_alias, assoc_alias.c.parent_id == table.c.id)
+
+        req.group_by_clauses.append(assoc_alias.c.parent_id)
+
+        type_concat_field = sa.func.group_concat(assoc_alias.c.child_type)
+        id_concat_field = sa.func.group_concat(assoc_alias.c.child_id)
+        req.select_fields.extend((type_concat_field, id_concat_field))
+
+        return (type_concat_field, id_concat_field)
+
+    def extract_select(self, req, path, row, state):
+        type_concat_field, id_concat_field = state
+        if row[type_concat_field] is None:
+            raise KeyError(path)
+        return [{'type': type_, 'id': int(id_)} for type_, id_ in zip(row[type_concat_field].split(','), row[id_concat_field].split(','))]
+
+
 
 
 

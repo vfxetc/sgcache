@@ -20,6 +20,11 @@ sequence_id = db.execute(schema['Sequence'].table.insert().values(name='AA', pro
 shot_id = db.execute(schema['Shot'].table.insert().values(name='AA_001', sg_sequence__type='Sequence', sg_sequence__id=sequence_id)).inserted_primary_key[0]
 task_id = db.execute(schema['Task'].table.insert().values(content='Animate', entity__type='Shot', entity__id=shot_id)).inserted_primary_key[0]
 
+user1_id = db.execute(schema['HumanUser'].table.insert().values(name='Alice')).inserted_primary_key[0]
+user2_id = db.execute(schema['HumanUser'].table.insert().values(name='Bob')).inserted_primary_key[0]
+db.execute(schema['Task']['task_assignees'].assoc_table.insert().values(parent_id=task_id, child_type='HumanUser', child_id=user1_id))
+db.execute(schema['Task']['task_assignees'].assoc_table.insert().values(parent_id=task_id, child_type='HumanUser', child_id=user2_id))
+
 #print db.execute('select shot.id from shot').fetchall()
 #print db.execute('select task.id, task.entity__id from task').fetchall()
 #print db.execute('select task.id, shot.id from task join shot on task.entity__id = shot.id').fetchall()
@@ -56,6 +61,7 @@ raw_request = {
         #"content",
         #"entity",
         #"entity.Shot.name",
+        "task_assignees",
         "entity.Shot.sg_sequence.Sequence.project.Project.name",
     ], 
     "return_only": "active", 

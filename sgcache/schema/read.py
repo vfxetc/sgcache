@@ -46,6 +46,7 @@ class ReadRequest(object):
         self.select_fields = []
         self.select_from = None
         self.where_clauses = []
+        self.group_by_clauses = []
 
         self.select_state = []
 
@@ -134,11 +135,13 @@ class ReadRequest(object):
 
         if self.where_clauses:
             query = query.where(sa.and_(*self.where_clauses))
+        if self.group_by_clauses:
+            query = query.group_by(*self.group_by_clauses)
         if self.offset:
             query = query.offset(self.offset)
         if self.limit:
             query = query.limit(self.limit)
-        
+
         return query
 
     def extract(self, res):
@@ -147,7 +150,7 @@ class ReadRequest(object):
             row = {'type': self.entity_type_name}
             for path, field, state in self.select_state:
                 try:
-                    value = field.extract_select(self, path, state, raw_row)
+                    value = field.extract_select(self, path, raw_row, state)
                 except KeyError:
                     pass
                 else:

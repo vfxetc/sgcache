@@ -36,7 +36,14 @@ class Schema(object):
             project=('entity', {'entity_types': ['Project']}),
             entity=('entity', {'entity_types': ['Asset', 'Shot']}),
             step=('entity', {'entity_types': ['Step']}),
+            task_assignees=('multi_entity', {'entity_types': ['HumanUser', 'ApiUser']}),
         ),
+        HumanUser=dict(
+            name=('text', {}),
+        ),
+        ApiUser=dict(
+            name=('text', {}),
+        )
     )
 
     def __init__(self, db):
