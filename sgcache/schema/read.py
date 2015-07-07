@@ -8,14 +8,24 @@ def parse_path(type_, path):
         res.append((path.pop(0), path.pop(0)))
     return res
 
-def format_path(path, head=True):
-    if head:
-        return '.'.join('%s.%s' % x for x in path)
-    else:
-        if len(path) > 1:
-            return '%s.%s' % (path[0][1], '.'.join('%s.%s' % x for x in path[1:]))
-        else:
+def format_path(path, head=False, tail=True):
+
+    if len(path) == 1:
+        if head and tail:
+            return '%s.%s' % path[0]
+        elif head:
+            return path[0][0]
+        elif tail:
             return path[0][1]
+        else:
+            raise ValueError('need head or tail when single-element path')
+
+    parts = []
+    parts.append(('%s.%s' % path[0]) if head else path[0][1])
+    if len(path) > 1:
+        parts.extend('%s.%s' % x for x in path[1:-1])
+        parts.append(('%s.%s' % path[-1]) if tail else path[-1][0])
+    return '.'.join(parts)
 
 
 class ReadRequest(object):
@@ -29,7 +39,9 @@ class ReadRequest(object):
         self.limit = request['paging']['entities_per_page']
         self.offset = self.limit * (request['paging']['current_page'] - 1)
 
+        self.aliased = set()
         self.aliases = {}
+
         self.joined = set()
         self.select_fields = []
         self.select_from = None
@@ -50,11 +62,15 @@ class ReadRequest(object):
         return field
 
     def get_table(self, path):
-        parts = ['%s.%s' % x for x in path[:-1]]
-        parts.append(path[-1][0])
-        name = '.'.join(parts)
+        name = format_path(path, head=True, tail=False)
         if name not in self.aliases:
-            self.aliases[name] = self.get_entity(path).table.alias(name)
+            # we can return the real table the first path it is used from,
+            # but after that we must alias it
+            table = self.get_entity(path).table
+            if table.name in self.aliased:
+                table = table.alias(name)
+            self.aliased.add(table.name)
+            self.aliases[name] = table
         return self.aliases[name]
 
     def join(self, table, on):
@@ -118,7 +134,11 @@ class ReadRequest(object):
 
         if self.where_clauses:
             query = query.where(sa.and_(*self.where_clauses))
-
+        if self.offset:
+            query = query.offset(self.offset)
+        if self.limit:
+            query = query.limit(self.limit)
+        
         return query
 
     def extract(self, res):

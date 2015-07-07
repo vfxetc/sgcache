@@ -158,15 +158,15 @@ class Entity(Base):
         self.entity_types = tuple(entity_types)
 
     def _create_sql(self, table):
-        self.type_column = self._create_or_check(table, sa.Column('%s__type' % self.name, sa.String))
+        self.type_column = self._create_or_check(table, sa.Column('%s__type' % self.name, sa.Enum(self.entity_types)))
         self.id_column   = self._create_or_check(table, sa.Column('%s__id' % self.name, sa.Integer))
 
     def prepare_join(self, req, self_path, next_path):
         self_table = req.get_table(self_path)
         next_table = req.get_table(next_path)
         req.join(next_table, sa.and_(
-            getattr(self_table.c, self.type_column.name) == next_path[-1][0],
-            getattr(self_table.c, self.id_column.name) == next_table.c.id,
+            self_table.c[self.type_column.name] == next_path[-1][0],
+            self_table.c[self.id_column.name]   == next_table.c.id,
         ))
 
     def prepare_select(self, req, path):
