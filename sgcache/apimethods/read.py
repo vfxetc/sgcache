@@ -41,7 +41,6 @@ class ReadHandler(object):
         return field
 
     def get_table(self, path):
-        print 'get_table', repr(path)
         name = path.format(head=True, tail=False)
         if name not in self.aliases:
             # we can return the real table the first path it is used from,

@@ -1,6 +1,8 @@
 import re
 import sqlalchemy as sa
 
+from ..exceptions import FilterNotImplemented
+
 
 sg_field_types = {}
 
@@ -53,8 +55,10 @@ class Base(object):
         column = getattr(req.get_table(path).c, self.name)
         if relation == 'is':
             return column == values[0]
+        elif relation == 'in':
+            return column.in_(values)
         else:
-            raise NotImplementedError('%s on %s' % (relation, self.type_name))
+            raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 
 
 
@@ -180,6 +184,9 @@ class Entity(Base):
             raise KeyError(path)
         return {'type': row[type_column], 'id': row[id_column]}
 
+    def prepare_filter(self, path, relation, values):
+        raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
+
 
 
 @sg_field_type
@@ -193,6 +200,7 @@ class MultiEntity(Base):
         self.assoc_table_name = '%s_%s' % (table.name, self.name)
         self.assoc_table = table.metadata.tables.get(self.assoc_table_name)
         if self.assoc_table is None:
+            # NOTE: we will need to handle any schema changes to this table ourselves
             self.assoc_table = sa.Table(self.assoc_table_name, table.metadata,
                 sa.Column('id', sa.Integer, primary_key=True),
                 sa.Column('parent_id', sa.Integer, sa.ForeignKey(table.name + '.id'), nullable=False),
@@ -207,15 +215,20 @@ class MultiEntity(Base):
     def prepare_select(self, req, path):
 
         table = req.get_table(path)
-        alias_name = '%s_%s_xref' % (table.name, self.name)
-        assoc_alias = self.assoc_table.alias(alias_name)
 
-        req.join(assoc_alias, assoc_alias.c.parent_id == table.c.id)
+        # get an alias of our table only if we need to
+        alias_name = '%s_%s' % (table.name, self.name)
+        assoc_table = self.assoc_table if self.assoc_table.name == alias_name else self.assoc_table.alias(alias_name) 
 
-        req.group_by_clauses.append(assoc_alias.c.parent_id)
+        req.join(assoc_table, assoc_table.c.parent_id == table.c.id)
 
-        type_concat_field = sa.func.group_concat(assoc_alias.c.child_type)
-        id_concat_field = sa.func.group_concat(assoc_alias.c.child_id)
+        # we group by the parent_id such that only one row is actually
+        # returned per parent entity
+        req.group_by_clauses.append(assoc_table.c.parent_id)
+
+        # we convert the group results into a comma-delimited string of results
+        type_concat_field = sa.func.group_concat(assoc_table.c.child_type)
+        id_concat_field = sa.func.group_concat(assoc_table.c.child_id)
         req.select_fields.extend((type_concat_field, id_concat_field))
 
         return (type_concat_field, id_concat_field)
@@ -225,6 +238,9 @@ class MultiEntity(Base):
         if row[type_concat_field] is None:
             raise KeyError(path)
         return [{'type': type_, 'id': int(id_)} for type_, id_ in zip(row[type_concat_field].split(','), row[id_concat_field].split(','))]
+    
+    def prepare_filter(self, path, relation, values):
+        raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 
 
 
