@@ -107,6 +107,8 @@ class EntityField(Base):
 
     def extract_select(self, req, path, state, res):
         type_column, id_column = state
+        if res[type_column] is None:
+            raise KeyError(path)
         return {'type': res[type_column], 'id': res[id_column]}
 
 

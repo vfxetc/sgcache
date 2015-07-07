@@ -98,6 +98,8 @@ class ReadRequest(object):
 
         self.select_from = self.get_table([(self.entity_type_name, None)])
 
+        self.return_fields.append('id')
+        
         for raw_path in self.return_fields:
 
             path = self.parse_path(raw_path)
@@ -124,8 +126,12 @@ class ReadRequest(object):
         for i, raw_row in enumerate(res):
             row = {'type': self.entity_type_name}
             for path, field, state in self.select_state:
-                value = field.extract_select(self, path, state, raw_row)
-                row[format_path(path, head=False)] = value
+                try:
+                    value = field.extract_select(self, path, state, raw_row)
+                except KeyError:
+                    pass
+                else:
+                    row[format_path(path, head=False)] = value
             rows.append(row)
         return rows
 

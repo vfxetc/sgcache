@@ -15,7 +15,9 @@ db = sa.create_engine('sqlite://', echo=True)
 
 schema = Schema(db)
 
-shot_id = db.execute(schema['Shot'].table.insert().values(name='AA_001')).inserted_primary_key[0]
+project_id = db.execute(schema['Project'].table.insert().values(name='PROJECT')).inserted_primary_key[0]
+sequence_id = db.execute(schema['Sequence'].table.insert().values(name='AA', project__type='Project', project__id=project_id)).inserted_primary_key[0]
+shot_id = db.execute(schema['Shot'].table.insert().values(name='AA_001', sg_sequence__type='Sequence', sg_sequence__id=sequence_id)).inserted_primary_key[0]
 task_id = db.execute(schema['Task'].table.insert().values(content='Animate', entity__type='Shot', entity__id=shot_id)).inserted_primary_key[0]
 
 #print db.execute('select shot.id from shot').fetchall()
@@ -45,10 +47,11 @@ raw_request = {
         "entities_per_page": 1
     }, 
     "return_fields": [
-        "id",
+        #"id",
         #"content",
-        "entity",
+        #"entity",
         #"entity.Shot.name",
+        "entity.Shot.sg_sequence.Sequence.project.Project.name",
     ], 
     "return_only": "active", 
     "return_paging_info": False, 
