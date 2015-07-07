@@ -24,6 +24,7 @@
 + Step.entity_type
 
 + Task
++ Task.content
 + Task.step
 + Task.task_assignees
 
@@ -33,7 +34,7 @@
 ### FIELDS
 
 # we can't cache S3 URLs yet; bummer
-- *:text
+- *:image
 
 # these don't work with the API at all
 - *:pivot_table

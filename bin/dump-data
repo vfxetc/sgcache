@@ -1,0 +1,43 @@
+#!/usr/bin/env python
+
+import argparse
+import datetime
+import sys
+import json
+
+import yaml
+
+from shotgun_api3_registry import connect
+from sgsession import Session
+
+session = Session(connect())
+session.shotgun.config.convert_datetimes_to_utc = False
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-p', '--project', type=int)
+parser.add_argument('-t', '--type', action='append')
+parser.add_argument('-s', '--schema', required=True)
+args = parser.parse_args()
+
+schema = yaml.load((sys.stdin if args.schema == '-' else open(args.schema)).read())
+
+for entity_type, fields in sorted(schema.iteritems()):
+
+    if args.type and entity_type not in args.type:
+        continue
+
+    print >> sys.stderr, '#', entity_type
+
+    filters = []
+    if 'project' in fields and args.project and entity_type not in ('ApiUser', ):
+        filters.append(('project', 'in', {'type': 'Project', 'id': args.project}))
+
+    return_fields = sorted(fields)
+
+    for e in session.find_iter(entity_type, filters, return_fields, add_default_fields=False, merge=False):
+        for k, t in fields.iteritems():
+            if t in ('entity', ) and e[k]:
+                e[k] = {'type': e[k]['type'], 'id': e[k]['id']}
+            if t in ('date', 'date_time'):
+                e[k] = e[k].isoformat() + 'Z'
+        print json.dumps(e, sort_keys=True)

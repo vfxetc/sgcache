@@ -3,15 +3,18 @@ ApiUser:
     created_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    description: text
     updated_at: date_time
     updated_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
 Asset:
+    code: text
     created_at: date_time
     created_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    description: text
     project:
         data_type: entity
         entity_types: [Project]
@@ -26,26 +29,31 @@ HumanUser:
     created_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    name: text
     sg_status_list: status_list
     updated_at: date_time
     updated_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
 Project:
+    code: text
     created_at: date_time
     created_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    name: text
     sg_status: list
     updated_at: date_time
     updated_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
 PublishEvent:
+    code: text
     created_at: date_time
     created_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    description: text
     project:
         data_type: entity
         entity_types: [Project]
@@ -53,6 +61,8 @@ PublishEvent:
         data_type: entity
         entity_types: [Task]
     sg_path: text
+    sg_path_to_frames: text
+    sg_path_to_movie: text
     sg_status: status_list
     sg_type: text
     sg_version: number
@@ -61,10 +71,12 @@ PublishEvent:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
 Sequence:
+    code: text
     created_at: date_time
     created_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    description: text
     project:
         data_type: entity
         entity_types: [Project]
@@ -74,10 +86,12 @@ Sequence:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
 Shot:
+    code: text
     created_at: date_time
     created_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    description: text
     project:
         data_type: entity
         entity_types: [Project]
@@ -90,16 +104,19 @@ Shot:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
 Step:
+    code: text
     created_at: date_time
     created_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    description: text
     entity_type: entity_type
     updated_at: date_time
     updated_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
 Task:
+    content: text
     created_at: date_time
     created_by:
         data_type: entity
@@ -122,16 +139,20 @@ Task:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
 Version:
+    code: text
     created_at: date_time
     created_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    description: text
     entity:
         data_type: entity
         entity_types: [Asset, Shot, Scene, Sequence]
     project:
         data_type: entity
         entity_types: [Project]
+    sg_path_to_frames: text
+    sg_path_to_movie: text
     sg_status_list: status_list
     updated_at: date_time
     updated_by:

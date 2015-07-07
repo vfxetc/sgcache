@@ -1,4 +1,6 @@
+import functools
 import re
+
 import sqlalchemy as sa
 
 from ..exceptions import FilterNotImplemented
@@ -29,8 +31,13 @@ class Base(object):
             return column
 
         for attr in 'type', 'primary_key', 'foreign_keys', 'constraints':
-            ev = existing.type.__class__ if attr == 'type' else getattr(existing, attr)
-            cv = column.type.__class__   if attr == 'type' else getattr(column, attr)
+            if attr == 'type':
+                ev = existing.type.compile() 
+                cv = column.type.compile()
+            else:
+                ev = getattr(existing, attr)
+                cv = getattr(column, attr)
+
             if ev != cv:
                 raise RuntimeError('schema mismatch on %s.%s; existing %s %r != %r' % (
                     table.name, column.name, attr, ev, cv
@@ -59,6 +66,9 @@ class Base(object):
             return column.in_(values)
         else:
             raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
+
+    def prepare_upsert(self, req, value):
+        return {self.name: value}
 
 
 
@@ -187,6 +197,9 @@ class Entity(Base):
     def prepare_filter(self, path, relation, values):
         raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 
+    def prepare_upsert(self, req, value):
+        return {self.type_column.name: value['type'], self.id_column.name: value['id']}
+
 
 
 @sg_field_type
@@ -238,9 +251,30 @@ class MultiEntity(Base):
         if row[type_concat_field] is None:
             raise KeyError(path)
         return [{'type': type_, 'id': int(id_)} for type_, id_ in zip(row[type_concat_field].split(','), row[id_concat_field].split(','))]
-    
+
     def prepare_filter(self, path, relation, values):
         raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
+
+    def prepare_upsert(self, req, value):
+        if req.entity_id:
+            # TODO: schedule deletion of existing data
+            pass
+        
+        if req.entity_id:
+            req.before_query.append(functools.partial(self._before_upsert, req, value))
+        if value:
+            req.after_query.append(functools.partial(self._after_upsert, req, value))
+
+    def _before_upsert(self, req, value, con):
+        # delete existing
+        con.execute(self.assoc_table.delete().where(self.assoc_table.c.parent_id == req.entity_id))
+
+    def _after_upsert(self, req, value, con):
+        con.execute(self.assoc_table.insert(), [dict(
+            parent_id=req.entity_id,
+            child_type=entity['type'],
+            child_id=entity['id']
+        ) for entity in value])
 
 
 

@@ -36,7 +36,7 @@ class EntityType(object):
     def _create_sql(self):
         
         self.table = self.schema.metadata.tables.get(self.table_name)
-        if not self.table:
+        if self.table is None:
             self.table = sa.Table(self.table_name, self.schema.metadata,
                 sa.Column('id', sa.Integer, primary_key=True),
                 sa.Column('_active', sa.Boolean, nullable=False, default=True),

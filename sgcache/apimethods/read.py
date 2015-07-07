@@ -1,7 +1,7 @@
 import sqlalchemy as sa
 
 from ..path import Path
-
+from ..exceptions import EntityMissing, FieldMissing
 
 
 class ReadHandler(object):
@@ -32,12 +32,18 @@ class ReadHandler(object):
         return Path(path, self.entity_type_name)
 
     def get_entity(self, path):
-        type_ = self.schema[path[-1][0]]
+        try:
+            type_ = self.schema[path[-1][0]]
+        except KeyError as e:
+            raise EntityMissing(e.args[0])
         return type_
 
     def get_field(self, path):
-        type_ = self.schema[path[-1][0]]
-        field = type_.fields[path[-1][1]]
+        type_ = self.get_entity(path)
+        try:
+            field = type_.fields[path[-1][1]]
+        except KeyError as e:
+            raise FieldMissing(e.args[0])
         return field
 
     def get_table(self, path):

@@ -1,6 +1,6 @@
 from ..exceptions import Passthrough
 from .core import api_method, schema, db
-from ..apimethods.read import ReadRequest
+from ..apimethods.read import ReadHandler
 
 
 @api_method

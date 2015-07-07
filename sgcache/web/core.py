@@ -5,6 +5,7 @@ import os
 import requests
 from flask import Flask, request, Response
 import sqlalchemy as sa
+import yaml
 
 from ..schema.core import Schema
 from ..exceptions import Passthrough
@@ -13,6 +14,7 @@ log = logging.getLogger(__name__)
 app = Flask(__name__)
 
 app.config['SQLA_URL'] = 'sqlite://'
+app.config['SGCACHE_SCHEMA'] = 'schema/keystone-basic.yml'
 for k, v in os.environ.iteritems():
     if k.startswith('SGCACHE_'):
         app.config[k[8:]] = v
@@ -20,7 +22,8 @@ for k, v in os.environ.iteritems():
 #db = sa.create_engine('postgresql://127.0.0.1/sgcache', echo=True)
 db = sa.create_engine(app.config['SQLA_URL'], echo=True)
 
-schema = Schema(db) # the schema is created here; watch out!
+schema_spec = yaml.load(open('schema/keystone-basic.yml').read())
+schema = Schema(db, schema_spec) # the schema is created here; watch out!
 
 
 

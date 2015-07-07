@@ -5,6 +5,13 @@
 - exception to signal non-error that requeted data doesn't exist: NoFieldData
 
 
+- docs:
+    ./bin/grep-schema -f schema/basic-filters.txt schema/keystone-full.yaml > schema/keystone-basic.yml
+    dev ./bin/dump-data -p 66 -s schema/keystone-basic.yml | tee data.json
+    PYTHONPATH=.:$PYTHONPATH bin/update-data -u sqlite:///test.db -s schema/keystone-basic.yml data.json
+    SGCACHE_SQLA_URL=sqlite:///test.db PYTHONPATH="$PYTHONPATH:." python -m sgcache.web
+
+
 - dump-schema.py which creates a schema.json
 - dump-data.py which takes a schema.json, and a $TYPE.json (which is an
   entity per line, json encoded)

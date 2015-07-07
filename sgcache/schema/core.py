@@ -4,7 +4,9 @@ import sqlalchemy as sa
 
 from .entity import EntityType
 from . import fields
-
+from ..apimethods.read import ReadHandler
+from ..apimethods.create import CreateHandler
+from ..exceptions import EntityMissing
 
 
 
@@ -24,7 +26,11 @@ class Schema(object):
         self._create_sql()
 
     def __getitem__(self, key):
-        return self._entity_types[key]
+        try:
+            return self._entity_types[key]
+        except KeyError as e:
+            raise EntityMissing(e.args[0])
+    
     def __contains__(self, key):
         return key in self._entity_types
     
@@ -32,4 +38,20 @@ class Schema(object):
         self.metadata.reflect()
         for entity in self._entity_types.itervalues():
             entity._create_sql()
+
+    def read(self, request):
+        handler = ReadHandler(request)
+        return handler(self)
+
+    def create(self, request, data=None, allow_id=False):
+
+        if data is not None:
+            request = {
+                'type': request,
+                'fields': [{'field_name': k, 'value': v} for k, v in data.iteritems()],
+                'return_fields': ['id'],
+            }
+        
+        handler = CreateHandler(request, allow_id=allow_id)
+        return handler(self)
 
