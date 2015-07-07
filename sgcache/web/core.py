@@ -1,31 +1,31 @@
 import json
 import logging
+import os
 
 import requests
 from flask import Flask, request, Response
 import sqlalchemy as sa
 
 from ..schema.core import Schema
-
+from ..exceptions import Passthrough
 
 log = logging.getLogger(__name__)
 app = Flask(__name__)
 
-db = sa.create_engine('postgresql://127.0.0.1/sgcache', echo=True)
-schema = Schema(db)
-schema.assert_exists()
+app.config['SQLA_URL'] = 'sqlite://'
+for k, v in os.environ.iteritems():
+    if k.startswith('SGCACHE_'):
+        app.config[k[8:]] = v
+
+#db = sa.create_engine('postgresql://127.0.0.1/sgcache', echo=True)
+db = sa.create_engine(app.config['SQLA_URL'], echo=True)
+
+schema = Schema(db) # the schema is created here; watch out!
 
 
-_api_methods = {}
-def api_method(func):
-    _api_methods[func.__name__] = func
-    return func
 
-class Passthrough(Exception):
-    pass
 
-# register api methods
-from . import api
+
 
 
 FALLBACK_SERVER = 'https://keystone.shotgunstudio.com'
@@ -92,3 +92,12 @@ def _process_passthrough_response(res):
     # TODO: analyze it here
 
 
+
+# register api methods
+
+_api_methods = {}
+def api_method(func):
+    _api_methods[func.__name__] = func
+    return func
+
+from . import api

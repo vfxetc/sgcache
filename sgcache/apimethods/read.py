@@ -1,31 +1,7 @@
 import sqlalchemy as sa
 
+from ..path import Path
 
-def parse_path(type_, path):
-    path = path.split('.')
-    res = [(type_, path.pop(0))]
-    while path:
-        res.append((path.pop(0), path.pop(0)))
-    return res
-
-def format_path(path, head=False, tail=True):
-
-    if len(path) == 1:
-        if head and tail:
-            return '%s.%s' % path[0]
-        elif head:
-            return path[0][0]
-        elif tail:
-            return path[0][1]
-        else:
-            raise ValueError('need head or tail when single-element path')
-
-    parts = []
-    parts.append(('%s.%s' % path[0]) if head else path[0][1])
-    if len(path) > 1:
-        parts.extend('%s.%s' % x for x in path[1:-1])
-        parts.append(('%s.%s' % path[-1]) if tail else path[-1][0])
-    return '.'.join(parts)
 
 
 class ReadHandler(object):
@@ -42,16 +18,18 @@ class ReadHandler(object):
         self.aliased = set()
         self.aliases = {}
 
-        self.joined = set()
         self.select_fields = []
+        self.select_state = []
+
         self.select_from = None
+        self.joined = set()
+
         self.where_clauses = []
         self.group_by_clauses = []
 
-        self.select_state = []
 
     def parse_path(self, path):
-        return parse_path(self.entity_type_name, path)
+        return Path(path, self.entity_type_name)
 
     def get_entity(self, path):
         type_ = self.schema[path[-1][0]]
@@ -63,7 +41,8 @@ class ReadHandler(object):
         return field
 
     def get_table(self, path):
-        name = format_path(path, head=True, tail=False)
+        print 'get_table', repr(path)
+        name = path.format(head=True, tail=False)
         if name not in self.aliases:
             # we can return the real table the first path it is used from,
             # but after that we must alias it
@@ -113,7 +92,7 @@ class ReadHandler(object):
 
     def prepare(self):
 
-        self.select_from = self.get_table([(self.entity_type_name, None)])
+        self.select_from = self.get_table(Path([(self.entity_type_name, None)]))
 
         self.return_fields.append('id')
         
@@ -154,7 +133,7 @@ class ReadHandler(object):
                 except KeyError:
                     pass
                 else:
-                    row[format_path(path, head=False)] = value
+                    row[path.format(head=False)] = value
             rows.append(row)
         return rows
 
