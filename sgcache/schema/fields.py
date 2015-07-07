@@ -20,10 +20,22 @@ class Base(object):
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, self.name)
 
-    def _init_columns(self):
-        raise NotImplementedError()
+    def _create_or_check(self, table, column):
+        existing = table.c.get(column.name)
+        if existing is None:
+            column.create(table)
+            return column
 
-    def _create_sql(self, con, columns):
+        for attr in 'type', 'primary_key', 'foreign_keys', 'constraints':
+            ev = existing.type.__class__ if attr == 'type' else getattr(existing, attr)
+            cv = column.type.__class__   if attr == 'type' else getattr(column, attr)
+            if ev != cv:
+                raise RuntimeError('schema mismatch on %s.%s; existing %s %r != %r' % (
+                    table.name, column.name, attr, ev, cv
+                ))
+        return existing
+
+    def _create_sql(self, table):
         raise NotImplementedError()
 
     def prepare_join(self, request, self_path, next_path):
@@ -48,38 +60,25 @@ class Base(object):
 
 class Scalar(Base):
 
-    sqla_type = None
-    sql_type = None
+    sa_type = None
 
-    def _init_columns(self):
-        self.column = sa.Column(self.name, self.sqla_type)
-        return [self.column]
-
-    def _create_sql(self, con, columns):
-        if self.name in columns:
-            return
-        con.execute('''ALTER TABLE %s ADD COLUMN %s %s''' % (self.entity.type_name, self.name, self.sql_type))
+    def _create_sql(self, table):
+        self.column = self._create_or_check(table, sa.Column(self.name, self.sa_type))
 
 
 
 @sg_field_type
 class Checkbox(Scalar):
-    sqla_type = sa.Boolean
-    sql_type = 'BOOLEAN'
+    sa_type = sa.Boolean
 
 
 
 @sg_field_type
 class Number(Base):
 
-    def _init_columns(self):
-        self.column = sa.Column(self.name, sa.Integer, primary_key=self.name == 'id')
-        return [self.column]
+    def _create_sql(self, table):
+        self.column = self._create_or_check(table, sa.Column(self.name, sa.Integer, primary_key=self.name == 'id'))
 
-    def _create_sql(self, con, columns):
-        if self.name in columns:
-            return
-        con.execute('''ALTER TABLE %s ADD COLUMN %s INTEGER''' % (self.entity.type_name, self.name))
 
 @sg_field_type
 class Duration(Number):
@@ -97,15 +96,13 @@ class Timecode(Number):
 
 @sg_field_type
 class Float(Scalar):
-    sqla_type = sa.Float
-    sql_type = 'FLOAT'
+    sa_type = sa.Float
 
 
 
 @sg_field_type
 class Text(Scalar):
-    sqla_type = sa.Text
-    sql_type = 'TEXT'
+    sa_type = sa.Text
 
 @sg_field_type
 class EntityType(Text):
@@ -160,16 +157,9 @@ class Entity(Base):
         super(Entity, self).__init__(entity, name)
         self.entity_types = tuple(entity_types)
 
-    def _init_columns(self):
-        self.type_column = sa.Column('%s__type' % self.name, sa.String)
-        self.id_column = sa.Column('%s__id' % self.name, sa.Integer)
-        return [self.type_column, self.id_column]
-
-    def _create_sql(self, con, columns):
-        if '%s__id' % self.name in columns:
-            return
-        con.execute('''ALTER TABLE %s ADD COLUMN %s__type TEXT''' % (self.entity.type_name, self.name))
-        con.execute('''ALTER TABLE %s ADD COLUMN %s__id INTEGER''' % (self.entity.type_name, self.name))
+    def _create_sql(self, table):
+        self.type_column = self._create_or_check(table, sa.Column('%s__type' % self.name, sa.String))
+        self.id_column   = self._create_or_check(table, sa.Column('%s__id' % self.name, sa.Integer))
 
     def prepare_join(self, req, self_path, next_path):
         self_table = req.get_table(self_path)

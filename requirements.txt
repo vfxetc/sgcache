@@ -1,0 +1,6 @@
+flask >= 0.10.0
+requests >= 2.7.0
+sqlalchemy >= 1.0.0
+
+# this is the commit by zzzeek offering initial support for SQLA >= 1.0.0
+-e git+git@github.com:stackforge/sqlalchemy-migrate@35832555#egg=migrate

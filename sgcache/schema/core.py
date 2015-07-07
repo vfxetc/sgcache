@@ -42,7 +42,7 @@ class Schema(object):
     def __init__(self, db):
         
         self.db = db
-        self.metadata = sa.MetaData()
+        self.metadata = sa.MetaData(bind=db)
 
         self._entity_types = {}
         for name, fields in self.base_schema.iteritems():
@@ -57,7 +57,7 @@ class Schema(object):
         return key in self._entity_types
     
     def _create_sql(self):
-        with self.db.begin() as con:
-            for entity in self._entity_types.itervalues():
-                entity._create_sql(con)
+        self.metadata.reflect()
+        for entity in self._entity_types.itervalues():
+            entity._create_sql()
 
