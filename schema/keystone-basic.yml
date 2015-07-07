@@ -1,0 +1,155 @@
+ApiUser:
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    image: image
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+Asset:
+    code: text
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    image: image
+    project:
+        data_type: entity
+        entity_types: [Project]
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+HumanUser:
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    image: image
+    name: text
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+Project:
+    code: text
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    image: image
+    name: text
+    sg_status: list
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+PublishEvent:
+    code: text
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    image: image
+    project:
+        data_type: entity
+        entity_types: [Project]
+    sg_link:
+        data_type: entity
+        entity_types: [Task]
+    sg_path: text
+    sg_path_to_frames: text
+    sg_path_to_movie: text
+    sg_status: status_list
+    sg_type: text
+    sg_version: number
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+Sequence:
+    code: text
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    image: image
+    project:
+        data_type: entity
+        entity_types: [Project]
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+Shot:
+    code: text
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    image: image
+    project:
+        data_type: entity
+        entity_types: [Project]
+    sg_sequence:
+        data_type: entity
+        entity_types: [Sequence]
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+Step:
+    code: text
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    entity_type: entity_type
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+Task:
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    entity:
+        data_type: entity
+        entity_types: [Asset, Element, Scene, Sequence, Shot]
+    image: image
+    project:
+        data_type: entity
+        entity_types: [Project]
+    step:
+        data_type: entity
+        entity_types: [Step]
+    task_assignees:
+        data_type: multi_entity
+        entity_types: [Group, HumanUser]
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+Version:
+    code: text
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    entity:
+        data_type: entity
+        entity_types: [Asset, Shot, Scene, Sequence]
+    image: image
+    project:
+        data_type: entity
+        entity_types: [Project]
+    sg_path_to_frames: text
+    sg_path_to_movie: text
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+

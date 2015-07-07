@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+
+import yaml
+
+from shotgun_api3_registry import connect
+
+sg = connect()
+
+raw_schema = sg.schema_read()
+our_schema = {}
+
+for entity_type, raw_fields in raw_schema.iteritems():
+    our_type = our_schema[entity_type] = {}
+    for field_name, spec in raw_fields.iteritems():
+
+        our_field = {}
+        our_field['data_type'] = field_type = spec['data_type']['value']
+        if field_type in ('entity', 'multi_entity'):
+            our_field['entity_types'] = spec['properties']['valid_types']['value']
+
+        # if it is the just the type; save some space
+        our_type[field_name] = our_field['data_type'] if len(our_field) == 1 else our_field
+
+
+
+
+
+print yaml.dump(our_schema, indent=4)
+

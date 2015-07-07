@@ -1,0 +1,75 @@
+#!/usr/bin/env python
+
+import argparse
+import fnmatch
+import sys
+import re
+
+import yaml
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-f', '--file', action='append')
+parser.add_argument('patterns', nargs='*')
+parser.add_argument('schema', default='-')
+args = parser.parse_args()
+
+raw_patterns = list(args.patterns)
+for path in args.file:
+    raw_patterns.extend(open(path))
+
+patterns = []
+for raw in raw_patterns:
+
+    raw = raw.split('#')[0].strip()
+    if not raw:
+        continue
+
+    m = re.match(r'([+-])?\s*([^\.]+)(?:\.(.+))?$', raw)
+    if not m:
+        print >> sys.stderr, 'could not parse filter:', raw
+        continue
+
+    flag, entity_type, field_name = m.groups()
+    include = flag in (None, '+')
+    patterns.append((entity_type, field_name, include))
+
+def apply_patterns(entity_type, name, default=True):
+    for type_pattern, name_pattern, include in patterns:
+
+        if name is None: # name is actually a entity type
+            if name_pattern: # it is a field pattern
+                continue
+            if fnmatch.fnmatch(entity_type, type_pattern):
+                return include
+
+        else: # name is a field name
+            if not name_pattern: # it is an entity pattern
+                continue
+            if not fnmatch.fnmatch(entity_type, type_pattern):
+                continue
+            if fnmatch.fnmatch(name, name_pattern):
+                return include
+
+    return default
+
+
+old_schema = yaml.load((sys.stdin if args.schema == '-' else open(args.schema)).read())
+
+
+new_schema = {}
+for entity_type, entity_spec in old_schema.iteritems():
+
+    if not apply_patterns(entity_type, None):
+        continue
+
+    new_entity = {}
+    for field_name, field_spec in entity_spec.iteritems():
+        if apply_patterns(entity_type, field_name):
+            new_entity[field_name] = field_spec
+
+    if new_entity:
+        new_schema[entity_type] = new_entity
+
+
+print yaml.dump(new_schema, indent=4)

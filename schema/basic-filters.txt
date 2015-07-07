@@ -1,0 +1,49 @@
+
++ ApiUser
+
++ Asset
+
++ HumanUser
+
++ Project
+
++ PublishEvent
++ PublishEvent.sg_path
++ PublishEvent.sg_type
++ PublishEvent.sg_version
+
++ Sequence
+
++ Shot
++ Shot.*sequence
+
++ Step
++ Step.entity_type
+
++ Task
++ Task.step
++ Task.task_assignees
+
++ Version
+- * # exclude everything else
+
++ *.code
++ *.created_at
++ *.created_by
++ *.entity
++ *.image
++ *.link
++ *.name
++ *.project
++ *.sg_code
++ *.sg_entity
++ *.sg_link
++ *.sg_name
++ *.sg_path_to_frames
++ *.sg_path_to_movie
++ *.sg_status
++ *.status
++ *.updated_at
++ *.updated_by
+
+- *.*
