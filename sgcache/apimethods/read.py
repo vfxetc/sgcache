@@ -14,6 +14,7 @@ class ReadHandler(object):
         self.return_fields = request['return_fields']
         self.limit = request['paging']['entities_per_page']
         self.offset = self.limit * (request['paging']['current_page'] - 1)
+        self.sorts = request.get('sorts', [])
 
         self.aliased = set()
         self.aliases = {}
@@ -26,6 +27,7 @@ class ReadHandler(object):
 
         self.where_clauses = []
         self.group_by_clauses = []
+        self.order_by_clauses = []
 
 
     def parse_path(self, path):
@@ -115,10 +117,21 @@ class ReadHandler(object):
         if clause is not None:
             self.where_clauses.append(clause)
 
-        query = sa.select(self.select_fields).select_from(self.select_from)
+        for sort_spec in self.sorts:
+            path = self.parse_path(sort_spec['field_name'])
+            self.prepare_joins(path)
+            field = self.get_field(path)
+            sort_expr = field.prepare_order(self, path)
+            if sort_spec.get('direction') == 'desc':
+                sort_expr = sort_expr.desc()
+            self.order_by_clauses.append(sort_expr)
+
+        query = sa.select(self.select_fields, use_labels=True).select_from(self.select_from)
 
         if self.where_clauses:
             query = query.where(sa.and_(*self.where_clauses))
+        if self.order_by_clauses:
+            query = query.order_by(*self.order_by_clauses)
         if self.group_by_clauses:
             query = query.group_by(*self.group_by_clauses)
         if self.offset:

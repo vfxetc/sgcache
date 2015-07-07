@@ -63,15 +63,21 @@ def json_api(params=None):
     try:
         res = method(payload['params'][1] if len(payload['params']) > 1 else {})
     except Passthrough as pt:
-        return passthrough()
+        return passthrough(pt)
 
     res = json.dumps(res)
     return res, 200, [('Content-Type', 'application/json')]
 
 
-def passthrough():
+def passthrough(e=None):
 
-    log.info('passthrough request')
+    if e:
+        if isinstance(e, Exception):
+            log.info('passthrough request (%s): %s' % (e.__class__.__name__, e))
+        else:
+            log.info('passthrough request: %s' % e)
+    else:
+        log.info('passthrough request')
 
     # our "Host" is different than theirs
     headers = dict(request.headers)

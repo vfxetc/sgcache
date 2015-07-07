@@ -55,6 +55,10 @@ class Base(object):
         req.select_fields.append(column)
         return column
 
+    def prepare_order(self, req, path):
+        column = getattr(req.get_table(path).c, self.name)
+        return column
+
     def extract_select(self, req, path, row, column):
         return row[column]
 
