@@ -3,19 +3,18 @@ import logging
 
 import requests
 from flask import Flask, request, Response
+import sqlalchemy as sa
 
 from ..schema.core import Schema
-from ..database.core import Database
 
 
 log = logging.getLogger(__name__)
 app = Flask(__name__)
 
-db = Database.from_url('postgresql://127.0.0.1/sgcache')
-db.update_schema()
-
+db = sa.create_engine('postgresql://127.0.0.1/sgcache', echo=True)
 schema = Schema(db)
 schema.assert_exists()
+
 
 _api_methods = {}
 def api_method(func):

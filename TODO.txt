@@ -1,6 +1,67 @@
 
+Task.content
+  SELECT task.content from task WHERE ...
+
+Task.entity
+  SELECT task.entity__type, task.entity__id from task WHERE ...
+
+Task.entity.Shot.name
+  SELECT shot.name from task OUTER JOIN shot WHERE
+    task.entity__type = 'Shot' AND task.entity__id = shot.id AND ...
+
+IN GENERAL:
+  fields in either return fields OR filters must be broken down into:
+    1. required joins
+    2. the final column(s), valid in the context of those joins
+
+API:
+
+  Field.prepare_select(req, path_to_here):
+    - setup the joins (via the request)
+    - add the columns to the request (via the request)
+    - return some state that will be given back to extract_select
+
+  Field.extract_select(req, row, state):
+    - given the state, return a dict of the fields to return for the given row
+
+  Field.prepare_filter(req, path_to_here, operator, values):
+    - setup the joins (via the request)
+    - return the SQLA statement to add to the filter
+
+  Field.prepare_order(req, path_to_here):
+    - setup the joins
+    - return the SQLA statement to order by
+
+
+
+
+
+  for path:
+      joins: task JOIN shot ON task.entity__id = shot.id
+  for field:
+      joins: shot JOIN sequence on shot.sequence__id = sequence_id
+
 
 - ReadQuery
+
+  
+  - table_for_key('entity.Shot.sequence') -> alias of Sequence table
+    - this is unique for 'entity.Shot'; 'entity.Shot.something_else' gives the
+      same table
+
+  - column_for_key('entity.Shot.something') -> "something" from alias of Shot table
+
+  - fields_to_select: the fields (which are columns from SQLA tables) to select
+  
+  - root_table: the table everything starts from
+  - select_from: the query to select from eventually. This starts equal to the
+    root table, and is expanded slowly
+  - select_from_keys: a set of (table_alias.name, str(expr)), used by outer_join
+    to only do the join once
+  - outer_join(table, on_expr)
+
+
+
   - parses the filters and return fields, slowly building up
     the tables to join, columns to return, and names to refer to them by (so
     that we can have assets joined to assets).
@@ -10,6 +71,16 @@
     entity_Task_step_Step_code)
   - the fields also give a callback which is given each database row and the
     final entity, and must copy from one to the other
+
+
+sg.find('Task', [('entity.Shot.id', 'is', 123)], ['entity.Shot.name'])
+
+  SELECT task.id, shot.id, shot.name
+  FROM
+    tasks
+      OUTER JOIN shots ON shot.id = task.entity__id
+  WHERE
+    shot.id = 123
 
 
 

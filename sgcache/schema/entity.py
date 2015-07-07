@@ -1,48 +1,50 @@
+import sqlalchemy as sa
 
-from .fields import Base as _BaseField
-
-
-class _EntityMeta(type):
-
-    def __new__(mcls, name, bases, namespace):
-
-        # assign an entity type if it doesn't explicitly have one
-        namespace.setdefault('type', name)
-
-        field_classes = namespace.setdefault('field_classes', {})
-        for base in bases:
-            field_classes.update(getattr(base, 'field_classes', {}))
-        for name, value in namespace.iteritems():
-            try:
-                if issubclass(value, _BaseField):
-                    field_classes[name] = value
-            except TypeError:
-                pass
-
-        return super(_EntityMeta, mcls).__new__(mcls, name, bases, namespace)
+from .fields import sg_field_types
 
 
-class Entity(object):
+class EntityType(object):
 
-    __metaclass__ = _EntityMeta
+    def __init__(self, schema, name, fields):
 
-    def __init__(self, schema, db):
-        self._schema = schema
-        self.db = db
-        self._fields = {name: cls(self, name, db) for name, cls in self.field_classes.iteritems()}
+        self.schema = schema
+        self.type_name = name.title()
+        self.table_name = name.lower()
+
+        self.fields = {}
+        field_columns = []
+        for name, (type_, kwargs) in fields.iteritems():
+            cls = sg_field_types[type_]
+            field = self.fields[name] = cls(self, name, **kwargs)
+            field_columns.extend(field._init_columns())
+
+        self.table = sa.Table(self.table_name, schema.metadata,
+            # sa.Column('id', sa.Integer, primary_key=True),
+            sa.Column('_active', sa.Boolean, nullable=False),
+            *field_columns
+        )
+
+    def __repr__(self):
+        return '<%s %s>' % (self.__class__.__name__, self.type_name)
 
     def __getitem__(self, key):
-        return self._fields[key]
+        return self.fields[key]
     def __contains__(self, key):
-        return key in self._fields
+        return key in self.fields
 
-    def assert_exists(self):
+    def _create_sql(self, con):
         
-        with self.db.cursor() as cur:
-            cur.execute('''CREATE TABLE IF NOT EXISTS %s (
-                id SERIAL,
-                _active BOOLEAN DEFAULT true
-            )''' % (self.type, ))
+        inspector = sa.inspect(con)
+        raw_columns = inspector.get_columns(self.table_name)
+        columns = {c['name']: c for c in raw_columns}
 
-        for field in self._fields.itervalues():
-            field.assert_exists()
+        if not columns:
+            con.execute('''CREATE TABLE %s (
+                id INTEGER PRIMARY KEY, -- what must this be for Postgres?
+                _active BOOLEAN DEFAULT true
+            )''' % (self.table_name))
+
+        for field in self.fields.itervalues():
+            if field.name == 'id':
+                continue
+            field._create_sql(con, columns)
