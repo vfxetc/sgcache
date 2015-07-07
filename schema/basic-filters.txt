@@ -1,7 +1,10 @@
 
+### ENTITIES
+
 + ApiUser
 
 + Asset
++ Asset.sg_asset_type
 
 + HumanUser
 
@@ -25,13 +28,21 @@
 + Task.task_assignees
 
 + Version
-- * # exclude everything else
+
+
+### FIELDS
+
+# we can't cache S3 URLs yet; bummer
+- *:text
+
+# these don't work with the API at all
+- *:pivot_table
 
 + *.code
 + *.created_at
 + *.created_by
++ *.description
 + *.entity
-+ *.image
 + *.link
 + *.name
 + *.project
@@ -42,8 +53,13 @@
 + *.sg_path_to_frames
 + *.sg_path_to_movie
 + *.sg_status
++ *.sg_status_list
 + *.status
++ *.status_list
 + *.updated_at
 + *.updated_by
 
+
+# exclude everything else
+- *
 - *.*

@@ -25,29 +25,39 @@ for raw in raw_patterns:
     if not raw:
         continue
 
-    m = re.match(r'([+-])?\s*([^\.]+)(?:\.(.+))?$', raw)
+    m = re.match(r'([+-])?\s*([^\.:]+)(?:\.(.+?))?(?::(.+))?$', raw)
     if not m:
         print >> sys.stderr, 'could not parse filter:', raw
         continue
 
-    flag, entity_type, field_name = m.groups()
+    flag, entity_type, field_name, data_type = m.groups()
+    if data_type and not field_name:
+        field_name = '*'
+    
     include = flag in (None, '+')
-    patterns.append((entity_type, field_name, include))
+    patterns.append((entity_type, field_name, data_type, include))
 
-def apply_patterns(entity_type, name, default=True):
-    for type_pattern, name_pattern, include in patterns:
+def apply_patterns(entity_type, name=None, data_type=None, default=True):
+
+    for entity_pattern, name_pattern, type_pattern, include in patterns:
+
+        if not fnmatch.fnmatch(entity_type, entity_pattern):
+            continue
 
         if name is None: # name is actually a entity type
-            if name_pattern: # it is a field pattern
+            if name_pattern or type_pattern: # it is a field pattern
                 continue
-            if fnmatch.fnmatch(entity_type, type_pattern):
-                return include
+            return include
 
         else: # name is a field name
-            if not name_pattern: # it is an entity pattern
+
+            # only apply to the given types
+            if data_type and type_pattern and type_pattern != data_type:
                 continue
-            if not fnmatch.fnmatch(entity_type, type_pattern):
+
+            if not name_pattern: # we need a name and pattern
                 continue
+
             if fnmatch.fnmatch(name, name_pattern):
                 return include
 
@@ -60,12 +70,13 @@ old_schema = yaml.load((sys.stdin if args.schema == '-' else open(args.schema)).
 new_schema = {}
 for entity_type, entity_spec in old_schema.iteritems():
 
-    if not apply_patterns(entity_type, None):
+    if not apply_patterns(entity_type):
         continue
 
     new_entity = {}
     for field_name, field_spec in entity_spec.iteritems():
-        if apply_patterns(entity_type, field_name):
+        data_type = field_spec if isinstance(field_spec, basestring) else field_spec['data_type']
+        if apply_patterns(entity_type, field_name, data_type):
             new_entity[field_name] = field_spec
 
     if new_entity:
