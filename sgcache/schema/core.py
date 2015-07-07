@@ -10,50 +10,15 @@ from . import fields
 
 class Schema(object):
 
-    base_schema = dict(
-        Step=dict(
-            code=('text', {}),
-            name=('text', {}),
-        ),
-        Project=dict(
-            name=('text', {}),
-        ),
-        Asset=dict(
-            name=('text', {}),
-            project=('entity', {'entity_types': ['Project']}),
-        ),
-        Sequence=dict(
-            name=('text', {}),
-            project=('entity', {'entity_types': ['Project']}),
-        ),
-        Shot=dict(
-            name=('text', {}),
-            project=('entity', {'entity_types': ['Project']}),
-            sg_sequence=('entity', {'entity_types': ['Sequence']}),
-        ),
-        Task=dict(
-            content=('text', {}),
-            project=('entity', {'entity_types': ['Project']}),
-            entity=('entity', {'entity_types': ['Asset', 'Shot']}),
-            step=('entity', {'entity_types': ['Step']}),
-            task_assignees=('multi_entity', {'entity_types': ['HumanUser', 'ApiUser']}),
-        ),
-        HumanUser=dict(
-            name=('text', {}),
-        ),
-        ApiUser=dict(
-            name=('text', {}),
-        )
-    )
-
-    def __init__(self, db):
+    def __init__(self, db, spec):
         
         self.db = db
+        self.spec = spec
         self.metadata = sa.MetaData(bind=db)
 
         self._entity_types = {}
-        for name, fields in self.base_schema.iteritems():
-            fields['id'] = ('number', {})
+        for name, fields in self.spec.iteritems():
+            fields['id'] = 'number'
             self._entity_types[name] = EntityType(self, name, fields)
 
         self._create_sql()

@@ -1,7 +1,7 @@
 import logging
 
 import sqlalchemy as sa
-
+import yaml
 from sgcache.schema.core import Schema
 from sgcache.apimethods.read import ReadHandler
 
@@ -12,12 +12,12 @@ logging.getLogger(None).handlers = []
 
 db = sa.create_engine('sqlite://', echo=True)
 
+schema_spec = yaml.load(open('schema/keystone-basic.yml').read())
+schema = Schema(db, schema_spec)
 
-schema = Schema(db)
-
-project_id = db.execute(schema['Project'].table.insert().values(name='PROJECT')).inserted_primary_key[0]
-sequence_id = db.execute(schema['Sequence'].table.insert().values(name='AA', project__type='Project', project__id=project_id)).inserted_primary_key[0]
-shot_id = db.execute(schema['Shot'].table.insert().values(name='AA_001', sg_sequence__type='Sequence', sg_sequence__id=sequence_id)).inserted_primary_key[0]
+project_id = db.execute(schema['Project'].table.insert().values(code='PROJECT')).inserted_primary_key[0]
+sequence_id = db.execute(schema['Sequence'].table.insert().values(code='AA', project__type='Project', project__id=project_id)).inserted_primary_key[0]
+shot_id = db.execute(schema['Shot'].table.insert().values(code='AA_001', sg_sequence__type='Sequence', sg_sequence__id=sequence_id)).inserted_primary_key[0]
 task_id = db.execute(schema['Task'].table.insert().values(content='Animate', entity__type='Shot', entity__id=shot_id)).inserted_primary_key[0]
 
 user1_id = db.execute(schema['HumanUser'].table.insert().values(name='Alice')).inserted_primary_key[0]
@@ -45,7 +45,7 @@ raw_request = {
                 "values": ["Animate"]
             },
             {
-                "path": "entity.Shot.sg_sequence.Sequence.name", 
+                "path": "entity.Shot.sg_sequence.Sequence.code", 
                 "relation": "in", 
                 "values": ["AA", "BB"]
             },
@@ -62,7 +62,7 @@ raw_request = {
         #"entity",
         #"entity.Shot.name",
         "task_assignees",
-        "entity.Shot.sg_sequence.Sequence.project.Project.name",
+        "entity.Shot.sg_sequence.Sequence.project.Project.code",
     ], 
     "return_only": "active", 
     "return_paging_info": False, 

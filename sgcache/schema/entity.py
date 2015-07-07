@@ -13,9 +13,17 @@ class EntityType(object):
         self.table_name = name.lower()
 
         self.fields = {}
-        for name, (type_, kwargs) in fields.iteritems():
+        for name, spec in fields.iteritems():
+            
+            # if it is a string, it represents just the data_type
+            if isinstance(spec, basestring):
+                spec = {'data_type': spec}
+            else:
+                spec = spec.copy()
+            type_ = spec.pop('data_type')
+
             cls = sg_field_types[type_]
-            field = self.fields[name] = cls(self, name, **kwargs)
+            field = self.fields[name] = cls(self, name, **spec)
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, self.type_name)

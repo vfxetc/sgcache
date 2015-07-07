@@ -112,6 +112,7 @@ Step:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
 Task:
+    content: text
     created_at: date_time
     created_by:
         data_type: entity
