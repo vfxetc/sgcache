@@ -38,7 +38,12 @@ raw_request = {
                 "path": "content", 
                 "relation": "is", 
                 "values": ["Animate"]
-            }
+            },
+            {
+                "path": "entity.Shot.sg_sequence.Sequence.name", 
+                "relation": "is", 
+                "values": ["AA"]
+            },
         ], 
         "logical_operator": "and"
     }, 

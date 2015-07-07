@@ -1,10 +1,11 @@
+import re
 import sqlalchemy as sa
 
 
 sg_field_types = {}
 
 def sg_field_type(cls):
-    type_name = getattr(cls, 'type_name', None) or cls.__name__.lower()
+    type_name = re.sub(r'(.)([A-Z][a-z])', r'\1_\2', cls.__name__).lower()
     cls.type_name = type_name
     sg_field_types[type_name] = cls
     return cls
@@ -44,6 +45,30 @@ class Base(object):
             raise NotImplementedError('%s on %s' % (relation, self.type_name))
 
 
+
+class Scalar(Base):
+
+    sqla_type = None
+    sql_type = None
+
+    def _init_columns(self):
+        self.column = sa.Column(self.name, self.sqla_type)
+        return [self.column]
+
+    def _create_sql(self, con, columns):
+        if self.name in columns:
+            return
+        con.execute('''ALTER TABLE %s ADD COLUMN %s %s''' % (self.entity.type_name, self.name, self.sql_type))
+
+
+
+@sg_field_type
+class Checkbox(Scalar):
+    sqla_type = sa.Boolean
+    sql_type = 'BOOLEAN'
+
+
+
 @sg_field_type
 class Number(Base):
 
@@ -56,27 +81,83 @@ class Number(Base):
             return
         con.execute('''ALTER TABLE %s ADD COLUMN %s INTEGER''' % (self.entity.type_name, self.name))
 
+@sg_field_type
+class Duration(Number):
+    pass
 
 @sg_field_type
-class Text(Base):
+class Percent(Number):
+    pass
 
-    def _init_columns(self):
-        self.column = sa.Column(self.name, sa.Text)
-        return [self.column]
+@sg_field_type
+class Timecode(Number):
+    pass
 
-    def _create_sql(self, con, columns):
-        if self.name in columns:
-            return
-        con.execute('''ALTER TABLE %s ADD COLUMN %s TEXT''' % (self.entity.type_name, self.name))
 
 
 @sg_field_type
-class EntityField(Base):
+class Float(Scalar):
+    sqla_type = sa.Float
+    sql_type = 'FLOAT'
+
+
+
+@sg_field_type
+class Text(Scalar):
+    sqla_type = sa.Text
+    sql_type = 'TEXT'
+
+@sg_field_type
+class EntityType(Text):
+    pass
+
+@sg_field_type
+class Color(Text):
+    pass
+
+@sg_field_type
+class Image(Text):
+    # TODO: affected by `api_return_image_urls`?
+    pass
+
+@sg_field_type
+class List(Text):
+    pass
+
+@sg_field_type
+class StatusList(Text):
+    pass
+
+@sg_field_type
+class URLTemplate(Text):
+    # TODO: affected by `api_return_image_urls`?
+    pass
+
+@sg_field_type
+class UUID(Text):
+    pass
+
+
+
+@sg_field_type
+class Date(Text):
+    # TODO: understand this better
+    pass
+
+@sg_field_type
+class DateTime(Text):
+    # TODO: understand this better
+    pass
+
+
+
+@sg_field_type
+class Entity(Base):
 
     type_name = 'entity'
 
     def __init__(self, entity, name, entity_types):
-        super(EntityField, self).__init__(entity, name)
+        super(Entity, self).__init__(entity, name)
         self.entity_types = tuple(entity_types)
 
     def _init_columns(self):
@@ -113,4 +194,28 @@ class EntityField(Base):
 
 
 
+@sg_field_type
+class MultiEntity(Base):
+    pass
+
+
+
+@sg_field_type
+class TagList(Base):
+    # TODO: JSON?
+    pass
+
+
+
+@sg_field_type
+class Serializable(Base):
+    # TODO: JSON?
+    pass
+
+
+
+@sg_field_type
+class URL(Base):
+    # TODO: JSON?
+    pass
 

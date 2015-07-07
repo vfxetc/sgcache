@@ -16,7 +16,7 @@ Field Types
 .. sg_field_type:: checkbox
 
     - API type: ``bool``
-    - Not NULL-able; the API throws an error if you filter with a ``None`` here.
+    - Not NULL-able; the API throws an error if you filter with a ``None`` here
 
 .. sg_field_type:: color
 
@@ -66,9 +66,9 @@ Field Types
             "name": "Shot 1"
         }
 
-    - Must contain ``type`` and ``id``, and often ``name``.
-    - NULL-able.
-    - Not necessarily constrained to a single entity type.
+    - Must contain ``type`` and ``id``, and often ``name``
+    - NULL-able
+    - Not necessarily constrained to a single entity type
 
 .. sg_field_type:: entity_type
 
@@ -81,12 +81,12 @@ Field Types
 .. sg_field_type:: image
 
     - API type: ``str`` of URL
-    - May be influenced by ``api_return_image_urls`` passed via JSON API.
+    - May be influenced by ``api_return_image_urls`` passed via JSON API
 
 .. sg_field_type:: list
 
-    - API type: ``str``, value of which is from a defined set.
-    - A better name would be "enumeration".
+    - API type: ``str``, value of which is from a defined set
+    - A better name would be "enumeration"
 
 .. sg_field_type:: multi_entity
 
@@ -94,27 +94,28 @@ Field Types
 
 .. sg_field_type:: number
 
-    ???
+    - API type: ``int``
+    - This is used for IDs
 
 .. sg_field_type:: password
 
     - API type: the literal string ``'*******'``
-    - Only used for ``ClientUser.password_proxy``.
+    - Only used for ``ClientUser.password_proxy``
 
 .. sg_field_type:: percent
 
-    - API type: ``int`` from 0 to 100.
-    - Only used by ``Task.time_percent_of_est``.
+    - API type: ``int`` from 0 to 100
+    - Only used by ``Task.time_percent_of_est``
 
 .. sg_field_type:: pivot_column
 
-    - Only in ``step_*`` fields.
-    - Not supported by the API in any way.
+    - Only in ``step_*`` fields
+    - Not supported by the API in any way
 
 .. sg_field_type:: serializable
 
-    - API type: any JSON.
-    - Not filterable by the API.
+    - API type: any JSON
+    - Not filterable by the API
 
 .. sg_field_type:: status_list
 
@@ -132,7 +133,7 @@ Field Types
 .. sg_field_type:: timecode
 
     - API type: ``int``
-    - Only used by ``Shot.{src_in,src_out}``.
+    - Only used by ``Shot.{src_in,src_out}``
 
 .. sg_field_type:: url
 
@@ -146,9 +147,9 @@ Field Types
 
 .. sg_field_type:: url_template
 
-    - Not filterable by the API.
+    - Not filterable by the API
     - Not used by default; only by by our ``{Shot,Version}.sg_viewer_link``
-      (which itself is deprecated).
+      (which itself is deprecated)
 
 .. sg_field_type:: uuid
 
