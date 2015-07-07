@@ -19,7 +19,7 @@ class EntityType(object):
             field_columns.extend(field._init_columns())
 
         self.table = sa.Table(self.table_name, schema.metadata,
-            # sa.Column('id', sa.Integer, primary_key=True),
+            sa.Column('id', sa.Integer, primary_key=True),
             sa.Column('_active', sa.Boolean, nullable=False),
             *field_columns
         )

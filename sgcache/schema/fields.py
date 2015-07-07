@@ -33,6 +33,9 @@ class Base(object):
         req.select_fields.append(column)
         return column
 
+    def extract_select(self, req, path, column, res):
+        return res[column]
+
     def prepare_filter(self, req, path, relation, values):
         column = getattr(req.get_table(path).c, self.name)
         if relation == 'is':
@@ -101,6 +104,11 @@ class EntityField(Base):
         id_column = getattr(table.c, self.id_column.name)
         req.select_fields.extend((type_column, id_column))
         return type_column, id_column
+
+    def extract_select(self, req, path, state, res):
+        type_column, id_column = state
+        return {'type': res[type_column], 'id': res[id_column]}
+
 
 
 

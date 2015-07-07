@@ -27,16 +27,16 @@ raw_request = {
     "api_return_image_urls": True, 
     "filters": {
         "conditions": [
-            # {
-            #     "path": "entity.Shot.id", 
-            #     "relation": "is", 
-            #     "values": [shot_id]
-            # },
-            # {
-            #     "path": "content", 
-            #     "relation": "is", 
-            #     "values": ["Animate"]
-            # }
+            {
+                "path": "entity.Shot.id", 
+                "relation": "is", 
+                "values": [shot_id]
+            },
+            {
+                "path": "content", 
+                "relation": "is", 
+                "values": ["Animate"]
+            }
         ], 
         "logical_operator": "and"
     }, 
@@ -46,9 +46,9 @@ raw_request = {
     }, 
     "return_fields": [
         "id",
-        "content",
+        #"content",
         "entity",
-        "entity.Shot.name",
+        #"entity.Shot.name",
     ], 
     "return_only": "active", 
     "return_paging_info": False, 

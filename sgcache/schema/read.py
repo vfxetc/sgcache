@@ -8,8 +8,14 @@ def parse_path(type_, path):
         res.append((path.pop(0), path.pop(0)))
     return res
 
-def format_path(path):
-    return '.'.join('%s.%s' % x for x in path)
+def format_path(path, head=True):
+    if head:
+        return '.'.join('%s.%s' % x for x in path)
+    else:
+        if len(path) > 1:
+            return '%s.%s' % (path[0][1], '.'.join('%s.%s' % x for x in path[1:]))
+        else:
+            return path[0][1]
 
 
 class ReadRequest(object):
@@ -28,6 +34,8 @@ class ReadRequest(object):
         self.select_fields = []
         self.select_from = None
         self.where_clauses = []
+
+        self.select_state = []
 
     def parse_path(self, path):
         return parse_path(self.entity_type_name, path)
@@ -54,38 +62,55 @@ class ReadRequest(object):
             self.select_from = self.select_from.outerjoin(table, on)
             self.joined.add(table.name)
 
+    def prepare_joins(self, path):
+        for i in xrange(0, len(path) - 1):
+            field_path = path[:i+1]
+            field = self.get_field(field_path)
+            field.prepare_join(self, field_path, path[:i+2])
+
+    def prepare_filters(self, filters):
+
+        clauses = []
+        for filter_ in filters['conditions']:
+
+            if 'conditions' in filter_:
+                clause = self.prepare_filters(filter_)
+            else:
+
+                raw_path = filter_['path']
+                relation = filter_['relation']
+                values = filter_['values']
+
+                path = self.parse_path(raw_path)
+                self.prepare_joins(path) # make sure it is availible
+
+                field = self.get_field(path)
+                clause = field.prepare_filter(self, path, relation, values)
+
+            if clause is not None:
+                clauses.append(clause)
+
+        if clauses:
+            return (sa.and_ if filters['logical_operator'] == 'and' else sa.or_)(*clauses)
+
+
     def prepare(self):
 
         self.select_from = self.get_table([(self.entity_type_name, None)])
 
         for raw_path in self.return_fields:
+
             path = self.parse_path(raw_path)
-            #print 'prepare_join(s) for', format_path(path)
-            for i in xrange(0, len(path) - 1):
-                field_path = path[:i+1]
-                field = self.get_field(field_path)
-                field.prepare_join(self, field_path, path[:i+2])
-            #print
-
-            #print 'prepare_select for', format_path(path)
-            field = self.get_field(path)
-            field.prepare_select(self, path)
-            #print
-
-        for filter_ in self.filters['conditions']:
-            path = self.parse_path(filter_['path'])
-            relation = filter_['relation']
-            values = filter_['values']
-
-            #print 'prepare_filter for', format_path(path), relation, values
+            self.prepare_joins(path) # make sure it is availible
 
             field = self.get_field(path)
-            clause = field.prepare_filter(self, path, relation, values)
-            #print 'WHERE', clause
-            if clause is not None:
-                self.where_clauses.append(clause)
+            state = field.prepare_select(self, path)
 
-            #print
+            self.select_state.append((path, field, state))
+
+        clause = self.prepare_filters(self.filters)
+        if clause is not None:
+            self.where_clauses.append(clause)
 
         query = sa.select(self.select_fields).select_from(self.select_from)
 
@@ -94,8 +119,15 @@ class ReadRequest(object):
 
         return query
 
-    def extract(self):
-        pass
+    def extract(self, res):
+        rows = []
+        for i, raw_row in enumerate(res):
+            row = {'type': self.entity_type_name}
+            for path, field, state in self.select_state:
+                value = field.extract_select(self, path, state, raw_row)
+                row[format_path(path, head=False)] = value
+            rows.append(row)
+        return rows
 
     def __call__(self, schema):
 
@@ -103,36 +135,6 @@ class ReadRequest(object):
         self.entity_type = schema[self.entity_type_name]
 
         query = self.prepare()
-
-        #print query
-        #print query.compile().params
-        #print
-
         res = schema.db.execute(query)
-        print 'RESULTS:'
-        for i, row in enumerate(res):
-            print i, row
 
-        return self.extract()
-
-        return self.entity_type
-
-        '''
-
-            "filters": {
-                "conditions": [
-                    {
-                        "path": "field", 
-                        "relation": "is", 
-                        "values": [
-                            // int:
-                            123
-                            // when datetime:
-                            "2015-07-01T00:51:10Z"
-                        ]
-                    }
-                ], 
-                "logical_operator": "and"
-            },
-
-        '''
+        return self.extract(res)
