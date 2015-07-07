@@ -7,6 +7,10 @@
 + Asset.sg_asset_type
 
 + HumanUser
++ HumanUser.email
++ HumanUser.firstname
++ HumanUser.lastname
++ HumanUser.login
 
 + Project
 
@@ -29,6 +33,7 @@
 + Task.task_assignees
 
 + Version
++ Version.sg_task
 
 
 ### FIELDS
@@ -55,6 +60,7 @@
 + *.sg_path_to_movie
 + *.sg_status
 + *.sg_status_list
++ *.short_name
 + *.status
 + *.status_list
 + *.updated_at

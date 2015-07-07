@@ -29,6 +29,10 @@ HumanUser:
     created_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    email: text
+    firstname: text
+    lastname: text
+    login: text
     name: text
     sg_status_list: status_list
     updated_at: date_time
@@ -111,6 +115,7 @@ Step:
         entity_types: [HumanUser, ApiUser]
     description: text
     entity_type: entity_type
+    short_name: text
     updated_at: date_time
     updated_by:
         data_type: entity
@@ -154,6 +159,9 @@ Version:
     sg_path_to_frames: text
     sg_path_to_movie: text
     sg_status_list: status_list
+    sg_task:
+        data_type: entity
+        entity_types: [Task]
     updated_at: date_time
     updated_by:
         data_type: entity
