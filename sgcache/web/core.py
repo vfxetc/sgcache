@@ -1,18 +1,22 @@
 import json
 import logging
 import os
-import threading
 
 import requests
 from flask import Flask, request, Response
 import sqlalchemy as sa
 import yaml
 
+from shotgun_api3_registry import get_args as get_sg_args
+
 from ..schema.core import Schema
 from ..exceptions import Passthrough
 from ..eventlog import EventLog
 
+
 log = logging.getLogger(__name__)
+
+
 app = Flask(__name__)
 
 app.config['SQLA_URL'] = 'sqlite://'
@@ -21,25 +25,18 @@ for k, v in os.environ.iteritems():
     if k.startswith('SGCACHE_'):
         app.config[k[8:]] = v
 
-#db = sa.create_engine('postgresql://127.0.0.1/sgcache', echo=True)
-db = sa.create_engine(app.config['SQLA_URL'], echo=True)
+db = sa.create_engine(app.config['SQLA_URL'], echo=False)
 
 schema_spec = yaml.load(open('schema/keystone-basic.yml').read())
 schema = Schema(db, schema_spec) # the schema is created here; watch out!
 
-events = EventLog(schema)
-
-event_watcher = threading.Thread(target=events.watch)
-event_watcher.daemon = True
-event_watcher.start()
+# Watch the event log in a thread.
+schema.watch(async=True)
 
 
 
-
-
-
-FALLBACK_SERVER = 'https://keystone.shotgunstudio.com'
-FALLBACK_URL = FALLBACK_SERVER + '/api3/json'
+FALLBACK_SERVER, _, _ = get_sg_args()
+FALLBACK_URL = FALLBACK_SERVER.strip('/') + '/api3/json'
 
 http_session = requests.Session()
 

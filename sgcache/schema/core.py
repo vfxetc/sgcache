@@ -1,4 +1,7 @@
+import logging
 import re
+import threading
+import datetime
 
 import sqlalchemy as sa
 
@@ -7,7 +10,11 @@ from . import fields
 from ..apimethods.read import ReadHandler
 from ..apimethods.create import CreateHandler
 from ..exceptions import EntityMissing
+from ..eventlog import EventLog
+from ..utils import log_exceptions
 
+
+log = logging.getLogger(__name__)
 
 
 class Schema(object):
@@ -43,7 +50,7 @@ class Schema(object):
         handler = ReadHandler(request)
         return handler(self)
 
-    def create(self, request, data=None, allow_id=False):
+    def create(self, request, data=None, allow_id=False, **kwargs):
 
         if data is not None:
             request = {
@@ -53,5 +60,122 @@ class Schema(object):
             }
         
         handler = CreateHandler(request, allow_id=allow_id)
-        return handler(self)
+        return handler(self, **kwargs)
+
+    def watch(self, async=False):
+
+        if async:
+            thread = threading.Thread(target=self.watch)
+            thread.daemon = True
+            thread.start()
+            return thread
+
+        self.event_log = EventLog(self, auto_last_id=True)
+        while True:
+            with log_exceptions(__name__, 'error while processing event log'):
+                for events in self.event_log.iter():
+                    if events:
+                        with self.db.begin() as con:
+                            self._process_events(con, events)
+
+    def _process_events(self, con, events):
+        for event in events:
+
+            event_type = event['event_type']
+            event_id = event['id']
+            event_entity = event.get('entity')
+
+            summary_parts = ['%s %d' % (event_type, event_id)]
+            if event_entity:
+                summary_parts.append('on %s %d' % (event_entity['type'], event_entity['id']))
+                if event_entity.get('name'):
+                    summary_parts.append('"%s"' % event_entity['name'])
+            summary = ' '.join(summary_parts)
+
+            domain, entity_type_name, event_subtype = event_type.split('_', 2)
+            if domain != 'Shotgun':
+                log.info('Skipping %s; not in Shotgun domain' % summary)
+                continue
+
+            entity_type = self._entity_types.get(entity_type_name)
+            if entity_type is None:
+                log.info('Skipping %s; unknown entity type' % summary)
+                continue
+
+            func = getattr(self, '_process_%s_event' % event_subtype.lower(), None)
+            if func is None:
+                log.info('Skipping %s; unknown event type' % summary)
+                continue
+
+            log.info('Processing %s' % summary)
+            func(con, event, entity_type)
+
+    def _process_new_event(self, con, event, entity_type):
+        '''
+        {u'attribute_name': None,
+         u'created_at': u'2015-07-09T19:33:37Z',
+         u'entity': {u'id': 67378, u'name': u'something', u'type': u'Task'},
+         u'event_type': u'Shotgun_Task_New',
+         u'id': 2011530,
+         u'meta': {u'entity_id': 67378,
+                   u'entity_type': u'Task',
+                   u'type': u'new_entity'},
+         u'project': {u'id': 66, u'name': u'Testing Sandbox', u'type': u'Project'},
+         u'type': u'EventLogEntry'}
+        '''
+
+        # we need to fetch all of the data from the server. bleh
+        entities = self.event_log.api.call('read', {
+            "type": entity_type.type_name,
+            "return_fields": entity_type.fields.keys(), 
+            "filters": {
+                "conditions": [{
+                    'path': 'id',
+                    'relation': 'is',
+                    'values': [event['entity']['id']],
+                }],
+                "logical_operator": "and",
+            },
+            "paging": {
+                "current_page": 1, 
+                "entities_per_page": 1,
+            },
+            "return_only": "active", 
+        })
+        if not entities:
+            log.warning('Could not find "new" %s %d' % (entity_type.type_name, event['entity']['id']))
+            return
+
+        self.create(entity_type.type_name, data=entities[0], allow_id=True, con=con, extra={
+            '_last_log_event_id': event['id'],
+        })
+
+    def _process_change_event(self, con, event, entity_type):
+        '''
+        {u'attribute_name': u'color',
+         u'created_at': u'2015-07-09T19:33:37Z',
+         u'entity': {u'id': 67378, u'name': u'something', u'type': u'Task'},
+         u'event_type': u'Shotgun_Task_Change',
+         u'id': 2011531,
+         u'meta': {u'attribute_name': u'color',
+                   u'entity_id': 67378,
+                   u'entity_type': u'Task',
+                   u'field_data_type': u'color',
+                   u'in_create': True,
+                   u'new_value': u'pipeline_step',
+                   u'old_value': None,
+                   u'type': u'attribute_change'},
+         u'project': {u'id': 66, u'name': u'Testing Sandbox', u'type': u'Project'},
+         u'type': u'EventLogEntry'}
+        '''
+
+        data = event['entity'].copy()
+        if event.get('project'):
+            data['project'] = event['project']
+        data[event['attribute_name']] = event['meta']['new_value']
+
+        self.create(entity_type.type_name, data=data, allow_id=True, con=con, extra={
+            '_last_log_event_id': event['id'],
+        })
+
 

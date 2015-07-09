@@ -42,11 +42,14 @@ class EntityType(object):
             self.table = sa.Table(self.table_name, self.schema.metadata,
                 sa.Column('id', sa.Integer, primary_key=True),
                 sa.Column('_active', sa.Boolean, nullable=False, default=True),
-                sa.Column('_cache_created_at', sa.DateTime, nullable=False, default=datetime.datetime.utcnow),
-                sa.Column('_cache_updated_at', sa.DateTime, nullable=False, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow),
-                sa.Column('_last_log_event_id', sa.Integer),
             )
             self.table.create()
+        
+        if '_cache_created_at' not in self.table.c:
+            sa.Column('_cache_created_at', sa.DateTime, nullable=False, default=datetime.datetime.utcnow).create(self.table)
+            sa.Column('_cache_updated_at', sa.DateTime, nullable=False, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow).create(self.table)
+        if '_last_log_event_id' not in self.table.c:
+            sa.Column('_last_log_event_id', sa.Integer).create(self.table)
 
         for field in self.fields.itervalues():
             field._create_sql(self.table)

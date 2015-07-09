@@ -1,3 +1,4 @@
+import datetime
 import sqlalchemy as sa
 
 '''
@@ -31,13 +32,15 @@ class CreateHandler(object):
         if self.entity_id and not allow_id:
             raise ValueError('cannot specify ID for create')
 
-
         self.before_query = []
         self.after_query = []
 
-    def __call__(self, schema):
+    def __call__(self, schema, con=None, extra=None):
 
-        query_params = {}
+        query_params = (extra or {}).copy()
+        query_params['_active'] = True
+        query_params['_cache_created_at'] = query_params['_cache_updated_at'] = datetime.datetime.utcnow()
+
 
         for field_name, field in schema[self.entity_type_name].fields.iteritems():
             value = self.data.get(field_name)
@@ -46,7 +49,10 @@ class CreateHandler(object):
                 if field_params:
                     query_params.update(field_params)
 
-        with schema.db.begin() as con:
+        con_given = con is not None
+        con = con or schema.db.begin()
+
+        try:
 
             table = schema[self.entity_type_name].table
 
@@ -57,7 +63,10 @@ class CreateHandler(object):
                 func(con)
 
             if self.entity_exists:
-                del query_params['id'] # can't update the ID
+                # these are only for creation
+                del query_params['id']
+                del query_params['_active']
+                del query_params['_cache_created_at']
                 con.execute(table.update().where(table.c.id == self.entity_id), **query_params)
 
             else:
@@ -67,5 +76,13 @@ class CreateHandler(object):
             for func in self.after_query:
                 func(con)
 
-        return {'type': self.entity_type_name, 'id': self.entity_id}
+            return {'type': self.entity_type_name, 'id': self.entity_id}
+
+        except:
+            if not con_given:
+                con.rollback()
+            raise
+        else:
+            if not con_given:
+                con.commit()
 
