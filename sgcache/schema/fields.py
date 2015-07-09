@@ -66,8 +66,14 @@ class Base(object):
         column = getattr(req.get_table(path).c, self.name)
         if relation == 'is':
             return column == values[0]
+        elif relation == 'is_not':
+            return column != values[0]
         elif relation == 'in':
             return column.in_(values)
+        elif relation == 'greater_than':
+            return column > values[0]
+        elif relation == 'less_than':
+            return column < values[0]
         else:
             raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 
@@ -121,6 +127,19 @@ class Float(Scalar):
 @sg_field_type
 class Text(Scalar):
     sa_type = sa.Text
+    
+    def prepare_filter(self, req, path, relation, values):
+
+        if relation == 'starts_with':
+            column = getattr(req.get_table(path).c, self.name)
+            return column.like(values[0].replace('%', '\\%') + '%')
+        if relation == 'ends_with':
+            column = getattr(req.get_table(path).c, self.name)
+            return column.like('%' + values[0].replace('%', '\\%'))
+
+        return super(Text, self).prepare_filter(req, path, relation, values)
+
+
 
 @sg_field_type
 class EntityType(Text):
@@ -198,7 +217,18 @@ class Entity(Base):
             raise KeyError(path)
         return {'type': row[type_column], 'id': row[id_column]}
 
-    def prepare_filter(self, path, relation, values):
+    def prepare_filter(self, req, path, relation, values):
+
+        table = req.get_table(path)
+        type_column = getattr(table.c, self.type_column.name)
+        id_column = getattr(table.c, self.id_column.name)
+
+        if relation == 'is':
+            return sa.and_(
+                type_column == values[0]['type'],
+                id_column == values[0]['id']
+            )
+        
         raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 
     def prepare_upsert(self, req, value):
@@ -256,7 +286,7 @@ class MultiEntity(Base):
             raise KeyError(path)
         return [{'type': type_, 'id': int(id_)} for type_, id_ in zip(row[type_concat_field].split(','), row[id_concat_field].split(','))]
 
-    def prepare_filter(self, path, relation, values):
+    def prepare_filter(self, req, path, relation, values):
         raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 
     def prepare_upsert(self, req, value):

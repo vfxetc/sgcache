@@ -25,9 +25,11 @@
 + Shot.*sequence
 
 + Step
++ Step.color
 + Step.entity_type
 
 + Task
++ Task.color
 + Task.content
 + Task.step
 + Task.task_assignees
