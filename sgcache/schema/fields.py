@@ -3,7 +3,7 @@ import re
 
 import sqlalchemy as sa
 
-from ..exceptions import FilterNotImplemented
+from ..exceptions import FilterNotImplemented, NoFieldData
 
 
 sg_field_types = {}
@@ -60,7 +60,10 @@ class Base(object):
         return column
 
     def extract_select(self, req, path, row, column):
-        return row[column]
+        try:
+            return row[column]
+        except KeyError as e:
+            raise NoFieldData(path)
 
     def prepare_filter(self, req, path, relation, values):
         column = getattr(req.get_table(path).c, self.name)
@@ -214,7 +217,7 @@ class Entity(Base):
     def extract_select(self, req, path, row, state):
         type_column, id_column = state
         if row[type_column] is None:
-            raise KeyError(path)
+            raise NoFieldData(path)
         return {'type': row[type_column], 'id': row[id_column]}
 
     def prepare_filter(self, req, path, relation, values):
@@ -273,9 +276,11 @@ class MultiEntity(Base):
         # returned per parent entity
         req.group_by_clauses.append(assoc_table.c.parent_id)
 
-        # we convert the group results into a comma-delimited string of results
-        type_concat_field = sa.func.group_concat(assoc_table.c.child_type)
-        id_concat_field = sa.func.group_concat(assoc_table.c.child_id)
+        # We convert the group results into a comma-delimited string of results
+        # We need to manually label them since we turned on labelling in
+        # the select.
+        type_concat_field = sa.func.group_concat(assoc_table.c.child_type).label('%s__type_group' % assoc_table.name)
+        id_concat_field = sa.func.group_concat(assoc_table.c.child_id).label('%s__id_group' % assoc_table.name)
         req.select_fields.extend((type_concat_field, id_concat_field))
 
         return (type_concat_field, id_concat_field)
@@ -283,7 +288,7 @@ class MultiEntity(Base):
     def extract_select(self, req, path, row, state):
         type_concat_field, id_concat_field = state
         if row[type_concat_field] is None:
-            raise KeyError(path)
+            return []
         return [{'type': type_, 'id': int(id_)} for type_, id_ in zip(row[type_concat_field].split(','), row[id_concat_field].split(','))]
 
     def prepare_filter(self, req, path, relation, values):
@@ -300,10 +305,28 @@ class MultiEntity(Base):
             req.after_query.append(functools.partial(self._after_upsert, req, value))
 
     def _before_upsert(self, req, value, con):
+        # we have a special syntax for handling changes from the event log
+        if isinstance(value, dict) and '__removed__' in value:
+            removed = value['__removed__']
+            if not removed:
+                return
+            con.execute(self.assoc_table.delete().where(sa.and_(self.assoc_table.c.parent_id == req.entity_id, sa.or_(*[sa.and_(
+                self.assoc_table.c.child_type == e['type'],
+                self.assoc_table.c.child_id == e['id']
+            ) for e in removed]))))
+
         # delete existing
-        con.execute(self.assoc_table.delete().where(self.assoc_table.c.parent_id == req.entity_id))
+        else:
+            con.execute(self.assoc_table.delete().where(self.assoc_table.c.parent_id == req.entity_id))
 
     def _after_upsert(self, req, value, con):
+
+        # we have a special syntax for handling changes from the event log
+        if isinstance(value, dict) and '__added__' in value:
+            value = value['__added__']
+        if not value:
+            return
+
         con.execute(self.assoc_table.insert(), [dict(
             parent_id=req.entity_id,
             child_type=entity['type'],

@@ -1,7 +1,7 @@
 import sqlalchemy as sa
 
 from ..path import Path
-from ..exceptions import EntityMissing, FieldMissing
+from ..exceptions import EntityMissing, FieldMissing, NoFieldData
 
 
 class ReadHandler(object):
@@ -148,7 +148,7 @@ class ReadHandler(object):
             for path, field, state in self.select_state:
                 try:
                     value = field.extract_select(self, path, raw_row, state)
-                except KeyError:
+                except NoFieldData:
                     pass
                 else:
                     row[path.format(head=False)] = value

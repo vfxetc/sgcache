@@ -1,5 +1,7 @@
 
 
+- multi-entities use "added" and "removed" in the event-log;
+
 - page_count and entity_count are supposed to be for the read request
   without paging applied (but with the current filters)
 

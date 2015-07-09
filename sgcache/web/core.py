@@ -25,14 +25,10 @@ for k, v in os.environ.iteritems():
     if k.startswith('SGCACHE_'):
         app.config[k[8:]] = v
 
-db = sa.create_engine(app.config['SQLA_URL'], echo=False)
+db = sa.create_engine(app.config['SQLA_URL'], echo=True)
 
 schema_spec = yaml.load(open('schema/keystone-basic.yml').read())
 schema = Schema(db, schema_spec) # the schema is created here; watch out!
-
-# Watch the event log in a thread.
-schema.watch(async=True)
-
 
 
 FALLBACK_SERVER, _, _ = get_sg_args()
