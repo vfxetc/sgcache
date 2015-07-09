@@ -37,7 +37,7 @@ class CreateHandler(object):
 
     def __call__(self, schema):
 
-        query_params = {'_active': True}
+        query_params = {}
 
         for field_name, field in schema[self.entity_type_name].fields.iteritems():
             value = self.data.get(field_name)

@@ -1,3 +1,5 @@
+import datetime
+
 import sqlalchemy as sa
 import migrate # this monkey-patches sqlalchemy
 
@@ -40,6 +42,9 @@ class EntityType(object):
             self.table = sa.Table(self.table_name, self.schema.metadata,
                 sa.Column('id', sa.Integer, primary_key=True),
                 sa.Column('_active', sa.Boolean, nullable=False, default=True),
+                sa.Column('_cache_created_at', sa.DateTime, nullable=False, default=datetime.datetime.utcnow),
+                sa.Column('_cache_updated_at', sa.DateTime, nullable=False, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow),
+                sa.Column('_last_log_event_id', sa.Integer),
             )
             self.table.create()
 
