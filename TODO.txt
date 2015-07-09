@@ -1,9 +1,22 @@
 
+
+- page_count and entity_count are supposed to be for the read request
+  without paging applied (but with the current filters)
+
+- check _active (or not)
+    - does this apply to filters too?
+
+- table with log of data updates
+- the actual event logs?
+
+- _config table of key, json-value
+
 - exception to signal that a required entity doesn't exist: EntityMissing
 - exception to signal that a required field doesn't exist: FieldMissing
 - exception to signal that we can't process the requested filter: FilterNotImplemented
 - exception to signal non-error that requeted data doesn't exist: NoFieldData
 
+- watch event logs ourselves, and fail spectacularly when it doesn't work
 
 - docs:
     ./bin/grep-schema -f schema/basic-filters.txt schema/keystone-full.yaml > schema/keystone-basic.yml
