@@ -53,7 +53,7 @@ class SGAPI(object):
             response = json.loads(response_handle.text)
             if response.get('exception'):
                 raise SGAPIError(response.get('message', 'unknown error'))
-            return response
+            return response['results']
         else:
             return response_handle.text
 

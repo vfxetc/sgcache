@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import threading
 
 import requests
 from flask import Flask, request, Response
@@ -9,6 +10,7 @@ import yaml
 
 from ..schema.core import Schema
 from ..exceptions import Passthrough
+from ..eventlog import EventLog
 
 log = logging.getLogger(__name__)
 app = Flask(__name__)
@@ -25,6 +27,11 @@ db = sa.create_engine(app.config['SQLA_URL'], echo=True)
 schema_spec = yaml.load(open('schema/keystone-basic.yml').read())
 schema = Schema(db, schema_spec) # the schema is created here; watch out!
 
+events = EventLog(schema)
+
+event_watcher = threading.Thread(target=events.watch)
+event_watcher.daemon = True
+event_watcher.start()
 
 
 
