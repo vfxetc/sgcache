@@ -46,8 +46,9 @@ class EntityType(object):
             self.table.create()
         
         if '_cache_created_at' not in self.table.c:
-            sa.Column('_cache_created_at', sa.DateTime, nullable=False, default=datetime.datetime.utcnow).create(self.table)
-            sa.Column('_cache_updated_at', sa.DateTime, nullable=False, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow).create(self.table)
+            # TODO: make these nullable
+            sa.Column('_cache_created_at', sa.DateTime, default=datetime.datetime.utcnow).create(self.table)
+            sa.Column('_cache_updated_at', sa.DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow).create(self.table)
         if '_last_log_event_id' not in self.table.c:
             sa.Column('_last_log_event_id', sa.Integer).create(self.table)
 

@@ -49,15 +49,17 @@ class CreateHandler(object):
                 if field_params:
                     query_params.update(field_params)
 
-        con_given = con is not None
-        con = con or schema.db.begin()
+        transaction = None
+        if not con:
+            con = schema.db.connect()
+            transaction = con.begin()
 
         try:
 
             table = schema[self.entity_type_name].table
 
             if self.entity_id:
-                self.entity_exists = list(con.execute(table.select(table.c.id).where(table.c.id == self.entity_id).limit(1)))
+                self.entity_exists = list(con.execute(sa.select([table.c.id]).where(table.c.id == self.entity_id).limit(1)))
 
             for func in self.before_query:
                 func(con)
@@ -76,13 +78,17 @@ class CreateHandler(object):
             for func in self.after_query:
                 func(con)
 
-            return {'type': self.entity_type_name, 'id': self.entity_id}
-
         except:
-            if not con_given:
-                con.rollback()
+            if transaction:
+                transaction.rollback()
             raise
         else:
-            if not con_given:
-                con.commit()
+            if transaction:
+                transaction.commit()
+        finally:
+            if transaction:
+                con.close()
+        
+        return {'type': self.entity_type_name, 'id': self.entity_id}
+
 

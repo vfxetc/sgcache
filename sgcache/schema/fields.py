@@ -32,8 +32,10 @@ class Base(object):
 
         for attr in 'type', 'primary_key', 'foreign_keys', 'constraints':
             if attr == 'type':
-                ev = existing.type.compile() 
-                cv = column.type.compile()
+                # Compare the compiled version in the correct dialect to
+                # correct for enums in different dialects.
+                ev = existing.type.compile(table.metadata.bind.dialect) 
+                cv = column.type.compile(table.metadata.bind.dialect)
             else:
                 ev = getattr(existing, attr)
                 cv = getattr(column, attr)
@@ -196,7 +198,20 @@ class Entity(Base):
         self.entity_types = tuple(entity_types)
 
     def _create_sql(self, table):
-        self.type_column = self._create_or_check(table, sa.Column('%s__type' % self.name, sa.Enum(*self.entity_types)))
+
+        # We aren't confident using enumns yet since we don't know how to deal
+        # with changes in them.
+        if False:
+            # We need to take care with enums, and create their type before the column.
+            # If this is done on SQLite, it does nothing (as it should).
+            type_enum = sa.Enum(*self.entity_types, name='%s_%s__enum' % (table.name, self.name))
+            type_column = sa.Column('%s__type' % self.name, type_enum)
+            if type_column.name not in table.c:
+                type_enum.create(table.metadata.bind)
+        type_column = sa.Column('%s__type' % self.name, sa.String(255))
+
+        # TODO: improve checking against existing types.
+        self.type_column = self._create_or_check(table, type_column)
         self.id_column   = self._create_or_check(table, sa.Column('%s__id' % self.name, sa.Integer))
 
     def prepare_join(self, req, self_path, next_path):
@@ -254,7 +269,7 @@ class MultiEntity(Base):
             self.assoc_table = sa.Table(self.assoc_table_name, table.metadata,
                 sa.Column('id', sa.Integer, primary_key=True),
                 sa.Column('parent_id', sa.Integer, sa.ForeignKey(table.name + '.id'), nullable=False),
-                sa.Column('child_type', sa.Enum(*self.entity_types), nullable=False),
+                sa.Column('child_type', sa.String(255), nullable=False), #sa.Enum(*self.entity_types, name=table.name + '__enum'), nullable=False),
                 sa.Column('child_id', sa.Integer, nullable=False)
             )
             self.assoc_table.create()

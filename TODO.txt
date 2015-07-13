@@ -27,6 +27,14 @@
     SGCACHE_SQLA_URL=sqlite:///test.db PYTHONPATH="$PYTHONPATH:." python -m sgcache.web
 
 
+    dev ./bin/dump-data -p 115 -s schema/keystone-basic.yml | tee all.json | PYTHONPATH=.:$PYTHONPATH bin/update-data -u sqlite:///test.db -s schema/keystone-basic.yml
+
+
+    SGCACHE_SQLA_URL=sqlite:///test.db PYTHONPATH="$PYTHONPATH:." python -m sgcache.web
+    SGCACHE_SQLA_URL=postgres:///sgcache python -m sgcache.web
+
+
+
 - dump-schema.py which creates a schema.json
 - dump-data.py which takes a schema.json, and a $TYPE.json (which is an
   entity per line, json encoded)
