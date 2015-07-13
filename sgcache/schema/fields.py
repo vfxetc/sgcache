@@ -4,6 +4,7 @@ import re
 import sqlalchemy as sa
 
 from ..exceptions import FilterNotImplemented, NoFieldData
+from ..utils import iter_unique
 
 
 sg_field_types = {}
@@ -268,7 +269,7 @@ class MultiEntity(Base):
             # NOTE: we will need to handle any schema changes to this table ourselves
             self.assoc_table = sa.Table(self.assoc_table_name, table.metadata,
                 sa.Column('id', sa.Integer, primary_key=True),
-                sa.Column('parent_id', sa.Integer, sa.ForeignKey(table.name + '.id'), nullable=False),
+                sa.Column('parent_id', sa.Integer, sa.ForeignKey(table.name + '.id'), index=True, nullable=False),
                 sa.Column('child_type', sa.String(255), nullable=False), #sa.Enum(*self.entity_types, name=table.name + '__enum'), nullable=False),
                 sa.Column('child_id', sa.Integer, nullable=False)
             )
@@ -281,46 +282,71 @@ class MultiEntity(Base):
 
         table = req.get_table(path)
 
-        # get an alias of our table only if we need to
+        # Get an alias of our table (but only if we need to).
         alias_name = '%s_%s' % (table.name, self.name)
         assoc_table = self.assoc_table if self.assoc_table.name == alias_name else self.assoc_table.alias(alias_name) 
 
-        req.join(assoc_table, assoc_table.c.parent_id == table.c.id)
+        # Postgres will aggregate into an array for us, but for SQLite
+        # we convert the group results into a comma-delimited string of results
+        # that must be split up later.
+        group_func = getattr(sa.func, 'array_agg' if table.metadata.bind.dialect.name == 'postgresql' else 'group_concat')
+        type_concat_field = group_func(assoc_table.c.child_type).label('child_types')
+        id_concat_field = group_func(assoc_table.c.child_id).label('child_ids')
 
-        # we group by the parent_id such that only one row is actually
-        # returned per parent entity
-        req.group_by_clauses.append(assoc_table.c.parent_id)
+        # In order to use the aggregating functions, we must GROUP BY.
+        # But, we need to avoid GROUP BY in the main query, as Postgres will
+        # yell at us if we don't use aggregating functions for every other
+        # column. So, we express ourselves in a subquery.
+        subquery = (sa
+            .select([
+                assoc_table.c.parent_id.label('parent_id'),
+                type_concat_field,
+                id_concat_field
+            ])
+            .select_from(assoc_table)
+            .group_by(assoc_table.c.parent_id)
+        ).alias(alias_name + '__grouped')
 
-        # We convert the group results into a comma-delimited string of results
-        # We need to manually label them since we turned on labelling in
-        # the select.
-        type_concat_field = sa.func.group_concat(assoc_table.c.child_type).label('%s__type_group' % assoc_table.name)
-        id_concat_field = sa.func.group_concat(assoc_table.c.child_id).label('%s__id_group' % assoc_table.name)
-        req.select_fields.extend((type_concat_field, id_concat_field))
+        # Hopefully the query planner is smart enough to restrict the subquery...
+        req.join(subquery, subquery.c.parent_id == table.c.id)
 
-        return (type_concat_field, id_concat_field)
+        fields_to_select = (subquery.c.child_types, subquery.c.child_ids)
+        req.select_fields.extend(fields_to_select)
+
+        return fields_to_select
 
     def extract_select(self, req, path, row, state):
+
         type_concat_field, id_concat_field = state
-        if row[type_concat_field] is None:
+        if not row[type_concat_field]:
             return []
-        return [{'type': type_, 'id': int(id_)} for type_, id_ in zip(row[type_concat_field].split(','), row[id_concat_field].split(','))]
+
+        # Postgres will return an array, while SQLite will return a string.
+        types = row[type_concat_field]
+        ids = row[id_concat_field]
+        if isinstance(types, basestring):
+            types = types.split(',')
+            ids = ids.split(',')
+
+        # Return unique entities since I don't think you can have the same
+        # entity in a multi-entity twice.
+        return [{'type': type_, 'id': int(id_)} for type_, id_ in iter_unique(zip(types, ids))]
 
     def prepare_filter(self, req, path, relation, values):
         raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 
     def prepare_upsert(self, req, value):
         if req.entity_id:
-            # TODO: schedule deletion of existing data
-            pass
-        
-        if req.entity_id:
+            # Schedule deletion of existing data.
             req.before_query.append(functools.partial(self._before_upsert, req, value))
+
         if value:
+            # Schedule creation of new data.
             req.after_query.append(functools.partial(self._after_upsert, req, value))
 
     def _before_upsert(self, req, value, con):
-        # we have a special syntax for handling changes from the event log
+
+        # We have a special syntax for handling changes from the event log
         if isinstance(value, dict) and '__removed__' in value:
             removed = value['__removed__']
             if not removed:
@@ -330,15 +356,16 @@ class MultiEntity(Base):
                 self.assoc_table.c.child_id == e['id']
             ) for e in removed]))))
 
-        # delete existing
+        # Delete existing
         else:
             con.execute(self.assoc_table.delete().where(self.assoc_table.c.parent_id == req.entity_id))
 
     def _after_upsert(self, req, value, con):
 
-        # we have a special syntax for handling changes from the event log
+        # We have a special syntax for handling changes from the event log
         if isinstance(value, dict) and '__added__' in value:
             value = value['__added__']
+
         if not value:
             return
 
