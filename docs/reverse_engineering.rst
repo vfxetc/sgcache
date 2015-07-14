@@ -160,3 +160,46 @@ Field Types
 
 
 
+Event Logs
+----------
+
+Herein lie things we have learned that were not obvious about the event log.
+
+
+Retired entities are ``null``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``entity`` field is ``null`` for retired entities, as determined when you
+read the log, not when the log was created. Ergo, if you are processing a
+backlog of log events, you can find yourself dealing with "Change" or even
+"New" events with a null entity field.
+
+
+Multi-Entity changes have no ``new_value``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Changes to a :sg_field_type:`multi_entity` do not have a ``new_value`` and/or
+``old_value`` in the ``meta``. Instead, there is a list of
+ entities added and removed in ``added`` and ``removed`` (respectively) in ``meta``.
+
+
+Back-references mix metadata
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``meta`` field is a mixture of referee and referrer data when it is the
+backref of a :sg_field_type:`multi_entity` field.
+
+E.g. if you set the the ``Task.entity`` to be a ``Shot``, ``Shot.tasks``
+will be updated to include that ``Task``. The event pertaining to
+``Shot.tasks`` will contain a few oddities which match the ``Task``:
+
+    - ``entity_type``
+    - ``entity_id``
+    - ``field_data_type``
+
+If you combine this with the retired entity rule, you see that you can't even
+derive what the referenced entity was. However, it is likely that you can lookup the
+other log entry via ``original_event_log_entry_id`` to figure out what the
+entity was set to.
+
+

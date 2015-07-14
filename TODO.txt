@@ -1,6 +1,14 @@
 
 
-- multi-entities use "added" and "removed" in the event-log;
+- if the last event log in a read references another log, then make an immediate
+  extra read to make sure we got everything for it
+
+- create an sgevents package which tries to work around all the problems
+  with the event log (such as null entities making backrefs very difficult to
+  follow)
+
+- log query times
+- update updated_at and updated_by with info from the event log
 
 - page_count and entity_count are supposed to be for the read request
   without paging applied (but with the current filters)
@@ -13,12 +21,7 @@
 
 - _config table of key, json-value
 
-- exception to signal that a required entity doesn't exist: EntityMissing
-- exception to signal that a required field doesn't exist: FieldMissing
-- exception to signal that we can't process the requested filter: FilterNotImplemented
-- exception to signal non-error that requeted data doesn't exist: NoFieldData
 
-- watch event logs ourselves, and fail spectacularly when it doesn't work
 
 - docs:
     ./bin/grep-schema -f schema/basic-filters.txt schema/keystone-full.yaml > schema/keystone-basic.yml
@@ -27,11 +30,16 @@
     SGCACHE_SQLA_URL=sqlite:///test.db PYTHONPATH="$PYTHONPATH:." python -m sgcache.web
 
 
-    dev ./bin/dump-data -p 115 -s schema/keystone-basic.yml | tee all.json | PYTHONPATH=.:$PYTHONPATH bin/update-data -u sqlite:///test.db -s schema/keystone-basic.yml
+    ./bin/dump-data -p 115 -s schema/keystone-basic.yml | tee all.json
+    PYTHONPATH=.:$PYTHONPATH bin/update-data -u sqlite:///test.db -s schema/keystone-basic.yml all.json
 
 
     SGCACHE_SQLA_URL=sqlite:///test.db PYTHONPATH="$PYTHONPATH:." python -m sgcache.web
     SGCACHE_SQLA_URL=postgres:///sgcache python -m sgcache.web
+
+    ./bin/dump-data -p 66 -s schema/keystone-basic.yml | tee all.json
+    ./bin/dump-data -p 115 -s schema/keystone-basic.yml | tee all.json
+    PYTHONPATH=.:$PYTHONPATH ./bin/update-data -u postgres:///sgcache -s schema/keystone-basic.yml all.json
 
 
 
