@@ -174,13 +174,18 @@ read the log, not when the log was created. Ergo, if you are processing a
 backlog of log events, you can find yourself dealing with "Change" or even
 "New" events with a null entity field.
 
+It is still possible to read the entity via a ``$FROM`` filter::
+
+    >>> sg.find_one('Task', [('$FROM$EventLogEntry.entity.id', 'is', 2017315)], [], retired_only=True)
+    {'type': 'Task', 'id': 67519}
+
 
 Multi-Entity changes have no ``new_value``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Changes to a :sg_field_type:`multi_entity` do not have a ``new_value`` and/or
 ``old_value`` in the ``meta``. Instead, there is a list of
- entities added and removed in ``added`` and ``removed`` (respectively) in ``meta``.
+entities added and removed in ``added`` and ``removed`` (respectively) in ``meta``.
 
 
 Back-references mix metadata
@@ -198,8 +203,12 @@ will be updated to include that ``Task``. The event pertaining to
     - ``field_data_type``
 
 If you combine this with the retired entity rule, you see that you can't even
-derive what the referenced entity was. However, it is likely that you can lookup the
-other log entry via ``original_event_log_entry_id`` to figure out what the
-entity was set to.
+derive what the referenced entity was. There are two backup plans:
+
+1. You can lookup the other log entry via ``original_event_log_entry_id``
+   to figure out what the entity was set to.
+
+2. Use the entity type formatted into the event type, and the ``$FROM`` syntax
+   to select the entity with ``retired_only=True``.
 
 

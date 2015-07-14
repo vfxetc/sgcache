@@ -261,6 +261,11 @@ class Schema(object):
             }
         }
 
+        BUT:
+
+            >>> sg.find_one('Task', [('$FROM$EventLogEntry.entity.id', 'is', 2017315)], [], retired_only=True)
+            {'type': 'Task', 'id': 67519}
+
 
         '''
 

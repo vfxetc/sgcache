@@ -32,6 +32,7 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   setup
    design
    roadmap
    reverse_engineering

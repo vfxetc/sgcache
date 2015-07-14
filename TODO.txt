@@ -1,11 +1,17 @@
 
+- create sgevents which works around the event-log's problems:
 
-- if the last event log in a read references another log, then make an immediate
-  extra read to make sure we got everything for it
+    - group everything into transactions, and make further requests to make
+      sure we have all events in a transaction
 
-- create an sgevents package which tries to work around all the problems
-  with the event log (such as null entities making backrefs very difficult to
-  follow)
+    - use $FROM$ to load retired entities in another request
+        Event.entity -> entity field
+        Event.retired_entity -> load via $FROM$
+
+    - out-of-order events due to transactions
+        - keep a pool of event IDS that we haven't seen yet, that we should
+          have
+        - only hold onto this pool for a limited time; perhaps 60s
 
 - log query times
 - update updated_at and updated_by with info from the event log
@@ -13,13 +19,16 @@
 - page_count and entity_count are supposed to be for the read request
   without paging applied (but with the current filters)
 
-- check _active (or not)
-    - does this apply to filters too?
+- deal with retirement:
+    - delete entities as soon as they are retired?
+    - s/_active/retirement_date ??
+        - does this matter since we should just delete them?
+    - check _active
+        - does this apply to filters too?
 
 - table with log of data updates
 - the actual event logs?
 
-- _config table of key, json-value
 
 
 
