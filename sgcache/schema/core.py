@@ -14,6 +14,7 @@ from ..apimethods.create import CreateHandler
 from ..exceptions import EntityMissing
 from ..eventlog import EventLog
 from ..utils import log_exceptions
+from ..logs import log_globals
 
 
 log = logging.getLogger(__name__)
@@ -64,7 +65,7 @@ class Schema(object):
         handler = CreateHandler(request, allow_id=allow_id)
         return handler(self, **kwargs)
 
-    def watch(self, async=False):
+    def watch(self, async=False, auto_last_id=False):
 
         if async:
             thread = threading.Thread(target=self.watch)
@@ -72,7 +73,7 @@ class Schema(object):
             thread.start()
             return thread
 
-        self.event_log = EventLog(self, auto_last_id=True)
+        self.event_log = EventLog(self, auto_last_id=auto_last_id)
         while True:
             for events in self.event_log.iter():
                 if not events:
@@ -82,6 +83,7 @@ class Schema(object):
 
     def _process_events(self, con, events):
         for event in events:
+            log_globals.meta = {'event': event['id']}
             try:
                 self._process_event(con, event)
             except:
@@ -93,30 +95,40 @@ class Schema(object):
         event_type = event['event_type']
         event_id = event['id']
         event_entity = event.get('entity')
+        event_user = event.get('user')
 
-        summary_parts = ['%s %d' % (event_type, event_id)]
+        summary_parts = [event_type]
         if event_entity:
-            summary_parts.append('on %s %d' % (event_entity['type'], event_entity['id']))
+            summary_parts.append('on %s:%d' % (event_entity['type'], event_entity['id']))
             if event_entity.get('name'):
-                summary_parts.append('"%s"' % event_entity['name'])
+                summary_parts.append('("%s")' % event_entity['name'])
+        if event_user:
+            summary_parts.append('by %s:%d' % (event_user['type'], event_user['id']))
+            if event_user.get('name'):
+                summary_parts.append('("%s")' % event_user['name'])
+
+
         summary = ' '.join(summary_parts)
+        log.info(summary)
 
         domain, entity_type_name, event_subtype = event_type.split('_', 2)
         if domain != 'Shotgun':
-            log.info('Skipping %s; not in Shotgun domain' % summary)
+            log.info('skipping event; not in Shotgun domain')
             return
 
         entity_type = self._entity_types.get(entity_type_name)
         if entity_type is None:
-            log.info('Skipping %s; unknown entity type' % summary)
+            log.info('skipping event; unknown entity type %s' % (entity_type_name))
             return
+
+        print json.dumps(event, sort_keys=True, indent=4)
 
         func = getattr(self, '_process_%s_event' % event_subtype.lower(), None)
         if func is None:
-            log.info('Skipping %s; unknown event type' % summary)
+            log.info('skipping event; unknown event type %s' % (event_subtype))
             return
 
-        log.info('Processing %s' % summary)
+
         func(con, event, entity_type)
 
     def _process_new_event(self, con, event, entity_type):
@@ -156,7 +168,7 @@ class Schema(object):
             log.warning('Could not find "new" %s %d' % (entity_type.type_name, event['entity']['id']))
             return
 
-        print 'CREATED', entities[0]
+        # print 'CREATED', entities[0]
         self.create(entity_type.type_name, data=entities[0], allow_id=True, con=con, extra={
             '_last_log_event_id': event['id'],
         })
@@ -179,30 +191,75 @@ class Schema(object):
          u'project': {u'id': 66, u'name': u'Testing Sandbox', u'type': u'Project'},
          u'type': u'EventLogEntry'}
 
-        OR
+        OR (on a backref)
 
-        {u'attribute_name': u'tasks',
-         u'created_at': u'2015-07-09T23:00:10Z',
-         u'entity': {u'id': 7080, u'name': u'002_001', u'type': u'Shot'},
-         u'event_type': u'Shotgun_Shot_Change',
-         u'id': 2011759,
-         u'meta': {u'actual_attribute_changed': u'Task.entity',
-                   u'added': [{u'id': 67380,
-                               u'name': u'newtask3',
-                               u'status': u'wtg',
-                               u'type': u'Task',
-                               u'uuid': u'3fc23e92-268e-11e5-ac19-0025900054a4',
-                               u'valid': u'valid'}],
-                   u'attribute_name': u'tasks',
-                   u'entity_id': 67380,
-                   u'entity_type': u'Task',
-                   u'field_data_type': u'entity',
-                   u'in_create': True,
-                   u'original_event_log_entry_id': 2011758,
-                   u'removed': [],
-                   u'type': u'attribute_change'},
-         u'project': {u'id': 66, u'name': u'Testing Sandbox', u'type': u'Project'},
-         u'type': u'EventLogEntry'}
+        {
+            "attribute_name": "tasks", 
+            "created_at": "2015-07-09T23:00:10Z", 
+            "entity": {
+                "id": 7080, 
+                "name": "002_001", 
+                "type": "Shot"
+            }, 
+            "event_type": "Shotgun_Shot_Change", 
+            "id": 2011759, 
+            "meta": {
+                "actual_attribute_changed": "Task.entity", 
+                "added": [
+                    {
+                        "id": 67380, 
+                        "name": "newtask3", 
+                        "status": "wtg", 
+                        "type": "Task", 
+                        "uuid": "3fc23e92-268e-11e5-ac19-0025900054a4", 
+                        "valid": "valid"
+                    }
+                ], 
+                "attribute_name": "tasks", 
+                "entity_id": 67380, 
+                "entity_type": "Task", 
+                "field_data_type": "entity", 
+                "in_create": true, 
+                "original_event_log_entry_id": 2011758, 
+                "removed": [], 
+                "type": "attribute_change"
+            }, 
+            "project": {
+                "id": 66, 
+                "name": "Testing Sandbox", 
+                "type": "Project"
+            }, 
+            "type": "EventLogEntry"
+        }
+
+        OR (after a retirement; note the NULL entity):
+
+        {
+            "attribute_name": "retirement_date", 
+            "created_at": "2015-07-13T21:54:01Z", 
+            "entity": null, 
+            "event_type": "Shotgun_Task_Change", 
+            "id": 2017315, 
+            "meta": {
+                "attribute_name": "retirement_date", 
+                "entity_id": 67519, 
+                "entity_type": "Task", 
+                "new_value": "2015-07-13 21:54:01 UTC", 
+                "old_value": null, 
+                "type": "attribute_change"
+            }, 
+            "project": {
+                "id": 66, 
+                "name": "Testing Sandbox", 
+                "type": "Project"
+            }, 
+            "type": "EventLogEntry", 
+            "user": {
+                "id": 108, 
+                "name": "Mike Boers", 
+                "type": "HumanUser"
+            }
+        }
 
 
         '''
@@ -222,5 +279,72 @@ class Schema(object):
         self.create(entity_type.type_name, data=data, allow_id=True, con=con, extra={
             '_last_log_event_id': event['id'],
         })
+
+    def _process_retirement_event(self, con, event, entity_type):
+        '''
+        {
+            "attribute_name": null, 
+            "created_at": "2015-07-13T22:32:35Z", 
+            "entity": null, 
+            "event_type": "Shotgun_Task_Retirement", 
+            "id": 2017525, 
+            "meta": {
+                "class_name": "Task", 
+                "display_name": "another to delete", 
+                "entity_id": 67531, 
+                "entity_type": "Task", 
+                "id": 67531, 
+                "retirement_date": "2015-07-13 22:32:35 UTC", 
+                "type": "entity_retirement"
+            }, 
+            "project": {
+                "id": 66, 
+                "name": "Testing Sandbox", 
+                "type": "Project"
+            }, 
+            "type": "EventLogEntry", 
+            "user": {
+                "id": 108, 
+                "name": "Mike Boers", 
+                "type": "HumanUser"
+            }
+        }
+        '''
+        pass
+
+    def _process_revival_event(self, con, event, entity_type):
+        '''
+        {
+            "attribute_name": null, 
+            "created_at": "2015-07-13T22:34:21Z", 
+            "entity": {
+                "id": 67531, 
+                "name": "another to delete", 
+                "type": "Task"
+            }, 
+            "event_type": "Shotgun_Task_Revival", 
+            "id": 2017561, 
+            "meta": {
+                "class_name": "Task", 
+                "display_name": "another to delete", 
+                "entity_id": 67531, 
+                "entity_type": "Task", 
+                "id": 67531
+            }, 
+            "project": {
+                "id": 66, 
+                "name": "Testing Sandbox", 
+                "type": "Project"
+            }, 
+            "type": "EventLogEntry", 
+            "user": {
+                "id": 108, 
+                "name": "Mike Boers", 
+                "type": "HumanUser"
+            }
+        }
+        '''
+        pass
+
 
 

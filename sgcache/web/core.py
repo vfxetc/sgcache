@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import time
 
 import requests
 from flask import Flask, request, Response
@@ -12,28 +13,27 @@ from shotgun_api3_registry import get_args as get_sg_args
 from ..schema.core import Schema
 from ..exceptions import Passthrough
 from ..eventlog import EventLog
-
+from ..logs import setup_logs, log_globals
 
 log = logging.getLogger(__name__)
 
 
 app = Flask(__name__)
+app.config.from_object('sgcache.config')
 
-app.config['SQLA_URL'] = 'sqlite://'
-app.config['SGCACHE_SCHEMA'] = 'schema/keystone-basic.yml'
-for k, v in os.environ.iteritems():
-    if k.startswith('SGCACHE_'):
-        app.config[k[8:]] = v
+db = sa.create_engine(app.config['SQLA_URL'], echo=app.config['SQLA_ECHO'])
 
-db = sa.create_engine(app.config['SQLA_URL'], echo=True)
+# Setup logging *after* SQLA so that it can deal with its handlers.
+setup_logs(app)
 
-schema_spec = yaml.load(open('schema/keystone-basic.yml').read())
-schema = Schema(db, schema_spec) # the schema is created here; watch out!
+schema_spec = yaml.load(open(app.config['SCHEMA']).read())
+schema = Schema(db, schema_spec) # SQL DDL is executed here; watch out!
 
-
+# Get the fallback server from shotgun_api3_registry.
 FALLBACK_SERVER, _, _ = get_sg_args()
 FALLBACK_URL = FALLBACK_SERVER.strip('/') + '/api3/json'
 
+# We use one HTTP session for everything.
 http_session = requests.Session()
 
 
@@ -48,7 +48,7 @@ def json_api(params=None):
     if not isinstance(payload, dict):
         return '', 400, []
 
-    print json.dumps(payload, sort_keys=True, indent=4)
+    #print json.dumps(payload, sort_keys=True, indent=4)
 
     try:
         method_name = payload['method_name']
@@ -58,12 +58,23 @@ def json_api(params=None):
     try:
         method = _api_methods[method_name]
     except KeyError as e:
-        return passthrough()
+        return passthrough('unknown API method %s' % method_name)
 
     try:
-        res = method(payload['params'][1] if len(payload['params']) > 1 else {})
+        method_params = payload['params'][1] if len(payload['params']) > 1 else {}
+        start_time = time.time()
+        res = method(method_params)
     except Passthrough as pt:
         return passthrough(pt)
+    else:
+        elapsed_ms = 1000 * (time.time() - start_time)
+        log.info('API %s %s returned %sin %.1fms' % (
+            method_name,
+            method_params.get('type'),
+            '%s entities ' % len(res['entities']) if 'entities' in res else '',
+            elapsed_ms
+        ))
+        log_globals.skip_http_log = True
 
     res = json.dumps(res)
     return res, 200, [('Content-Type', 'application/json')]
@@ -73,11 +84,11 @@ def passthrough(e=None):
 
     if e:
         if isinstance(e, Exception):
-            log.info('passthrough request (%s): %s' % (e.__class__.__name__, e))
+            log.info('Passing through request (%s): %s' % (e.__class__.__name__, e))
         else:
-            log.info('passthrough request: %s' % e)
+            log.info('Passing through request: %s' % e)
     else:
-        log.info('passthrough request')
+        log.info('Passing through request')
 
     # our "Host" is different than theirs
     headers = dict(request.headers)
@@ -102,11 +113,9 @@ def _process_passthrough_response(res):
 
 
 
-# register api methods
-
+# Register api methods
 _api_methods = {}
 def api_method(func):
     _api_methods[func.__name__] = func
     return func
-
 from . import api

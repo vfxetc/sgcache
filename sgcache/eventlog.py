@@ -89,6 +89,7 @@ class EventLog(object):
                 'event_type',
                 'meta',
                 'project',
+                'user',
             ], 
             "filters": {
                 "conditions": filters or [],
