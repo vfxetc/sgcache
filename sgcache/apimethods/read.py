@@ -1,7 +1,7 @@
 import sqlalchemy as sa
 
-from ..path import Path
 from ..exceptions import EntityMissing, FieldMissing, NoFieldData
+from ..path import Path
 
 
 class ReadHandler(object):

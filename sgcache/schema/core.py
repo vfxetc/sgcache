@@ -7,14 +7,16 @@ import json
 
 import sqlalchemy as sa
 
-from .entity import EntityType
+from sgevents import EventLog
+
+
 from . import fields
-from ..apimethods.read import ReadHandler
 from ..apimethods.create import CreateHandler
+from ..apimethods.read import ReadHandler
 from ..exceptions import EntityMissing
-from ..eventlog import EventLog
-from ..utils import log_exceptions
 from ..logs import log_globals
+from ..utils import log_exceptions
+from .entity import EntityType
 
 
 log = logging.getLogger(__name__)
@@ -65,71 +67,69 @@ class Schema(object):
         handler = CreateHandler(request, allow_id=allow_id)
         return handler(self, **kwargs)
 
+    def get_last_event(self):
+        last_id = 0
+        last_time = None
+        for entity_type in self._entity_types.itervalues():
+            row = sa.select([
+                sa.func.max(entity_type.table.c._last_log_event_id),
+                sa.func.max(entity_type.table.c._cache_updated_at),
+            ]).execute().fetchone()
+            last_id = max(
+                last_id or 0,
+                row[0] or 0
+            ) or None
+            last_time = max(
+                last_time or '',
+                row[1].replace(microsecond=0).isoformat('T') + 'Z' if row[1] else ''
+            ) or None
+        return last_id, last_time
+
     def watch(self, async=False, auto_last_id=False):
 
         if async:
-            thread = threading.Thread(target=self.watch)
+            thread = threading.Thread(target=self.watch, kwargs={'auto_last_id': auto_last_id})
             thread.daemon = True
             thread.start()
             return thread
 
-        self.event_log = EventLog(self, auto_last_id=auto_last_id)
+        if auto_last_id:
+            last_id, last_time = self.get_last_event()
+        else:
+            last_id = last_time = None
+
+        self.event_log = EventLog(last_id=last_id, last_time=last_time)
         while True:
-            for events in self.event_log.iter():
-                if not events:
-                    continue
-                with self.db.begin() as con:
-                    self._process_events(con, events)
+            for event in self.event_log.iter_events():
+                log_globals.meta = {'event': event.id}
+                log.info(event.summary)
+                try:
+                    handler = self._get_event_handler(event)
+                    if not handler:
+                        continue
+                    with self.db.begin() as con:
+                        handler(con)
+                except:
+                    log.exception('error during event %d:\n%s' % (event.id, event.dumps(pretty=True)))
 
-    def _process_events(self, con, events):
-        for event in events:
-            log_globals.meta = {'event': event['id']}
-            try:
-                self._process_event(con, event)
-            except:
-                log.exception('error during event %d:\n%s' % (event['id'], json.dumps(event, sort_keys=True, indent=4)))
+    def _get_event_handler(self, event):
 
-
-    def _process_event(self, con, event):
-
-        event_type = event['event_type']
-        event_id = event['id']
-        event_entity = event.get('entity')
-        event_user = event.get('user')
-
-        summary_parts = [event_type]
-        if event_entity:
-            summary_parts.append('on %s:%d' % (event_entity['type'], event_entity['id']))
-            if event_entity.get('name'):
-                summary_parts.append('("%s")' % event_entity['name'])
-        if event_user:
-            summary_parts.append('by %s:%d' % (event_user['type'], event_user['id']))
-            if event_user.get('name'):
-                summary_parts.append('("%s")' % event_user['name'])
-
-
-        summary = ' '.join(summary_parts)
-        log.info(summary)
-
-        domain, entity_type_name, event_subtype = event_type.split('_', 2)
-        if domain != 'Shotgun':
+        if event.domain != 'Shotgun':
             log.info('skipping event; not in Shotgun domain')
             return
 
-        entity_type = self._entity_types.get(entity_type_name)
+        entity_type = self._entity_types.get(event.entity_type)
         if entity_type is None:
-            log.info('skipping event; unknown entity type %s' % (entity_type_name))
+            log.info('skipping event; unknown entity type %s' % event.entity_type)
             return
 
-        print json.dumps(event, sort_keys=True, indent=4)
-
-        func = getattr(self, '_process_%s_event' % event_subtype.lower(), None)
+        func = getattr(self, '_process_%s_event' % event.subtype.lower(), None)
         if func is None:
-            log.info('skipping event; unknown event type %s' % (event_subtype))
+            log.info('skipping event; unknown event subtype %s' % (event.subtype))
             return
 
+        return lambda con: func(con, event, entity_type)
 
-        func(con, event, entity_type)
 
     def _process_new_event(self, con, event, entity_type):
         '''
@@ -146,30 +146,16 @@ class Schema(object):
         '''
 
         # we need to fetch all of the data from the server. bleh
-        entities = self.event_log.api.call('read', {
-            "type": entity_type.type_name,
-            "return_fields": entity_type.fields.keys(), 
-            "filters": {
-                "conditions": [{
-                    'path': 'id',
-                    'relation': 'is',
-                    'values': [event['entity']['id']],
-                }],
-                "logical_operator": "and",
-            },
-            "paging": {
-                "current_page": 1, 
-                "entities_per_page": 1,
-            },
-            "return_only": "active", 
-        })['entities']
+        entity = self.event_log.shotgun.find_one(entity_type.type_name, [
+            ('id', 'is', event.entity_id),
+        ], entity_type.fields.keys())
 
-        if not entities:
-            log.warning('Could not find "new" %s %d' % (entity_type.type_name, event['entity']['id']))
+        if not entity:
+            log.warning('Could not find "new" %s %d' % (entity_type.type_name, event.entity_id))
             return
 
         # print 'CREATED', entities[0]
-        self.create(entity_type.type_name, data=entities[0], allow_id=True, con=con, extra={
+        self.create(entity_type.type_name, data=entity, allow_id=True, con=con, extra={
             '_last_log_event_id': event['id'],
         })
 
@@ -269,13 +255,13 @@ class Schema(object):
 
         '''
 
-        data = event['entity'].copy()
+        data = event.entity.copy()
         if event.get('project'):
             data['project'] = event['project']
 
         # use an internal syntax for adding or removing from multi-entities
-        added = event['meta'].get('added')
-        removed = event['meta'].get('removed')
+        added = event.meta.get('added')
+        removed = event.meta.get('removed')
         if added or removed:
             data[event['attribute_name']] = {'__added__': added, '__removed__': removed}
         else:

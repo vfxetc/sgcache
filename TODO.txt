@@ -21,10 +21,13 @@
 
 - deal with retirement:
     - delete entities as soon as they are retired?
+        - this could make dealing with a backlog of events tricky, as we would
+          have to not revive entities by accident
     - s/_active/retirement_date ??
-        - does this matter since we should just delete them?
+        - it seems like this could be reasonable attribute to use. if it is
+          null then it is retired
     - check _active
-        - does this apply to filters too?
+        - check on every select and every join
 
 - table with log of data updates
 - the actual event logs?
