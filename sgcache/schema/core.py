@@ -65,7 +65,8 @@ class Schema(object):
             }
         
         handler = CreateHandler(request, allow_id=allow_id)
-        return handler(self, **kwargs)
+        handler(self, **kwargs)
+        return handler
 
     def get_last_event(self):
         last_id = 0
@@ -151,12 +152,12 @@ class Schema(object):
         ], entity_type.fields.keys())
 
         if not entity:
-            log.warning('Could not find "new" %s %d' % (entity_type.type_name, event.entity_id))
+            log.warning('could not find "new" %s %d' % (entity_type.type_name, event.entity_id))
             return
 
-        # print 'CREATED', entities[0]
         self.create(entity_type.type_name, data=entity, allow_id=True, con=con, extra={
             '_last_log_event_id': event['id'],
+            '_active': True, # for revived entities
         })
 
     def _process_change_event(self, con, event, entity_type):
@@ -255,11 +256,16 @@ class Schema(object):
 
         '''
 
-        data = event.entity.copy()
+        # This could be a retired entity, in which case we just need the ID.
+        if event.entity:
+            data = event.entity.copy()
+        else:
+            data = {'type': event.entity_type, 'id': event.entity_id}
+
         if event.get('project'):
             data['project'] = event['project']
 
-        # use an internal syntax for adding or removing from multi-entities
+        # Use an internal syntax for adding or removing from multi-entities.
         added = event.meta.get('added')
         removed = event.meta.get('removed')
         if added or removed:
@@ -267,9 +273,14 @@ class Schema(object):
         else:
             data[event['attribute_name']] = event['meta']['new_value']
 
-        self.create(entity_type.type_name, data=data, allow_id=True, con=con, extra={
+        handler = self.create(entity_type.type_name, data=data, allow_id=True, con=con, extra={
             '_last_log_event_id': event['id'],
         })
+
+        # If we did not know about it, then fetch all data as if it is new.
+        if not handler.entity_exists:
+            log.warning('updated un-cached %s %d; fetching all data' % (event.entity_type, event.entity_id))
+            self._process_new_event(con, event, entity_type)
 
     def _process_retirement_event(self, con, event, entity_type):
         '''
@@ -301,7 +312,14 @@ class Schema(object):
             }
         }
         '''
-        pass
+
+        res = con.execute(entity_type.table.update().where(entity_type.table.c.id == event.entity_id),
+            _active=False,
+            _last_log_event_id=event.id,
+            _cache_updated_at=datetime.datetime.utcnow(),
+        )
+        if not res.rowcount:
+            log.warning('retired un-cached %s %d; ignoring' % (event.entity_type, event.entity_id))
 
     def _process_revival_event(self, con, event, entity_type):
         '''
@@ -335,7 +353,15 @@ class Schema(object):
             }
         }
         '''
-        pass
+
+        res = con.execute(entity_type.table.update().where(entity_type.table.c.id == event.entity_id),
+            _active=True,
+            _last_log_event_id=event.id,
+            _cache_updated_at=datetime.datetime.utcnow(),
+        )
+        if not res.rowcount:
+            log.warning('revived un-cached %s %d; fetching all data' % (event.entity_type, event.entity_id))
+            self._process_new_event(con, event, entity_type)
 
 
 

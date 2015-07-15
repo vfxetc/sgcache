@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 app = Flask(__name__)
 app.config.from_object('sgcache.config')
 
-db = sa.create_engine(app.config['SQLA_URL'], echo=app.config['SQLA_ECHO'])
+db = sa.create_engine(app.config['SQLA_URL'], echo=bool(app.config['SQLA_ECHO']))
 
 # Setup logging *after* SQLA so that it can deal with its handlers.
 setup_logs(app)

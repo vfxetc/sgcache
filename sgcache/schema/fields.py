@@ -221,6 +221,7 @@ class Entity(Base):
         req.join(next_table, sa.and_(
             self_table.c[self.type_column.name] == next_path[-1][0],
             self_table.c[self.id_column.name]   == next_table.c.id,
+            next_table.c._active == True, # `retired_only` only affects the top-level entity
         ))
 
     def prepare_select(self, req, path):
@@ -306,6 +307,8 @@ class MultiEntity(Base):
             .select_from(assoc_table)
             .group_by(assoc_table.c.parent_id)
         ).alias(alias_name + '__grouped')
+
+        # TODO: somehow filter retired entities
 
         # Hopefully the query planner is smart enough to restrict the subquery...
         req.join(subquery, subquery.c.parent_id == table.c.id)

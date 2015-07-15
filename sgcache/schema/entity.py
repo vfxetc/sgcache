@@ -41,6 +41,8 @@ class EntityType(object):
         if self.table is None:
             self.table = sa.Table(self.table_name, self.schema.metadata,
                 sa.Column('id', sa.Integer, primary_key=True),
+                # We call this "active" to match the RPC values, even though
+                # the Python API tends to call the negative of this "retired".
                 sa.Column('_active', sa.Boolean, nullable=False, default=True),
             )
             self.table.create()

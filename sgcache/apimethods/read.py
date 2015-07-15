@@ -16,6 +16,8 @@ class ReadHandler(object):
         self.offset = self.limit * (request['paging']['current_page'] - 1)
         self.sorts = request.get('sorts', [])
 
+        self.return_active = request.get('return_only') != 'retired'
+
         self.aliased = set()
         self.aliases = {}
 
@@ -100,7 +102,8 @@ class ReadHandler(object):
     def prepare(self):
 
         self.select_from = self.get_table(Path([(self.entity_type_name, None)]))
-
+        self.where_clauses.append(self.select_from.c._active == self.return_active)
+        
         self.return_fields.append('id')
         
         for raw_path in self.return_fields:
