@@ -1,6 +1,7 @@
 *.pyc
 _build
 /venv*
+*.egg-info
 
 /*.json
 /*.db

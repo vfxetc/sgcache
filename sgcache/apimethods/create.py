@@ -39,7 +39,10 @@ class CreateHandler(object):
     def __call__(self, schema, con=None, extra=None):
 
         query_params = (extra or {}).copy()
-        query_params['_active'] = True
+
+        explicit_active = '_active' in query_params
+        query_params.setdefault('_active', True)
+
         query_params['_cache_created_at'] = query_params['_cache_updated_at'] = datetime.datetime.utcnow()
 
 
@@ -68,8 +71,10 @@ class CreateHandler(object):
             if self.entity_exists:
                 # these are only for creation
                 del query_params['id']
-                del query_params['_active']
                 del query_params['_cache_created_at']
+                # this might be for creation only
+                if not explicit_active:
+                    del query_params['_active']
                 con.execute(table.update().where(table.c.id == self.entity_id), **query_params)
 
             else:

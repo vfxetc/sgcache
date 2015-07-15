@@ -16,6 +16,7 @@ from ..apimethods.create import CreateHandler
 from ..apimethods.read import ReadHandler
 from ..exceptions import EntityMissing
 from ..logs import log_globals
+from ..scanner import Scanner
 from ..utils import log_exceptions
 from .entity import EntityType
 
@@ -87,18 +88,16 @@ class Schema(object):
             ) or None
         return last_id, last_time
 
-    def watch(self, async=False, auto_last_id=False):
+    def watch(self, last_id=None, last_time=None, auto_last_id=False, async=False):
 
         if async:
-            thread = threading.Thread(target=self.watch, kwargs={'auto_last_id': auto_last_id})
+            thread = threading.Thread(target=self.watch, args=(last_id, last_time, auto_last_id, ))
             thread.daemon = True
             thread.start()
             return thread
 
         if auto_last_id:
             last_id, last_time = self.get_last_event()
-        else:
-            last_id = last_time = None
 
         self.event_log = EventLog(last_id=last_id, last_time=last_time)
 
@@ -119,6 +118,27 @@ class Schema(object):
                 # NOTE: The event log may have corrupted its ID tracking.
                 log.exception('error during event iteration; sleeping for 10s')
                 time.sleep(10)
+
+    def scan(self, interval=None, last_time=None, auto_last_id=False, async=False):
+        
+        if async:
+            thread = threading.Thread(target=self.scan, args=(interval, last_time, auto_last_id))
+            thread.daemon = True
+            thread.start()
+            return thread
+
+        if auto_last_id:
+            last_id, last_time = self.get_last_event()
+
+        self.scanner = Scanner(self, last_time=last_time)
+        while True:
+            try:
+                self.scanner.scan(interval)
+                if not interval:
+                    break # only need to get through one
+            except:
+                log.exception('error during scan; sleeping for 30s')
+                time.sleep(30)
 
     def _get_event_handler(self, event):
 

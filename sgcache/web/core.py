@@ -12,14 +12,14 @@ from shotgun_api3_registry import get_args as get_sg_args
 
 from ..schema.core import Schema
 from ..exceptions import Passthrough
-from ..eventlog import EventLog
 from ..logs import setup_logs, log_globals
+from .. import config
 
 log = logging.getLogger(__name__)
 
 
 app = Flask(__name__)
-app.config.from_object('sgcache.config')
+app.config.from_object(config)
 
 db = sa.create_engine(app.config['SQLA_URL'], echo=bool(app.config['SQLA_ECHO']))
 

@@ -6,41 +6,46 @@ import threading
 import time
 from urllib import quote
 
-from flask import request
+try:
+    from flask import request
+except ImportError:
+    request = None
 
 
 log_globals = threading.local()
 
 
-def setup_logs(app):
+def setup_logs(app=None):
 
     request_counter = itertools.count(1)
     http_access_logger = logging.getLogger('http.access')
 
-    @app.before_request
-    def prepare_for_injection():
-        log_globals.http_start_time = time.time()
-        log_globals.meta = {
-            'request': next(request_counter),
-            'ip': request.remote_addr,
-        }
+    if app:
 
-    @app.after_request
-    def log_request(response):
+        @app.before_request
+        def prepare_for_injection():
+            log_globals.http_start_time = time.time()
+            log_globals.meta = {
+                'request': next(request_counter),
+                'ip': request.remote_addr,
+            }
 
-        if not getattr(log_globals, 'skip_http_log', False):
-            http_access_logger.info('%(method)s %(path)s -> %(status)s in %(duration).1fms' % {
-                'method': request.method,
-                'path': quote(request.path.encode('utf8')),
-                'status': response.status_code,
-                'duration': 1000 * (time.time() - log_globals.http_start_time),
-            })
+        @app.after_request
+        def log_request(response):
 
-        return response
+            if not getattr(log_globals, 'skip_http_log', False):
+                http_access_logger.info('%(method)s %(path)s -> %(status)s in %(duration).1fms' % {
+                    'method': request.method,
+                    'path': quote(request.path.encode('utf8')),
+                    'status': response.status_code,
+                    'duration': 1000 * (time.time() - log_globals.http_start_time),
+                })
+
+            return response
 
 
     root = logging.getLogger()
-    root.setLevel(logging.DEBUG if app.debug else logging.INFO)
+    root.setLevel(logging.DEBUG if app and app.debug else logging.INFO)
 
     # Clear existing handlers.
     root.handlers[:] = []
