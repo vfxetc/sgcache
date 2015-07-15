@@ -4,6 +4,7 @@ import threading
 import datetime
 import pprint
 import json
+import time
 
 import sqlalchemy as sa
 
@@ -100,18 +101,24 @@ class Schema(object):
             last_id = last_time = None
 
         self.event_log = EventLog(last_id=last_id, last_time=last_time)
+
         while True:
-            for event in self.event_log.iter_events():
-                log_globals.meta = {'event': event.id}
-                log.info(event.summary)
-                try:
-                    handler = self._get_event_handler(event)
-                    if not handler:
-                        continue
-                    with self.db.begin() as con:
-                        handler(con)
-                except:
-                    log.exception('error during event %d:\n%s' % (event.id, event.dumps(pretty=True)))
+            try:
+                for event in self.event_log.iter_events():
+                    log_globals.meta = {'event': event.id}
+                    log.info(event.summary)
+                    try:
+                        handler = self._get_event_handler(event)
+                        if not handler:
+                            continue
+                        with self.db.begin() as con:
+                            handler(con)
+                    except:
+                        log.exception('error during event %d:\n%s' % (event.id, event.dumps(pretty=True)))
+            except:
+                # NOTE: The event log may have corrupted its ID tracking.
+                log.exception('error during event iteration; sleeping for 10s')
+                time.sleep(10)
 
     def _get_event_handler(self, event):
 

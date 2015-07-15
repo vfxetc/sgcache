@@ -1,4 +1,7 @@
 
+- sgcache-scan -> grab new data
+- sgcache-reprocess --retirement -> reprocess retirement events
+
 - somehow filter retired multi_entity connections
 
 
