@@ -40,11 +40,12 @@ class CreateHandler(object):
 
         query_params = (extra or {}).copy()
 
-        explicit_active = '_active' in query_params
-        query_params.setdefault('_active', True)
+        # Manually deal with _active field, since it isn't actually a field
+        # in the schema and so won't be handled by below.
+        explicit_active = '_active' in self.data
+        query_params['_active'] = self.data.get('_active', True)
 
         query_params['_cache_created_at'] = query_params['_cache_updated_at'] = datetime.datetime.utcnow()
-
 
         for field_name, field in schema[self.entity_type_name].fields.iteritems():
             value = self.data.get(field_name)
