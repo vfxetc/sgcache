@@ -14,7 +14,7 @@ from sgcache.web.core import schema, app
 # Watch the event log in a thread.
 if app.config['WATCH_EVENTS']:
     log.info('starting event watcher')
-    schema.watch(async=True, auto_last_id=app.config['AUTO_LAST_ID'])
+    schema.watch(async=True, auto_last_id=app.config['AUTO_LAST_ID'], idle_delay=float(app.config['WATCH_IDLE_DELAY']))
 else:
     log.warning('not watching events!')
 

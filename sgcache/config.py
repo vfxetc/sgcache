@@ -11,6 +11,8 @@ SCHEMA = 'schema/keystone-basic.yml'
 CLEAR_LOGGERS = True
 
 WATCH_EVENTS = False
+WATCH_IDLE_DELAY = 5.0
+
 AUTO_LAST_ID = False
 
 SCAN_INTERVAL = None

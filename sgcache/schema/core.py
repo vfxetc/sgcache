@@ -88,10 +88,10 @@ class Schema(object):
             ) or None
         return last_id, last_time
 
-    def watch(self, last_id=None, last_time=None, auto_last_id=False, async=False):
+    def watch(self, last_id=None, last_time=None, auto_last_id=False, idle_delay=5.0, async=False):
 
         if async:
-            thread = threading.Thread(target=self.watch, args=(last_id, last_time, auto_last_id, ))
+            thread = threading.Thread(target=self.watch, args=(last_id, last_time, auto_last_id, idle_delay))
             thread.daemon = True
             thread.start()
             return thread
@@ -103,7 +103,7 @@ class Schema(object):
 
         while True:
             try:
-                for event in self.event_log.iter_events():
+                for event in self.event_log.iter_events(idle_delay=idle_delay):
                     log_globals.meta = {'event': event.id}
                     log.info(event.summary)
                     try:
