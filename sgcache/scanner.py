@@ -74,7 +74,7 @@ class Scanner(object):
             #log.info('scanning %ss' % entity_type.type_name)
 
             filters = base_filters[:]
-            if self.projects and args.project and entity_type.type_name not in ('ApiUser', ):
+            if self.projects and args.project and 'project' in entity_type.fields and entity_type.type_name not in ('ApiUser', 'HumanUser'):
                 filters.append(('project', 'in', [{'type': 'Project', 'id': pid} for pid in self.projects]))
 
             return_fields = sorted(entity_type.fields)
