@@ -1,5 +1,26 @@
 
 - pass through thumbnail (and other) uploads
+    /upload/share_thumbnail
+    /upload/publish_thumbnail
+    /upload/upload_file
+
+- pass through download
+    /file_serve/attachment
+    /upload/get_thumbnail_url?...
+
+- devops
+    - serve with gunicorn and gevent
+    - split up the processes
+    - nginx proxy to real thing when down?
+
+- get private schema
+    s = requests.Session()
+    s.cookies['_session_id'] = sg._get_session_token()
+    s.get('https://keystone.shotgunstudio.com/page/schema')
+
+- how to sign our own S3 URLs?
+
+- use sudo_as_login in logs
 
 - include entity type in passthroughs
 

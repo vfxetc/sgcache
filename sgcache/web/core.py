@@ -3,8 +3,9 @@ import logging
 import os
 import time
 
+from flask import Flask, request, Response, stream_with_context
+from werkzeug.http import remove_hop_by_hop_headers
 import requests
-from flask import Flask, request, Response
 import sqlalchemy as sa
 import yaml
 
@@ -30,8 +31,8 @@ schema_spec = yaml.load(open(app.config['SCHEMA']).read())
 schema = Schema(db, schema_spec) # SQL DDL is executed here; watch out!
 
 # Get the fallback server from shotgun_api3_registry.
-FALLBACK_SERVER, _, _ = get_sg_args()
-FALLBACK_URL = FALLBACK_SERVER.strip('/') + '/api3/json'
+FALLBACK_SERVER = get_sg_args()[0].strip('/')
+FALLBACK_URL = FALLBACK_SERVER + '/api3/json'
 
 # We use one HTTP session for everything.
 http_session = requests.Session()
@@ -97,7 +98,7 @@ def passthrough(e=None):
     res = http_session.post(FALLBACK_URL, data=request.data, headers=headers, stream=True)
 
     if res.status_code == 200:
-        return Response(_process_passthrough_response(res), mimetype='application/json')
+        return Response(stream_with_context(_process_passthrough_response(res)), mimetype='application/json')
     else:
         return res.text, res.status_code, [('Content-Type', 'application/json')]
 
@@ -105,11 +106,49 @@ def passthrough(e=None):
 def _process_passthrough_response(res):
 
     buffer_ = []
-    for chunk in res.iter_content(512):
+    for chunk in res.iter_content(8192):
         yield chunk
         buffer_.append(chunk)
 
     # TODO: analyze it here
+
+
+
+# For handing a Flask stream to Requests; the iter API is likely
+# throwing Requests off.
+class _StreamReadWrapper(object):
+    def __init__(self, fh):
+        self.read = fh.read
+
+
+@app.route('/file_serve/<path:path>', methods=['GET', 'POST'])
+@app.route('/thumbnail/<path:path>', methods=['GET', 'POST'])
+@app.route('/upload/<path:path>', methods=['GET', 'POST'])
+def proxy(path):
+
+    url = FALLBACK_SERVER + request.path
+
+    # Strip out the hop-by-hop headers, AND the host (since that likely points
+    # to the cache and not Shotgun).
+    headers = [(k, v) for k, v in request.headers.items() if k.lower() != 'host']
+    remove_hop_by_hop_headers(headers)
+
+    remote_response = http_session.request(request.method, url,
+        data=_StreamReadWrapper(request.stream),
+        params=request.args,
+        headers=dict(headers),
+        stream=True,
+    )
+
+    headers = remote_response.headers.items()
+    remove_hop_by_hop_headers(headers)
+
+    return Response(
+        remote_response.iter_content(8192),
+        status=remote_response.status_code,
+        headers=headers,
+        direct_passthrough=True, # Don't encode it.
+    )
 
 
 
