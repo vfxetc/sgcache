@@ -1,4 +1,17 @@
 
+- pass through thumbnail (and other) uploads
+
+- include entity type in passthroughs
+
+- include user/script name in api logs
+
+- include more information on passed through read requests
+
+- return a fake "name" (as determined by the identifier_column in the 
+  private schema) with entities/multi-entities
+
+
+
 - sgcache-scanner -> grab updated data periodically
 
 - sgcache-reprocess --retirement -> reprocess retirement events

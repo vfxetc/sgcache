@@ -7,6 +7,18 @@ while poking through it in order to create SGCache.
 .. note:: This information is as of ``v6.0.3 (build 04eae45)``.
 
 
+.. _private_schema:
+
+Private Schema
+--------------
+
+For reverse-engineering purposes, it can be helpful to browse the private
+schema given to the Shotgun web page. This is available at::
+
+    https://yourname.shotgunstudio.com/page/schema
+
+
+
 Field Types
 -----------
 
@@ -157,6 +169,37 @@ Field Types
       e.g.::
 
         "de305d54-75b4-431b-adb2-eb6b9e546014"
+
+
+
+Identifier Column
+-----------------
+
+When reading an :sg_field_type:`entity` or :sg_field_type:`multi_entity` field,
+the API returns the entity type, id, and a ``name`` field. However, this field
+does not always exist::
+
+    >>> sg.find_one('Task', [], ['step'])
+    {'step': {'type': 'Step', 'id': 4, 'name': 'Matchmove'}, 'type': 'Task', 'id': 2}
+
+    # Note there is no "name" when we query the Step directly:
+    >>> sg.find_one('Step', [('id', 'is', 4)], ['name', 'code'])
+    {'code': 'Matchmove', 'type': 'Step', 'id': 4}
+
+It appears that :ref:`the private schema <private_schema>` describes a
+``identifier_column`` field per entity, which it uses for the ``name``.
+
+These include:
+
+- ``Note.subject``
+- ``Playlist.code``
+- ``Reply.content``
+- ``Status.icon`` (although this one has a ``name`` set too)
+- ``Step.code``
+- ``Task.content``
+
+As of now, we do not implement this behavior, and entities will not have a
+``name`` field.
 
 
 
