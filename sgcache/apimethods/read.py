@@ -47,7 +47,7 @@ class ReadHandler(object):
         try:
             field = type_.fields[path[-1][1]]
         except KeyError as e:
-            raise FieldMissing(e.args[0])
+            raise FieldMissing('%s.%s' % (type_.type_name, e.args[0]))
         return field
 
     def get_table(self, path):

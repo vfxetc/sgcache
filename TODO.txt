@@ -1,13 +1,4 @@
 
-- pass through thumbnail (and other) uploads
-    /upload/share_thumbnail
-    /upload/publish_thumbnail
-    /upload/upload_file
-
-- pass through download
-    /file_serve/attachment
-    /upload/get_thumbnail_url?...
-
 - devops
     - serve with gunicorn and gevent
     - split up the processes
@@ -22,11 +13,7 @@
 
 - use sudo_as_login in logs
 
-- include entity type in passthroughs
-
 - include user/script name in api logs
-
-- include more information on passed through read requests
 
 - return a fake "name" (as determined by the identifier_column in the 
   private schema) with entities/multi-entities

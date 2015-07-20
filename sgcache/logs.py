@@ -27,7 +27,7 @@ def setup_logs(app=None):
             log_globals.http_start_time = time.time()
             log_globals.meta = {
                 'request': next(request_counter),
-                'ip': request.remote_addr,
+                'ip': request.access_route[-1] if request.access_route else request.remote_addr,
             }
 
         @app.after_request

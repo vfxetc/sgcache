@@ -3,7 +3,7 @@ import logging
 import os
 import time
 
-from flask import Flask, request, Response, stream_with_context
+from flask import Flask, request, Response, stream_with_context, g
 from werkzeug.http import remove_hop_by_hop_headers
 import requests
 import sqlalchemy as sa
@@ -61,35 +61,39 @@ def json_api(params=None):
     except KeyError as e:
         return passthrough('unknown API method %s' % method_name)
 
+    method_params = payload['params'][1] if len(payload['params']) > 1 else {}
+
     try:
-        method_params = payload['params'][1] if len(payload['params']) > 1 else {}
         start_time = time.time()
-        res = method(method_params)
-    except Passthrough as pt:
-        return passthrough(pt)
-    else:
-        elapsed_ms = 1000 * (time.time() - start_time)
-        log.info('API %s %s returned %sin %.1fms' % (
+        res_data = method(method_params)
+        res_tuple = json.dumps(res_data), 200, [('Content-Type', 'application/json')]
+
+    except Passthrough as e:
+
+        log.info('Passing through %s request due to %s("%s"):%s%s' % (
             method_name,
-            method_params.get('type'),
-            '%s entities ' % len(res['entities']) if 'entities' in res else '',
-            elapsed_ms
+            e.__class__.__name__,
+            e,
+            '\n' if method_params else '',
+            json.dumps(method_params or {}, sort_keys=True, indent=4) if method_params else '',
         ))
-        log_globals.skip_http_log = True
+        res_data = {}
+        res_tuple = passthrough()
 
-    res = json.dumps(res)
-    return res, 200, [('Content-Type', 'application/json')]
+    elapsed_ms = 1000 * (time.time() - start_time)
+    log.info('%s request on %s returned %sin %.1fms' % (
+        method_name.title(),
+        method_params.get('type'),
+        '%s entities ' % len(res_data['entities']) if 'entities' in res_data else '',
+        elapsed_ms
+    ))
+    log_globals.skip_http_log = True
+
+    return res_tuple
 
 
-def passthrough(e=None):
 
-    if e:
-        if isinstance(e, Exception):
-            log.info('Passing through request (%s): %s' % (e.__class__.__name__, e))
-        else:
-            log.info('Passing through request: %s' % e)
-    else:
-        log.info('Passing through request')
+def passthrough():
 
     # our "Host" is different than theirs
     headers = dict(request.headers)
