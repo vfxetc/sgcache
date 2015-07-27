@@ -71,12 +71,8 @@ def setup_logs(app=None):
 
 class RequestContextInjector(logging.Filter):
 
-    static = {
-        'pid': os.getpid(),
-    }
-
     def filter(self, record):
-        record.__dict__.update(self.static)
+        record.pid = os.getpid() # Would love to cache this, but we can't.
         record.__dict__.update(log_globals.__dict__)
 
         meta = getattr(record, 'meta', {})

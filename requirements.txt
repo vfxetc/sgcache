@@ -3,6 +3,9 @@ requests >= 2.7.0
 sqlalchemy >= 1.0.0
 pyyaml
 
+gunicorn
+gevent
+
 psycopg2
 futures
 

@@ -18,8 +18,9 @@ AUTO_LAST_ID = False
 SCAN_INTERVAL = None
 SCAN_SINCE = None
 
-PORT = 8010
-
+PORT = int(os.environ.get('PORT', 8010))
+GUNICORN_WORKERS = 4
+GUNICORN_WORKER_CLASS = 'gevent'
 
 # Override with SGCACHE_* envvars.
 for k, v in os.environ.iteritems():
