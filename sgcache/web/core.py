@@ -59,7 +59,8 @@ def json_api(params=None):
     try:
         method = _api_methods[method_name]
     except KeyError as e:
-        return passthrough('unknown API method %s' % method_name)
+        log.info('Passing through %s request due to unknown API method' % method_name)
+        return passthrough()
 
     method_params = payload['params'][1] if len(payload['params']) > 1 else {}
 
