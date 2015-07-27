@@ -53,6 +53,9 @@ class Base(object):
     def prepare_join(self, request, self_path, next_path):
         raise NotImplementedError()
 
+    def check_for_join(self, request, row, state):
+        raise NotImplementedError()
+
     def prepare_select(self, req, path):
         column = getattr(req.get_table(path).c, self.name)
         req.select_fields.append(column)
@@ -218,11 +221,16 @@ class Entity(Base):
     def prepare_join(self, req, self_path, next_path):
         self_table = req.get_table(self_path)
         next_table = req.get_table(next_path)
+        req.select_fields.append(next_table.c.id)
         req.join(next_table, sa.and_(
             self_table.c[self.type_column.name] == next_path[-1][0],
             self_table.c[self.id_column.name]   == next_table.c.id,
             next_table.c._active == True, # `retired_only` only affects the top-level entity
         ))
+        return next_table.c.id
+
+    def check_for_join(self, req, row, id_column):
+        return bool(row[id_column])
 
     def prepare_select(self, req, path):
         table = req.get_table(path)

@@ -68,10 +68,23 @@ class ReadHandler(object):
             self.joined.add(table.name)
 
     def prepare_joins(self, path):
+        field = state = None
+
         for i in xrange(0, len(path) - 1):
             field_path = path[:i+1]
             field = self.get_field(field_path)
-            field.prepare_join(self, field_path, path[:i+2])
+            state = field.prepare_join(self, field_path, path[:i+2])
+
+        # We only need to track the last join to check if it was successful,
+        # since the previous ones are a requirement of it
+        return field, state
+
+    def check_for_joins(self, row, state_tuple):
+        field, state = state_tuple
+        if field is not None:
+            return field.check_for_join(self, row, state)
+        else:
+            return True
 
     def prepare_filters(self, filters):
 
@@ -109,12 +122,12 @@ class ReadHandler(object):
         for raw_path in self.return_fields:
 
             path = self.parse_path(raw_path)
-            self.prepare_joins(path) # make sure it is availible
+            join_state = self.prepare_joins(path) # make sure it is availible
 
             field = self.get_field(path)
             state = field.prepare_select(self, path)
 
-            self.select_state.append((path, field, state))
+            self.select_state.append((path, join_state, field, state))
 
         clause = self.prepare_filters(self.filters)
         if clause is not None:
@@ -148,7 +161,9 @@ class ReadHandler(object):
         rows = []
         for i, raw_row in enumerate(res):
             row = {'type': self.entity_type_name}
-            for path, field, state in self.select_state:
+            for path, join_state, field, state in self.select_state:
+                if not self.check_for_joins(raw_row, join_state):
+                    continue
                 try:
                     value = field.extract_select(self, path, raw_row, state)
                 except NoFieldData:
