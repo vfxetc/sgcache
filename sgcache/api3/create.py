@@ -2,20 +2,6 @@ import datetime
 
 import sqlalchemy as sa
 
-'''
-{
-    "fields": [
-        {
-            "field_name": "key", 
-            "value": "value"
-        }
-    ], 
-    "return_fields": [
-        "id"
-    ], 
-    "type": "Test"
-}
-'''
 
 class Api3CreateOperation(object):
 
@@ -72,7 +58,7 @@ class Api3CreateOperation(object):
             for entity-level caching mechanisms.
 
         """
-        
+
         query_params = (extra or {}).copy()
 
         # Manually deal with _active field, since it isn't actually a field

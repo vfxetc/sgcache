@@ -7,7 +7,7 @@ not yet have any Python API's designed for public consumption.
 
 
 Cache Data Models
-------------
+-----------------
 
 .. automodule:: sgcache.cache
 
@@ -26,7 +26,7 @@ Cache Data Models
 
 .. automodule:: sgcache.fields
 
-.. autoclass:: sgcache.fields.Base
+.. autoclass:: sgcache.fields.Field
     :members:
 
 

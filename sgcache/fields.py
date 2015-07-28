@@ -16,7 +16,7 @@ def sg_field_type(cls):
     return cls
 
 
-class Base(object):
+class Field(object):
 
     """The model of a single field of an entity, extended into a class
     for each and every of the different Shotgun data types.
@@ -176,7 +176,7 @@ class Base(object):
 
 
 
-class Scalar(Base):
+class Scalar(Field):
 
     sa_type = None
 
@@ -192,7 +192,7 @@ class Checkbox(Scalar):
 
 
 @sg_field_type
-class Number(Base):
+class Number(Field):
 
     def _construct_schema(self, table):
         self.column = self._create_or_check(table, sa.Column(self.name, sa.Integer, primary_key=self.name == 'id'))
@@ -280,7 +280,7 @@ class DateTime(Text):
 
 
 @sg_field_type
-class Entity(Base):
+class Entity(Field):
 
     def __init__(self, entity, name, schema):
         super(Entity, self).__init__(entity, name, schema)
@@ -351,7 +351,7 @@ class Entity(Base):
 
 
 @sg_field_type
-class MultiEntity(Base):
+class MultiEntity(Field):
 
     def __init__(self, entity, name, schema):
         super(MultiEntity, self).__init__(entity, name, schema)
@@ -478,21 +478,21 @@ class MultiEntity(Base):
 
 
 @sg_field_type
-class TagList(Base):
+class TagList(Field):
     # TODO: JSON?
     pass
 
 
 
 @sg_field_type
-class Serializable(Base):
+class Serializable(Field):
     # TODO: JSON?
     pass
 
 
 
 @sg_field_type
-class URL(Base):
+class URL(Field):
     # TODO: JSON?
     pass
 
