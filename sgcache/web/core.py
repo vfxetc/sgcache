@@ -11,9 +11,9 @@ import yaml
 
 from shotgun_api3_registry import get_args as get_sg_args
 
-from ..schema.core import Schema
 from ..exceptions import Passthrough
 from ..logs import setup_logs, log_globals
+from ..cache import Cache
 from .. import config
 
 log = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ db = sa.create_engine(app.config['SQLA_URL'], echo=bool(app.config['SQLA_ECHO'])
 setup_logs(app)
 
 schema_spec = yaml.load(open(app.config['SCHEMA']).read())
-schema = Schema(db, schema_spec) # SQL DDL is executed here; watch out!
+cache = Cache(db, schema_spec) # SQL DDL is executed here; watch out!
 
 # Get the fallback server from shotgun_api3_registry.
 FALLBACK_SERVER = get_sg_args()[0].strip('/')
@@ -57,7 +57,7 @@ def json_api(params=None):
         return '', 400, []
 
     try:
-        method = _api_methods[method_name]
+        method = _api3_methods[method_name]
     except KeyError as e:
         log.info('Passing through %s request due to unknown API method' % method_name)
         return passthrough()
@@ -158,8 +158,8 @@ def proxy(path):
 
 
 # Register api methods
-_api_methods = {}
-def api_method(func):
-    _api_methods[func.__name__] = func
+_api3_methods = {}
+def api3_method(func):
+    _api3_methods[func.__name__] = func
     return func
-from . import api
+from . import api3

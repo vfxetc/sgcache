@@ -3,7 +3,7 @@ import argparse
 import os
 
 
-SQLA_URL = 'sqlite://'
+SQLA_URL = 'sqlite:///%s' % os.path.abspath(os.path.join(__file__, '..', '..', 'sandbox', 'data.db'))
 SQLA_ECHO = False
 
 SCHEMA = 'schema/keystone-basic.yml'

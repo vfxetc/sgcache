@@ -8,9 +8,9 @@ from .fields import sg_field_types
 
 class EntityType(object):
 
-    def __init__(self, schema, name, fields):
+    def __init__(self, model, name, fields):
 
-        self.schema = schema
+        self.model = model
         self.type_name = name
         self.table_name = name.lower()
 
@@ -35,11 +35,11 @@ class EntityType(object):
     def __contains__(self, key):
         return key in self.fields
 
-    def _create_sql(self):
+    def _construct_schema(self):
         
-        self.table = self.schema.metadata.tables.get(self.table_name)
+        self.table = self.model.metadata.tables.get(self.table_name)
         if self.table is None:
-            self.table = sa.Table(self.table_name, self.schema.metadata,
+            self.table = sa.Table(self.table_name, self.model.metadata,
                 sa.Column('id', sa.Integer, primary_key=True),
                 # We call this "active" to match the RPC values, even though
                 # the Python API tends to call the negative of this "retired".
@@ -55,4 +55,4 @@ class EntityType(object):
             sa.Column('_last_log_event_id', sa.Integer).create(self.table)
 
         for field in self.fields.itervalues():
-            field._create_sql(self.table)
+            field._construct_schema(self.table)

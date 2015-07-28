@@ -1,9 +1,9 @@
 from ..api3.read import Api3ReadOperation
 from ..exceptions import Passthrough
-from .core import api_method, schema, db
+from .core import api3_method, cache
 
 
-@api_method
+@api3_method
 def info(req):
     return {
         's3_uploads_enabled': False,
@@ -13,11 +13,11 @@ def info(req):
     }
 
 
-@api_method
+@api3_method
 def read(req):
 
     op = Api3ReadOperation(req)
-    entities = op(schema)
+    entities = op(cache)
 
     return {
         'entities': entities,

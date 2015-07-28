@@ -1,42 +1,40 @@
+import datetime
+import json
 import logging
+import pprint
 import re
 import threading
-import datetime
-import pprint
-import json
 import time
 
 import sqlalchemy as sa
 
 from sgevents import EventLog
 
-
 from . import fields
-from ..api3.create import Api3CreateOperation
-from ..exceptions import EntityMissing
-from ..logs import log_globals
-from ..scanner import Scanner
-from ..utils import log_exceptions
+from .api3.create import Api3CreateOperation
 from .entity import EntityType
+from .exceptions import EntityMissing
+from .logs import log_globals
+from .scanner import Scanner
+from .utils import log_exceptions
 
 
 log = logging.getLogger(__name__)
 
 
-class Schema(object):
+class Cache(object):
 
     def __init__(self, db, spec):
         
         self.db = db
-        self.spec = spec
         self.metadata = sa.MetaData(bind=db)
 
         self._entity_types = {}
-        for name, fields in self.spec.iteritems():
+        for name, fields in spec.iteritems():
             fields['id'] = 'number'
             self._entity_types[name] = EntityType(self, name, fields)
 
-        self._create_sql()
+        self._construct_schema()
 
     def __getitem__(self, key):
         try:
@@ -47,10 +45,10 @@ class Schema(object):
     def __contains__(self, key):
         return key in self._entity_types
     
-    def _create_sql(self):
+    def _construct_schema(self):
         self.metadata.reflect()
         for entity in self._entity_types.itervalues():
-            entity._create_sql()
+            entity._construct_schema()
 
     def create_or_update(self, type_name, data, allow_id=False, **kwargs):
         request = {

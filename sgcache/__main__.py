@@ -9,14 +9,14 @@ from sgcache import config
 config.update_from_argv()
 
 # Must import app after config.
-from sgcache.web.core import schema, app
+from sgcache.web.core import cache, app
 
 threads = []
 
 # Watch the event log in a thread.
 if app.config['WATCH_EVENTS']:
     log.info('starting event watcher')
-    threads.append(schema.watch(
+    threads.append(cache.watch(
         async=True,
         auto_last_id=app.config['AUTO_LAST_ID'],
         idle_delay=float(app.config['WATCH_IDLE_DELAY']),
@@ -27,7 +27,7 @@ else:
 # Scan for updates in a thread.
 if app.config['SCAN_SINCE'] or app.config['SCAN_INTERVAL']:
     log.info('starting scanner')
-    threads.append(schema.scan(
+    threads.append(cache.scan(
         async=True,
         last_time=app.config['SCAN_SINCE'] or app.config['SCAN_INTERVAL'],
         interval=app.config['SCAN_INTERVAL'],

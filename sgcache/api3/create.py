@@ -36,18 +36,18 @@ class Api3CreateOperation(object):
         self.before_query = []
         self.after_query = []
 
-    def __call__(self, schema, con=None, extra=None):
+    def __call__(self, cache, con=None, extra=None):
 
         query_params = (extra or {}).copy()
 
         # Manually deal with _active field, since it isn't actually a field
-        # in the schema and so won't be handled by below.
+        # in the cache and so won't be handled by below.
         explicit_active = '_active' in self.data
         query_params['_active'] = self.data.get('_active', True)
 
         query_params['_cache_created_at'] = query_params['_cache_updated_at'] = datetime.datetime.utcnow()
 
-        for field_name, field in schema[self.entity_type_name].fields.iteritems():
+        for field_name, field in cache[self.entity_type_name].fields.iteritems():
             value = self.data.get(field_name)
             if value is not None:
                 field_params = field.prepare_upsert(self, value)
@@ -56,12 +56,12 @@ class Api3CreateOperation(object):
 
         transaction = None
         if not con:
-            con = schema.db.connect()
+            con = cache.db.connect()
             transaction = con.begin()
 
         try:
 
-            table = schema[self.entity_type_name].table
+            table = cache[self.entity_type_name].table
 
             if self.entity_id:
                 self.entity_exists = list(con.execute(sa.select([table.c.id]).where(table.c.id == self.entity_id).limit(1)))

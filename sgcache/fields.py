@@ -3,8 +3,8 @@ import re
 
 import sqlalchemy as sa
 
-from ..exceptions import FilterNotImplemented, NoFieldData
-from ..utils import iter_unique
+from .exceptions import FilterNotImplemented, NoFieldData
+from .utils import iter_unique
 
 
 sg_field_types = {}
@@ -47,7 +47,7 @@ class Base(object):
                 ))
         return existing
 
-    def _create_sql(self, table):
+    def _construct_schema(self, table):
         raise NotImplementedError()
 
     # Query construction methods
@@ -98,7 +98,7 @@ class Scalar(Base):
 
     sa_type = None
 
-    def _create_sql(self, table):
+    def _construct_schema(self, table):
         self.column = self._create_or_check(table, sa.Column(self.name, self.sa_type))
 
 
@@ -112,7 +112,7 @@ class Checkbox(Scalar):
 @sg_field_type
 class Number(Base):
 
-    def _create_sql(self, table):
+    def _construct_schema(self, table):
         self.column = self._create_or_check(table, sa.Column(self.name, sa.Integer, primary_key=self.name == 'id'))
 
 
@@ -204,7 +204,7 @@ class Entity(Base):
         super(Entity, self).__init__(entity, name)
         self.entity_types = tuple(entity_types)
 
-    def _create_sql(self, table):
+    def _construct_schema(self, table):
 
         # We aren't confident using enumns yet since we don't know how to deal
         # with changes in them.
@@ -274,7 +274,7 @@ class MultiEntity(Base):
         super(MultiEntity, self).__init__(entity, name)
         self.entity_types = tuple(entity_types)
 
-    def _create_sql(self, table):
+    def _construct_schema(self, table):
         self.assoc_table_name = '%s_%s' % (table.name, self.name)
         self.assoc_table = table.metadata.tables.get(self.assoc_table_name)
         if self.assoc_table is None:

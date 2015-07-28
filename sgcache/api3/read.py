@@ -37,7 +37,7 @@ class Api3ReadOperation(object):
 
     def get_entity(self, path):
         try:
-            type_ = self.schema[path[-1][0]]
+            type_ = self.cache[path[-1][0]]
         except KeyError as e:
             raise EntityMissing(e.args[0])
         return type_
@@ -175,12 +175,12 @@ class Api3ReadOperation(object):
             rows.append(row)
         return rows
 
-    def __call__(self, schema):
+    def __call__(self, cache):
 
-        self.schema = schema
-        self.entity_type = schema[self.entity_type_name]
+        self.cache = cache
+        self.entity_type = cache[self.entity_type_name]
 
         query = self.prepare()
-        res = schema.db.execute(query)
+        res = cache.db.execute(query)
 
         return self.extract(res)
