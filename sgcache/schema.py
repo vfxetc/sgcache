@@ -3,8 +3,20 @@ import yaml
 
 class Schema(dict):
 
+    """A mapping of entity type names to :class:`EntitySchema`."""
+
     @classmethod
-    def load_yaml(cls, fh):
+    def from_yaml(cls, fh):
+        """from_yaml(cls, file)
+
+        Load the full schema from the given YAML file. This schema is assumed to be:
+
+        - a mapping of entity names to entity schemas, which are:
+        - a mapping of field names to field schemas, which are:
+        - either a string representing the data type, or a mapping including
+          a ``data_type``, and any other info as required by the field.
+
+        """
         fh = open(fh) if isinstance(fh, basestring) else fh
         spec = yaml.load(fh.read())
         self = cls()
@@ -15,6 +27,8 @@ class Schema(dict):
 
 class EntitySchema(dict):
     
+    """A mapping of field names to :class:`FieldSchema`."""
+
     def __init__(self, name):
         self.name = name
 
@@ -32,7 +46,12 @@ class EntitySchema(dict):
 
 class FieldSchema(object):
 
+    """The schema of a single field."""
+
+    #: The Shotgun data type, e.g. ``entity`` or ``checkbox``.
     data_type = None
+
+    #: The allowable entity types for ``entity`` and ``multi_entity`` fields.
     entity_types = ()
 
     def __init__(self, name):
