@@ -1,6 +1,6 @@
+from ..api3.read import Api3ReadOperation
 from ..exceptions import Passthrough
 from .core import api_method, schema, db
-from ..apimethods.read import ReadHandler
 
 
 @api_method
@@ -16,8 +16,8 @@ def info(req):
 @api_method
 def read(req):
 
-    handler = ReadHandler(req)
-    entities = handler(schema)
+    op = Api3ReadOperation(req)
+    entities = op(schema)
 
     return {
         'entities': entities,

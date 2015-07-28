@@ -4,7 +4,7 @@ from ..exceptions import EntityMissing, FieldMissing, NoFieldData
 from ..path import FieldPath
 
 
-class ReadHandler(object):
+class Api3ReadOperation(object):
 
     def __init__(self, request):
 

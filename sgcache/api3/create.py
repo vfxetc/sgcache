@@ -17,7 +17,7 @@ import sqlalchemy as sa
 }
 '''
 
-class CreateHandler(object):
+class Api3CreateOperation(object):
 
     def __init__(self, request, allow_id=False):
 

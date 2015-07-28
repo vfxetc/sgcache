@@ -98,7 +98,7 @@ class Scanner(object):
                     ' "%s"' % entity['name'][:40] if entity.get('name') else ''
                 ))
 
-                self.schema.create(entity.pop('type'), entity, allow_id=True)
+                self.schema.create_or_update(entity.pop('type'), entity, allow_id=True)
                 counts[entity_type.type_name] = counts.get(entity_type.type_name, 0) + 1
 
         summary = ', '.join('%d %ss' % (count, name) for name, count in sorted(counts.iteritems()) if count)

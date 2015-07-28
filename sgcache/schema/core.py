@@ -12,8 +12,7 @@ from sgevents import EventLog
 
 
 from . import fields
-from ..apimethods.create import CreateHandler
-from ..apimethods.read import ReadHandler
+from ..api3.create import Api3CreateOperation
 from ..exceptions import EntityMissing
 from ..logs import log_globals
 from ..scanner import Scanner
@@ -53,22 +52,15 @@ class Schema(object):
         for entity in self._entity_types.itervalues():
             entity._create_sql()
 
-    def read(self, request):
-        handler = ReadHandler(request)
-        return handler(self)
-
-    def create(self, request, data=None, allow_id=False, **kwargs):
-
-        if data is not None:
-            request = {
-                'type': request,
-                'fields': [{'field_name': k, 'value': v} for k, v in data.iteritems()],
-                'return_fields': ['id'],
-            }
-        
-        handler = CreateHandler(request, allow_id=allow_id)
-        handler(self, **kwargs)
-        return handler
+    def create_or_update(self, type_name, data, allow_id=False, **kwargs):
+        request = {
+            'type': type_name,
+            'fields': [{'field_name': k, 'value': v} for k, v in data.iteritems()],
+            'return_fields': ['id'],
+        }
+        op = Api3CreateOperation(request, allow_id=allow_id)
+        op(self, **kwargs)
+        return op
 
     def get_last_event(self):
         last_id = 0
@@ -182,7 +174,7 @@ class Schema(object):
             log.warning('could not find "new" %s %d' % (entity_type.type_name, event.entity_id))
             return
 
-        self.create(entity_type.type_name, data=entity, allow_id=True, con=con, extra={
+        self.create_or_update(entity_type.type_name, data=entity, allow_id=True, con=con, extra={
             '_last_log_event_id': event['id'],
             '_active': True, # for revived entities
         })
@@ -300,7 +292,7 @@ class Schema(object):
         else:
             data[event['attribute_name']] = event['meta']['new_value']
 
-        handler = self.create(entity_type.type_name, data=data, allow_id=True, con=con, extra={
+        handler = self.create_or_update(entity_type.type_name, data=data, allow_id=True, con=con, extra={
             '_last_log_event_id': event['id'],
         })
 
