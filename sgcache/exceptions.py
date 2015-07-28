@@ -1,16 +1,16 @@
 
 
-class Passthrough(ValueError):
+class Passthrough(Exception):
     '''Signal that we cannot handle the request, but expect the real server can.'''
 
 
-class EntityMissing(Passthrough):
+class EntityMissing(KeyError, Passthrough):
     '''Signal that a required entity does not exist in our schema.'''
 
-class FieldMissing(Passthrough):
+class FieldMissing(KeyError, Passthrough):
     '''Signal that a required field does not exist in our schema.'''
 
-class FilterNotImplemented(Passthrough):
+class FilterNotImplemented(NotImplementedError, Passthrough):
     '''Signal that we can't process the requested filter.'''
 
 
