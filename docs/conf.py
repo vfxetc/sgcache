@@ -33,6 +33,9 @@ for name in '''
     migrate
     psycopg2
     requests
+    sgapi
+    sgevents
+    shotgun_api3
     sqlalchemy
     yaml
 '''.strip().split():

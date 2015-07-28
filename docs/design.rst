@@ -69,8 +69,11 @@ We use PostgreSQL (or SQLite in development) to store the data.
 
 Shotgun also uses PostgreSQL, but is almost guaranteed to use it differently.
 
+.. _db_schema_rules:
+
 Schema Rules
 ^^^^^^^^^^^^
+
 
 - Basic entities are stored in tables sharing the name of the entity type, e.g.:
   ``asset`` and ``shot``.

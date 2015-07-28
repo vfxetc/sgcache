@@ -6,7 +6,7 @@ This page is generally for the developers of sgcache itself, as it does
 not yet have any Python API's designed for public consumption.
 
 
-Cache Models
+Cache Data Models
 ------------
 
 .. automodule:: sgcache.cache
@@ -21,25 +21,13 @@ Cache Models
 
     .. automethod:: get_last_event
 
-
-Entities
-~~~~~~~~
-
 .. automodule:: sgcache.entity
     :members:
-
-
-Fields
-~~~~~~
 
 .. automodule:: sgcache.fields
 
 .. autoclass:: sgcache.fields.Base
     :members:
-
-.. autoclass:: sgcache.fields.Entity
-
-.. autoclass:: sgcache.fields.MultiEntity
 
 
 Schema

@@ -21,6 +21,7 @@ class Api3ReadOperation(object):
         self.aliased = set()
         self.aliases = {}
 
+        #: A list of expressions to be passed to a SQL ``select(...)``.
         self.select_fields = []
         self.select_state = []
 
@@ -167,7 +168,7 @@ class Api3ReadOperation(object):
                 if not self.check_for_joins(raw_row, join_state):
                     continue
                 try:
-                    value = field.extract_select(self, path, raw_row, state)
+                    value = field.extract_select(self, raw_row, state)
                 except NoFieldData:
                     pass
                 else:

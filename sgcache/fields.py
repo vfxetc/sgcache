@@ -18,6 +18,14 @@ def sg_field_type(cls):
 
 class Base(object):
 
+    """The model of a single field of an entity, extended into a class
+    for each and every of the different Shotgun data types.
+
+    The functionality of the :class:`.Api3ReadOperation` and :class:`.Api3CreateOperation`
+    depend upon the implementation of the following abstract methods:
+
+    """
+
     def __init__(self, entity, name, schema):
         self.entity = entity
         self.name = name
@@ -54,29 +62,89 @@ class Base(object):
     # Query construction methods
     # ==========================
 
-    def prepare_join(self, request, self_path, next_path):
+    def prepare_join(self, read_op, self_path, next_path):
+        """Prepare any joins required through this field.
+
+        Only expected to be implemented by the ``Entity`` field class, this
+        must call :meth:`.Api3ReadOperation.join` to include any required
+        tables in the query.
+
+        :param read_op: :class:`.Api3ReadOperation` that is running.
+        :param self_path: :class:`.FieldPath` to this field in the context of the operation.
+        :param next_path: :class:`.FieldPath` to the next field in the context of the operation.
+        :return: An object to be passed back to :meth:`check_for_join` to
+            establish if the join was successful or not.
+
+        """
+
         raise NotImplementedError()
 
-    def check_for_join(self, request, row, state):
+    def check_for_join(self, read_op, row, state):
+        """Determine if the join set up by :meth:`prepare_join` occurred.
+
+        :param read_op: :class:`.Api3ReadOperation` that is running.
+        :param row: SQLAlchemy result row to inspect.
+        :param state: Return value from previous :meth:`prepare_join`.
+        :return bool: Did the requested join occur?
+
+        """
         raise NotImplementedError()
 
-    def prepare_select(self, req, path):
-        column = getattr(req.get_table(path).c, self.name)
-        req.select_fields.append(column)
+    def prepare_select(self, read_op, path):
+        """Select any fields that will be required to return the value of this field.
+
+        This must extend :attr:`.Api3ReadOperation.select_fields` with any
+        selectable expressions (e.g. columns) required by :meth:`extract_select`.
+
+        :param read_op: :class:`.Api3ReadOperation` that is running.
+        :param path: :class:`.FieldPath` to this field in the context of the operation.
+        :return: An object to be passed back to :meth:`extract_select` to
+            extract the value of this field for each returned row.
+
+        """
+        column = read_op.get_table(path).c[self.name]
+        read_op.select_fields.append(column)
         return column
 
-    def prepare_order(self, req, path):
-        column = getattr(req.get_table(path).c, self.name)
-        return column
+    def extract_select(self, read_op, row, state):
+        """Extract the value for this field, raising :class:`NoFieldData`
+        when no value should be returned.
 
-    def extract_select(self, req, path, row, column):
+        :param read_op: :class:`.Api3ReadOperation` that is running.
+        :param row: The SQLAlchemy result row to extract values from.
+        :param state: Return value from previous :meth:`prepare_select`.
+        :return: Value to include in entity for this field.
+        :raises NoFieldData: when no data should be returned.
+
+        """
         try:
-            return row[column]
+            return row[state] # state is the column
         except KeyError as e:
-            raise NoFieldData(path)
+            raise NoFieldData()
 
-    def prepare_filter(self, req, path, relation, values):
-        column = getattr(req.get_table(path).c, self.name)
+    def prepare_order(self, read_op, path):
+        """Prepare an expression to use for an order clause.
+
+        :param read_op: :class:`.Api3ReadOperation` that is running.
+        :param path: :class:`.FieldPath` to this field in the context of the operation.
+        :return: A SQLA expression to use to order the rows.
+        """
+        return read_op.get_table(path).c[self.name]
+
+    def prepare_filter(self, read_op, path, relation, values):
+        """Prepare an expression to use for a where clause, and raise
+        :class:`FilterNotImplemented` when the relation is not supported.
+
+        :param read_op: :class:`.Api3ReadOperation` that is running.
+        :param path: :class:`.FieldPath` to this field in the context of the operation.
+        :param str relation: The request relation from the subset of those
+            accepted by the Shotgun API, e.g. ``is``, ``in``, etc..
+        :param tuple values: The values the operation uses.
+        :return: A SQLA expression to use to filter the rows.
+        :raises FilterNotImplemented: when the filter is not supported.
+
+        """
+        column = req.get_table(path).c[self.name]
         if relation == 'is':
             return column == values[0]
         elif relation == 'is_not':
@@ -90,7 +158,20 @@ class Base(object):
         else:
             raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 
-    def prepare_upsert(self, req, value):
+    def prepare_upsert_data(self, create_op, value):
+        """Prepare the data to insert or update for this field.
+
+        If the data is more complex than can be dealt with in a single mapping
+        (e.g. for ``multi_entity`` types), you can append callbacks to
+        :attr:`~.Api3CreateOperation.before_query` and 
+        :attr:`~.Api3CreateOperation.after_query` of the operation,
+        which will be called with the database connection as the only argument.
+
+        :param create_op: :class:`.Api3CreateOperation` that is running.
+        :param value: The value to set.
+        :return: ``dict`` of values to insert into the database.
+
+        """
         return {self.name: value}
 
 
@@ -244,10 +325,10 @@ class Entity(Base):
         req.select_fields.extend((type_column, id_column))
         return type_column, id_column
 
-    def extract_select(self, req, path, row, state):
+    def extract_select(self, req, row, state):
         type_column, id_column = state
         if row[type_column] is None:
-            raise NoFieldData(path)
+            raise NoFieldData()
         return {'type': row[type_column], 'id': row[id_column]}
 
     def prepare_filter(self, req, path, relation, values):
@@ -264,7 +345,7 @@ class Entity(Base):
         
         raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 
-    def prepare_upsert(self, req, value):
+    def prepare_upsert_data(self, req, value):
         return {self.type_column.name: value['type'], self.id_column.name: value['id']}
 
 
@@ -332,7 +413,7 @@ class MultiEntity(Base):
 
         return fields_to_select
 
-    def extract_select(self, req, path, row, state):
+    def extract_select(self, req, row, state):
 
         type_concat_field, id_concat_field = state
         if not row[type_concat_field]:
@@ -352,7 +433,7 @@ class MultiEntity(Base):
     def prepare_filter(self, req, path, relation, values):
         raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 
-    def prepare_upsert(self, req, value):
+    def prepare_upsert_data(self, req, value):
         if req.entity_id:
             # Schedule deletion of existing data.
             req.before_query.append(functools.partial(self._before_upsert, req, value))

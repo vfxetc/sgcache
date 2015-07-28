@@ -28,7 +28,7 @@ class Api3CreateOperation(object):
         self.return_fields = request['return_fields']
 
         self.entity_exists = None
-        self.entity_id = self.data.get('id') # this is for field.prepare_upsert
+        self.entity_id = self.data.get('id') # this is for field.prepare_upsert_data
         if self.entity_id and not create_with_id:
             raise ValueError('cannot specify ID for create')
 
@@ -49,7 +49,7 @@ class Api3CreateOperation(object):
         for field_name, field in cache[self.entity_type_name].fields.iteritems():
             value = self.data.get(field_name)
             if value is not None:
-                field_params = field.prepare_upsert(self, value)
+                field_params = field.prepare_upsert_data(self, value)
                 if field_params:
                     query_params.update(field_params)
 
