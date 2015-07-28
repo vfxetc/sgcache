@@ -144,7 +144,7 @@ class Base(object):
         :raises FilterNotImplemented: when the filter is not supported.
 
         """
-        column = req.get_table(path).c[self.name]
+        column = read_op.get_table(path).c[self.name]
         if relation == 'is':
             return column == values[0]
         elif relation == 'is_not':

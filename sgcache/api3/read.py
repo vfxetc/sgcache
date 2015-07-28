@@ -182,6 +182,22 @@ class Api3ReadOperation(object):
         self.entity_type = cache[self.entity_type_name]
 
         query = self.prepare()
-        res = cache.db.execute(query)
+        db_res = cache.db.execute(query)
+        entities = self.extract(db_res)
 
-        return self.extract(res)
+        # paging_info.entity_count represents the total entities that would
+        # be returned if there was no paging applied. Since the shotgun_api3
+        # does not care about the specific value, only if it signals that there
+        # *might* be more data to grab, we fake it for now.
+        entity_count = self.offset + len(entities)
+        if len(entities) == self.limit:
+            # fake that there is more than one full page left.
+            entity_count += self.limit + 1
+
+        return {
+            'entities': entities,
+            'paging_info': {
+                'entity_count': entity_count,
+            },
+        }
+

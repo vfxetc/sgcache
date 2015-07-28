@@ -15,13 +15,4 @@ def info(req):
 
 @api3_method
 def read(req):
-
-    op = Api3ReadOperation(req)
-    entities = op.run(cache)
-
-    return {
-        'entities': entities,
-        'paging_info': {
-            'entity_count': len(entities),
-        }
-    }
+    return Api3ReadOperation(req).run(cache)

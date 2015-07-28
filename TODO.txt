@@ -1,19 +1,20 @@
 
+- return accurate paging info; currently we are cheating a bit
+
+- redirect Shotgun pages to actual Shotgun
+
 - devops
-    - serve with gunicorn and gevent
     - split up the processes
     - nginx proxy to real thing when down?
 
-- get private schema
+- get and parse private schema
     s = requests.Session()
     s.cookies['_session_id'] = sg._get_session_token()
     s.get('https://keystone.shotgunstudio.com/page/schema')
 
-- how to sign our own S3 URLs?
+
 
 - use sudo_as_login in logs
-
-- include user/script name in api logs
 
 - return a fake "name" (as determined by the identifier_column in the 
   private schema) with entities/multi-entities
@@ -23,12 +24,6 @@
 - sgcache-scanner -> grab updated data periodically
 
 - sgcache-reprocess --retirement -> reprocess retirement events
-
-- somehow filter retired multi_entity connections
-
-
-- page_count and entity_count are supposed to be for the read request
-  without paging applied (but with the current filters)
 
 - table with log of data updates
 - the actual event logs?
@@ -72,15 +67,10 @@
 
 - how to pull apart the results of those queries
 
-- YAML-style encoding of non-native types, e.g. a datetime: !!timestamp "2015-06-22 15:46:09.625815"
-
 - URLS could include the real shotgun server:
     >>> sg = Shotgun('http://localhost:8000/next=keystone.shotgunstudio.com/', 'xxx', 'yyy')
     The trailing slash is required for it to not get parsed out.
 
 - Can we instead exist as the http_proxy kwarg?
-
-- framework for forwarding the query to the real Shotgun if we don't know
-  how to deal with it
 
 - listen for schema changes, and use that to invalidate data
