@@ -175,7 +175,7 @@ class Api3ReadOperation(object):
             rows.append(row)
         return rows
 
-    def __call__(self, cache):
+    def run(self, cache):
 
         self.cache = cache
         self.entity_type = cache[self.entity_type_name]

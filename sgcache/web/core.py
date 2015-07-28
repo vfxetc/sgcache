@@ -14,6 +14,7 @@ from shotgun_api3_registry import get_args as get_sg_args
 from ..exceptions import Passthrough
 from ..logs import setup_logs, log_globals
 from ..cache import Cache
+from ..schema import Schema
 from .. import config
 
 log = logging.getLogger(__name__)
@@ -27,8 +28,8 @@ db = sa.create_engine(app.config['SQLA_URL'], echo=bool(app.config['SQLA_ECHO'])
 # Setup logging *after* SQLA so that it can deal with its handlers.
 setup_logs(app)
 
-schema_spec = yaml.load(open(app.config['SCHEMA']).read())
-cache = Cache(db, schema_spec) # SQL DDL is executed here; watch out!
+schema = Schema.load_yaml(app.config['SCHEMA'])
+cache = Cache(db, schema) # SQL DDL is executed here; watch out!
 
 # Get the fallback server from shotgun_api3_registry.
 FALLBACK_SERVER = get_sg_args()[0].strip('/')

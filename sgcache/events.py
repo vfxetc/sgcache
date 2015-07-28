@@ -49,7 +49,7 @@ class EventProcessor(object):
             log.warning('could not find "new" %s %d' % (entity_type.type_name, event.entity_id))
             return
 
-        self.cache.create_or_update(entity_type.type_name, data=entity, allow_id=True, con=con, extra={
+        self.cache.create_or_update(entity_type.type_name, data=entity, create_with_id=True, con=con, extra={
             '_last_log_event_id': event['id'],
             '_active': True, # for revived entities
         })
@@ -167,7 +167,7 @@ class EventProcessor(object):
         else:
             data[event['attribute_name']] = event['meta']['new_value']
 
-        handler = self.cache.create_or_update(entity_type.type_name, data=data, allow_id=True, con=con, extra={
+        handler = self.cache.create_or_update(entity_type.type_name, data=data, create_with_id=True, con=con, extra={
             '_last_log_event_id': event['id'],
         })
 

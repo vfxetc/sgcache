@@ -18,9 +18,10 @@ def sg_field_type(cls):
 
 class Base(object):
 
-    def __init__(self, entity, name):
+    def __init__(self, entity, name, schema):
         self.entity = entity
         self.name = name
+        self.schema = schema
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, self.name)
@@ -200,9 +201,10 @@ class DateTime(Text):
 @sg_field_type
 class Entity(Base):
 
-    def __init__(self, entity, name, entity_types):
-        super(Entity, self).__init__(entity, name)
-        self.entity_types = tuple(entity_types)
+    def __init__(self, entity, name, schema):
+        super(Entity, self).__init__(entity, name, schema)
+        if not self.schema.entity_types:
+            raise ValueError('entity field %s needs entity_types' % name)
 
     def _construct_schema(self, table):
 
@@ -211,7 +213,7 @@ class Entity(Base):
         if False:
             # We need to take care with enums, and create their type before the column.
             # If this is done on SQLite, it does nothing (as it should).
-            type_enum = sa.Enum(*self.entity_types, name='%s_%s__enum' % (table.name, self.name))
+            type_enum = sa.Enum(*self.schema.entity_types, name='%s_%s__enum' % (table.name, self.name))
             type_column = sa.Column('%s__type' % self.name, type_enum)
             if type_column.name not in table.c:
                 type_enum.create(table.metadata.bind)
@@ -270,10 +272,11 @@ class Entity(Base):
 @sg_field_type
 class MultiEntity(Base):
 
-    def __init__(self, entity, name, entity_types):
-        super(MultiEntity, self).__init__(entity, name)
-        self.entity_types = tuple(entity_types)
-
+    def __init__(self, entity, name, schema):
+        super(MultiEntity, self).__init__(entity, name, schema)
+        if not self.schema.entity_types:
+            raise ValueError('entity field %s needs entity_types' % name)
+    
     def _construct_schema(self, table):
         self.assoc_table_name = '%s_%s' % (table.name, self.name)
         self.assoc_table = table.metadata.tables.get(self.assoc_table_name)

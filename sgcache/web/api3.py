@@ -17,7 +17,7 @@ def info(req):
 def read(req):
 
     op = Api3ReadOperation(req)
-    entities = op(cache)
+    entities = op.run(cache)
 
     return {
         'entities': entities,

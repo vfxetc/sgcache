@@ -9,24 +9,18 @@ from .fields import sg_field_types
 
 class EntityType(collections.Mapping):
 
-    def __init__(self, model, name, fields):
+    def __init__(self, model, name, schema):
 
         self.model = model
         self.type_name = name
         self.table_name = name.lower()
 
-        self.fields = {}
-        for name, spec in fields.iteritems():
-            
-            # if it is a string, it represents just the data_type
-            if isinstance(spec, basestring):
-                spec = {'data_type': spec}
-            else:
-                spec = spec.copy()
-            type_ = spec.pop('data_type')
+        self.schema = schema
 
-            cls = sg_field_types[type_]
-            field = self.fields[name] = cls(self, name, **spec)
+        self.fields = {}
+        for name, field_schema in schema.iteritems():
+            cls = sg_field_types[field_schema.data_type]
+            field = self.fields[name] = cls(self, name, field_schema)
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, self.type_name)

@@ -19,10 +19,9 @@ import sqlalchemy as sa
 
 class Api3CreateOperation(object):
 
-    def __init__(self, request, allow_id=False):
+    def __init__(self, request, create_with_id=False):
 
         self.request = request
-        
 
         self.entity_type_name = request['type']
         self.data = {x['field_name']: x['value'] for x in request['fields']}
@@ -30,13 +29,13 @@ class Api3CreateOperation(object):
 
         self.entity_exists = None
         self.entity_id = self.data.get('id') # this is for field.prepare_upsert
-        if self.entity_id and not allow_id:
+        if self.entity_id and not create_with_id:
             raise ValueError('cannot specify ID for create')
 
         self.before_query = []
         self.after_query = []
 
-    def __call__(self, cache, con=None, extra=None):
+    def run(self, cache, con=None, extra=None):
 
         query_params = (extra or {}).copy()
 
