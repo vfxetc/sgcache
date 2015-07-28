@@ -6,6 +6,8 @@ import re
 import threading
 import time
 
+import collections
+
 import sqlalchemy as sa
 
 from sgevents import EventLog
@@ -22,7 +24,7 @@ from .utils import log_exceptions
 log = logging.getLogger(__name__)
 
 
-class Cache(object):
+class Cache(collections.Mapping):
 
     def __init__(self, db, spec):
         
@@ -31,6 +33,7 @@ class Cache(object):
 
         self._entity_types = {}
         for name, fields in spec.iteritems():
+            # We always need an `id` field.
             fields['id'] = 'number'
             self._entity_types[name] = EntityType(self, name, fields)
 
@@ -42,11 +45,11 @@ class Cache(object):
         except KeyError as e:
             raise EntityMissing(e.args[0])
     
-    def get(self, *args):
-        return self._entity_types.get(*args)
+    def __iter__(self):
+        return iter(self._entity_types)
 
-    def __contains__(self, key):
-        return key in self._entity_types
+    def __len__(self):
+        return len(self._entity_types)
     
     def _construct_schema(self):
         self.metadata.reflect()

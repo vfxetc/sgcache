@@ -1,3 +1,4 @@
+import collections
 import datetime
 
 import sqlalchemy as sa
@@ -6,7 +7,7 @@ import migrate # this monkey-patches sqlalchemy
 from .fields import sg_field_types
 
 
-class EntityType(object):
+class EntityType(collections.Mapping):
 
     def __init__(self, model, name, fields):
 
@@ -32,8 +33,12 @@ class EntityType(object):
 
     def __getitem__(self, key):
         return self.fields[key]
-    def __contains__(self, key):
-        return key in self.fields
+
+    def __iter__(self):
+        return iter(self.fields)
+
+    def __len__(self):
+        return len(self.fields)
 
     def _construct_schema(self):
         
