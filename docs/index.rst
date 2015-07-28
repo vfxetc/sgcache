@@ -36,6 +36,7 @@ Contents
    design
    roadmap
    reverse_engineering
+   dev_api
 
 
 

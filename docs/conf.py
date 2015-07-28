@@ -20,7 +20,8 @@ from docutils import nodes
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..')))
+sys.path.insert(1, os.path.abspath(os.path.join(__file__, '..', '..', 'venv', 'lib', 'python2.7', 'site-packages')))
 
 # -- General configuration ------------------------------------------------
 
@@ -293,6 +294,10 @@ texinfo_documents = [
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}
 
+
+
+autodoc_member_order = 'bysource'
+autodoc_default_flags = ['undoc-members']
 
 
 def setup(app):
