@@ -1,22 +1,22 @@
 import collections
 
 
-_PathSegment = collections.namedtuple('PathSegment', 'type field')
-class PathSegment(_PathSegment):
-
+_FieldPathSegment = collections.namedtuple('FieldPathSegment', 'type field')
+class FieldPathSegment(_FieldPathSegment):
+    
     def __str__(self):
         return '%s.%s' % self
 
 
-class Path(collections.Sequence):
+class FieldPath(collections.Sequence):
 
     def __init__(self, input_, root_type=None):
         if isinstance(input_, basestring):
             assert root_type
             parts = input_.split('.')
-            self.segments = segments = [PathSegment(root_type, parts.pop(0))]
+            self.segments = segments = [FieldPathSegment(root_type, parts.pop(0))]
             while parts:
-                segments.append(PathSegment(parts.pop(0), parts.pop(0)))
+                segments.append(FieldPathSegment(parts.pop(0), parts.pop(0)))
         else:
             self.segments = input_[:]
 
@@ -25,7 +25,7 @@ class Path(collections.Sequence):
 
     def __getitem__(self, index):
         if isinstance(index, slice):
-            return Path(self.segments[index])
+            return FieldPath(self.segments[index])
         else:
             return self.segments[index]
 

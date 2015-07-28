@@ -1,7 +1,7 @@
 import sqlalchemy as sa
 
 from ..exceptions import EntityMissing, FieldMissing, NoFieldData
-from ..path import Path
+from ..path import FieldPath
 
 
 class ReadHandler(object):
@@ -33,7 +33,7 @@ class ReadHandler(object):
 
 
     def parse_path(self, path):
-        return Path(path, self.entity_type_name)
+        return FieldPath(path, self.entity_type_name)
 
     def get_entity(self, path):
         try:
@@ -114,7 +114,9 @@ class ReadHandler(object):
 
     def prepare(self):
 
-        self.select_from = self.get_table(Path([(self.entity_type_name, None)]))
+        # Hacky use of FieldPath here...
+        self.select_from = self.get_table(FieldPath([(self.entity_type_name, None)]))
+
         self.where_clauses.append(self.select_from.c._active == self.return_active)
         
         self.return_fields.append('id')

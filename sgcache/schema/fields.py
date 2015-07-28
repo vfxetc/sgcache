@@ -50,6 +50,9 @@ class Base(object):
     def _create_sql(self, table):
         raise NotImplementedError()
 
+    # Query construction methods
+    # ==========================
+
     def prepare_join(self, request, self_path, next_path):
         raise NotImplementedError()
 
