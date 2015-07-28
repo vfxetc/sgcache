@@ -4,11 +4,45 @@ import collections
 _FieldPathSegment = collections.namedtuple('FieldPathSegment', 'type field')
 class FieldPathSegment(_FieldPathSegment):
     
+    """One segment of a :class:`FieldPath`.
+
+    .. attribute:: type
+
+        The entity type of this segment.
+
+    .. attribute:: field
+
+        The field name of this segment.
+
+    """
+
     def __str__(self):
         return '%s.%s' % self
 
 
 class FieldPath(collections.Sequence):
+
+    """A path in an API3 filter or return field; a sequence of
+    :class:`FieldPathSegment` objects.
+
+    :param input: A list of :class:`FieldPathSegment`, or a string.
+    :param root_type: The entity type this field starts at; required if
+        the input is a string.
+
+    ::
+
+        >>> path = FieldPath('entity.Shot.sg_sequence.Sequence.code', root_type='Task')
+
+        >>> str(path)
+        'entity.Shot.sg_sequence.Sequence.code'
+
+        >>> str(path[:1])
+        'entity'
+        
+        >>> str(path[1:])
+        'sg_sequence.Sequence.code'
+
+    """
 
     def __init__(self, input_, root_type=None):
         if isinstance(input_, basestring):
@@ -30,6 +64,25 @@ class FieldPath(collections.Sequence):
             return self.segments[index]
 
     def format(self, head=False, tail=True):
+        """Stringify this path.
+
+        :param bool head: Include the root entity type?
+        :param bool tail: Include the final field name?
+
+        ::
+
+            >>> path = FieldPath('entity.Shot.code', root_type='Task')
+
+            >>> path.format()
+            'entity.Shot.code'
+
+            >>> path.format(head=True)
+            'Task.entity.Shot.code'
+
+            >>> path.format(tail=False)
+            'entity.Shot'
+
+        """
 
         if len(self) == 1:
             if head and tail:
