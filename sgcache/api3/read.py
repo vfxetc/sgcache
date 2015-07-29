@@ -1,3 +1,6 @@
+import time
+import cProfile as profile
+
 import sqlalchemy as sa
 
 from ..exceptions import EntityMissing, FieldMissing, NoFieldData
@@ -47,6 +50,16 @@ class Api3ReadOperation(object):
         self.group_by_clauses = []
         self.order_by_clauses = []
 
+        self._start_time = self._last_time = time.time()
+
+    def _debug_time(self, msg):
+        now = time.time()
+        print '%3dms (+%6dus): %s' % (
+            1000 * (now - self._start_time),
+            1000000 * (now - self._last_time),
+            msg
+        )
+        self._last_time = now
 
     def parse_path(self, path):
         """Get a :class:`.FieldPath` for the requested entity type.
@@ -267,7 +280,7 @@ class Api3ReadOperation(object):
         """
 
         rows = []
-        for i, raw_row in enumerate(res):
+        for raw_row in res:
             row = {'type': self.entity_type_name}
             for path, join_state, field, state in self.select_state:
                 if not self.check_for_joins(raw_row, join_state):
@@ -277,7 +290,7 @@ class Api3ReadOperation(object):
                 except NoFieldData:
                     pass
                 else:
-                    row[path.format(head=False)] = value
+                    row[path.format()] = value
             rows.append(row)
         return rows
 
@@ -293,8 +306,34 @@ class Api3ReadOperation(object):
         self.entity_type = cache[self.entity_type_name]
 
         query = self.prepare()
+
+        #self._debug_time('prepared query')
+
+        if False:
+            try:
+                sql = str(query.compile(cache.db, compile_kwargs={"literal_binds": True}))
+                explain_res = cache.db.execute('EXPLAIN ANALYZE ' + sql)
+                print sql
+                print
+                for row in explain_res:
+                    print row[0]
+                print '========='
+            except Exception as e:
+                print 'EXPLAIN FAILED:', e
+
+
         db_res = cache.db.execute(query)
-        entities = self.extract(db_res)
+
+        #self._debug_time('executed query')
+
+        if False:
+            profiler = profile.Profile()
+            entities = profiler.runcall(self.extract, db_res)
+            profiler.print_stats()
+        else:
+            entities = self.extract(db_res)
+
+        #self._debug_time('extracted results')
 
         # paging_info.entity_count represents the total entities that would
         # be returned if there was no paging applied. Since the shotgun_api3

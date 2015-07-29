@@ -1,4 +1,11 @@
 
+- remote all global state:
+    - Config object to represent the config
+    - make_app to make the flask app
+    - make_cache to make the schema and cache
+
+- split non-indempotent parts of Api3ReadOperation into Api3ReadQuery
+
 - return accurate paging info; currently we are cheating a bit
 
 - redirect Shotgun pages to actual Shotgun

@@ -45,6 +45,7 @@ class FieldPath(collections.Sequence):
     """
 
     def __init__(self, input_, root_type=None):
+
         if isinstance(input_, basestring):
             assert root_type
             parts = input_.split('.')
@@ -63,7 +64,7 @@ class FieldPath(collections.Sequence):
         else:
             return self.segments[index]
 
-    def format(self, head=False, tail=True):
+    def format(self, head=False, tail=True, _cached=True):
         """Stringify this path.
 
         :param bool head: Include the root entity type?
@@ -84,7 +85,22 @@ class FieldPath(collections.Sequence):
 
         """
 
-        if len(self) == 1:
+        # If this is the very common case, cache it the first time.
+        # Doing this results in cutting down 2/3 of the time to respond to
+        # read queries that return 500 entities.
+        if tail and not head and _cached:
+            try:
+                return self._format_cache
+            except AttributeError:
+                res = self._format_cache = self.format(_cached=False)
+                return res
+
+        len_ = len(self)
+
+        if not len_:
+            return ''
+
+        if len_ == 1:
             if head and tail:
                 return '%s.%s' % self[0]
             elif head:
@@ -96,9 +112,10 @@ class FieldPath(collections.Sequence):
 
         parts = []
         parts.append(('%s.%s' % self[0]) if head else self[0][1])
-        if len(self) > 1:
+        if len_ > 1:
             parts.extend('%s.%s' % x for x in self[1:-1])
             parts.append(('%s.%s' % self[-1]) if tail else self[-1][0])
+
         return '.'.join(parts)
 
     def __str__(self):
