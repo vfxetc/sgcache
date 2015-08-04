@@ -1,3 +1,4 @@
+import datetime
 import itertools
 import logging
 import os
@@ -64,8 +65,22 @@ def setup_logs(app=None):
         handler.setFormatter(formatter)
         root.addHandler(handler)
 
+    # Console logging.
     add_handler(logging.StreamHandler(sys.stderr))
 
+    # File logging.
+    if app.config['LOGGING_FILE_DIR']:
+        if not os.path.exists(app.config['LOGGING_FILE_DIR']):
+            os.makedirs(app.config['LOGGING_FILE_DIR'])
+        handler = PatternedFileHandler(os.path.join(app.config['LOGGING_FILE_DIR'], '{date}.{pid}.log'))
+        handler.setLevel(app.config['LOGGING_FILE_LEVEL'])
+        add_handler(handler)
+
+    # Email logging.
+    if app.config['LOGGING_SMTP_ARGS']:
+        handler = logging.handlers.SMTPHandler(*app.config['LOGGING_SMTP_ARGS'])
+        handler.setLevel(app.config['LOGGING_SMTP_LEVEL'])
+        add_handler(handler)
 
 
 
@@ -78,4 +93,27 @@ class RequestContextInjector(logging.Filter):
         meta = getattr(record, 'meta', {})
         record.meta_str = ' '.join('%s:%s' % x for x in sorted(meta.iteritems()))
         return True
+
+
+class PatternedFileHandler(logging.FileHandler):
+
+    def __init__(self, *args, **kwargs):
+        super(PatternedFileHandler, self).__init__(*args, **kwargs)
+        self._last_path = None
+
+    def _current_path(self):
+        now = datetime.datetime.utcnow()
+        return self.baseFilename.format(
+            date=now.date().isoformat(),
+            pid=os.getpid(),
+        )
+
+    def _open(self):
+        return open(self._current_path(), self.mode)
+
+    def emit(self, record):
+        if self._last_path and self._last_path != self._current_path():
+            self.close()
+        super(PatternedFileHandler, self).emit(record)
+
 

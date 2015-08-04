@@ -1,9 +1,9 @@
-'''Default config goes here.'''
 import argparse
+import logging
 import os
 
 
-SQLA_URL = 'sqlite:///%s' % os.path.abspath(os.path.join(__file__, '..', '..', 'sandbox', 'data.db'))
+SQLA_URL = 'sqlite:///%s' % os.path.abspath(os.path.join(__file__, '..', '..', 'var', 'data.db'))
 SQLA_ECHO = False
 
 SCHEMA = 'schema/keystone-basic.yml'
@@ -22,10 +22,24 @@ PORT = int(os.environ.get('PORT', 8010))
 GUNICORN_WORKERS = 4
 GUNICORN_WORKER_CLASS = 'gevent'
 
+LOGGING_FILE_DIR = os.path.abspath(os.path.join(__file__, '..', '..', 'var', 'log'))
+LOGGING_FILE_LEVEL = logging.INFO
+LOGGING_SMTP_ARGS = None #('mail.westernx', 'sgevents@mail.westernx', ['mboers@mail.westernx'], 'SGCache Log Event')
+LOGGING_SMTP_LEVEL = logging.ERROR
+
+INCLUDE = None
+
+
 # Override with SGCACHE_* envvars.
 for k, v in os.environ.iteritems():
     if k.startswith('SGCACHE_'):
         globals()[k[8:]] = v
+
+
+# Expand any includes.
+if INCLUDE:
+    for path in INCLUDE.split(':'):
+        execfile(path)
 
 
 def update_from_argv():
