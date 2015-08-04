@@ -98,8 +98,8 @@ class RequestContextInjector(logging.Filter):
 class PatternedFileHandler(logging.FileHandler):
 
     def __init__(self, *args, **kwargs):
-        super(PatternedFileHandler, self).__init__(*args, **kwargs)
         self._last_path = None
+        super(PatternedFileHandler, self).__init__(*args, **kwargs)
 
     def _current_path(self):
         now = datetime.datetime.utcnow()
@@ -109,7 +109,8 @@ class PatternedFileHandler(logging.FileHandler):
         )
 
     def _open(self):
-        return open(self._current_path(), self.mode)
+        self._last_path = path = self._current_path()
+        return open(path, self.mode)
 
     def emit(self, record):
         if self._last_path and self._last_path != self._current_path():
