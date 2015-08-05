@@ -26,6 +26,8 @@ We have a few opportunities to capture data as it is created/modified, and can
 manufacture a few more:
 
 
+.. _event_log:
+
 1. The event log
 ^^^^^^^^^^^^^^^^
 

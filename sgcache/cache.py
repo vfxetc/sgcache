@@ -19,7 +19,7 @@ from .events import EventProcessor
 from .exceptions import EntityMissing
 from .logs import log_globals
 from .scanner import Scanner
-from .utils import log_exceptions
+from .utils import log_exceptions, get_shotgun_args
 
 log = logging.getLogger(__name__)
 
@@ -140,7 +140,7 @@ class Cache(collections.Mapping):
         if auto_last_id:
             last_id, last_time = self.get_last_event()
 
-        self.event_log = EventLog(last_id=last_id, last_time=last_time)
+        self.event_log = EventLog(shotgun=get_shotgun_args(), last_id=last_id, last_time=last_time)
         self.event_processor = EventProcessor(self)
 
         while True:

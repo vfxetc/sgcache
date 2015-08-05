@@ -4,6 +4,23 @@ import logging
 import re
 
 
+from . import config
+
+try:
+    import shotgun_api3_registry
+except ImportError:
+    shotgun_api3_registry
+
+
+def get_shotgun_args():
+    if config.SHOTGUN_URL:
+        return (config.SHOTGUN_URL, config.SHOTGUN_SCRIPT_NAME, config.SHOTGUN_API_KEY)
+    elif shotgun_api3_registry:
+        return shotgun_api3_registry.get_args()
+    else:
+        raise RuntimeError('please set SHOTGUN_URL, or provide shotgun_api3_registry.get_args')
+
+
 @contextlib.contextmanager
 def log_exceptions(log, msg=None):
     try:

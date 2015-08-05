@@ -10,9 +10,7 @@ try:
 except ImportError as e:
     Shotgun = None
 
-from shotgun_api3_registry import get_args as get_sg_args
-
-from .utils import parse_interval
+from .utils import parse_interval, get_shotgun_args
 from .logs import log_globals
 
 
@@ -29,7 +27,7 @@ class Scanner(object):
         self.projects = projects
 
         self._log_counter = itertools.count(1)
-        self.shotgun = Shotgun(*get_sg_args())
+        self.shotgun = Shotgun(*get_shotgun_args())
 
     def scan(self, interval=None):
 

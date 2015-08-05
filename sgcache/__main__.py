@@ -19,24 +19,25 @@ if app.config['WATCH_EVENTS']:
     threads.append(cache.watch(
         async=True,
         auto_last_id=app.config['AUTO_LAST_ID'],
-        idle_delay=float(app.config['WATCH_IDLE_DELAY']),
+        idle_delay=app.config['WATCH_IDLE_DELAY'],
     ))
 else:
     log.warning('not watching events!')
 
 # Scan for updates in a thread.
-if app.config['SCAN_SINCE'] or app.config['SCAN_INTERVAL']:
+if app.config['SCAN_CHANGES']:
     log.info('starting scanner')
     threads.append(cache.scan(
         async=True,
-        last_time=app.config['SCAN_SINCE'] or app.config['SCAN_INTERVAL'],
+        auto_last_time=app.config['AUTO_LAST_ID'],
+        last_time=app.config['SCAN_SINCE'],
         interval=app.config['SCAN_INTERVAL'],
     ))
 else:
     log.warning('not starting scanner!')
 
 
-port = int(config.PORT)
+port = app.config['PORT']
 if port:
 
     # Use Gunicorn?
@@ -48,7 +49,7 @@ if port:
 
             def load_config(self):
                 self.cfg.set('bind', '0.0.0.0:%s' % port)
-                for k, v in config.__dict__.iteritems():
+                for k, v in app.config.__dict__.iteritems():
                     if k.startswith('GUNICORN_') and v is not None:
                         # This is a bit fragile.
                         if isinstance(v, basestring) and v.isdigit():

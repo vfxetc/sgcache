@@ -13,7 +13,7 @@ and its consumers, with the immediate major goals being to:
 
 - Reduce the request latency compared to a hosted Shotgun server;
 
-- Increase the redundancy of the Shotgun API, upon which we base (far too much)
+- Increase the redundancy of the Shotgun API, upon which we base (perhaps too much)
   of our VFX pipeline;
 
 - More flexibility in querying Shotgun data, as we may construct arbitrary

@@ -9,13 +9,12 @@ import requests
 import sqlalchemy as sa
 import yaml
 
-from shotgun_api3_registry import get_args as get_sg_args
-
+from .. import config
+from ..cache import Cache
 from ..exceptions import Passthrough
 from ..logs import setup_logs, log_globals
-from ..cache import Cache
 from ..schema import Schema
-from .. import config
+from ..utils import get_shotgun_args
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +31,7 @@ schema = Schema.from_yaml(app.config['SCHEMA'])
 cache = Cache(db, schema) # SQL DDL is executed here; watch out!
 
 # Get the fallback server from shotgun_api3_registry.
-FALLBACK_SERVER = get_sg_args()[0].strip('/')
+FALLBACK_SERVER = get_shotgun_args()[0].strip('/')
 FALLBACK_URL = FALLBACK_SERVER + '/api3/json'
 
 # We use one HTTP session for everything.
