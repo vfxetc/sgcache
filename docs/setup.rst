@@ -19,7 +19,8 @@ A typical install looks like::
     # Create a virtualenv, and install the Python dependencies
     virtualenv venv
     . venv/bin/activate
-    pip install -r requirements
+    pip install -r requirements.txt
+    pip install -r requirements-westernx.txt
 
 
 
