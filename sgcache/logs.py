@@ -1,3 +1,4 @@
+from urllib import quote
 import datetime
 import itertools
 import logging
@@ -5,7 +6,6 @@ import os
 import sys
 import threading
 import time
-from urllib import quote
 
 try:
     from flask import request

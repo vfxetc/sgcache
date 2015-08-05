@@ -5,13 +5,8 @@ import re
 import sys
 import time
 
-try:
-    from sgapi import Shotgun
-except ImportError as e:
-    Shotgun = None
-
-from .utils import parse_interval, get_shotgun_args
 from .logs import log_globals
+from .utils import parse_interval, get_shotgun
 
 
 log = logging.getLogger(__name__)
@@ -27,7 +22,7 @@ class Scanner(object):
         self.projects = projects
 
         self._log_counter = itertools.count(1)
-        self.shotgun = Shotgun(*get_shotgun_args())
+        self.shotgun = get_shotgun('sgapi')
 
     def scan(self, interval=None):
 
@@ -76,7 +71,7 @@ class Scanner(object):
                 filters.append(('project', 'in', [{'type': 'Project', 'id': pid} for pid in self.projects]))
 
             return_fields = sorted(entity_type.fields)
-            
+
             for entity in self._find_active_and_retired(entity_type.type_name, filters, return_fields, threads=1, per_page=100):
                 for key, field in entity_type.fields.iteritems():
                     value = entity[key]

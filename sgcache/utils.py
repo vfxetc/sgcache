@@ -2,23 +2,65 @@ import contextlib
 import datetime
 import logging
 import re
-
+import os
 
 from . import config
 
 try:
+    import sgapi
+except ImportError as e:
+    sgapi = None
+try:
+    import shotgun_api3
+except ImportError as e:
+    shotgun_api3 = None
+
+try:
     import shotgun_api3_registry
 except ImportError:
-    shotgun_api3_registry
+    shotgun_api3_registry = None
+
+
+
+def get_shotgun_class(provider=None, strict=False):
+
+    if provider:
+
+        try:
+            module = {
+                'sgapi': sgapi,
+                'shotgun_api3': shotgun_api3,
+            }[provider]
+        except KeyError:
+            raise ValueError("%s is not a Shotgun api type")
+
+        if module:
+            return module.Shotgun
+        elif strict:
+            raise RuntimeError("%s is not installed" % provider)
+
+    if shotgun_api3:
+        return shotgun_api3.Shotgun
+    elif sgapi:
+        return sgapi.Shotgun
+    else:
+        raise RuntimeError("no Shotgun APIs installed")
 
 
 def get_shotgun_args():
     if config.SHOTGUN_URL:
         return (config.SHOTGUN_URL, config.SHOTGUN_SCRIPT_NAME, config.SHOTGUN_API_KEY)
     elif shotgun_api3_registry:
+        # In Western Post, this envvar signals to return the cache. That would
+        # make very little sense here.
+        os.environ.pop('SGCACHE', None)
         return shotgun_api3_registry.get_args()
     else:
         raise RuntimeError('please set SHOTGUN_URL, or provide shotgun_api3_registry.get_args')
+
+
+def get_shotgun(*args, **kwargs):
+    return get_shotgun_class(*args, **kwargs)(*get_shotgun_args())
 
 
 @contextlib.contextmanager
