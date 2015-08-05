@@ -9,7 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(__file__, '..', '..')))
 from sgcache.utils import get_shotgun
 
 
-sg = get_shotgun('shotgun_api3', strict=True)
+sg = get_shotgun()
 
 
 raw_schema = sg.schema_read()

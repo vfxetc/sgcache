@@ -22,7 +22,7 @@ except ImportError:
 
 
 
-def get_shotgun_class(provider=None, strict=False):
+def get_shotgun_class(provider=None, strict=True):
 
     if provider:
 
