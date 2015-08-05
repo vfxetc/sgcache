@@ -37,6 +37,19 @@ The recommended configuration setup is to write your own Python file with
 your configuration changes, and refer to it via ``$SGCACHE_CONFIG``.
 
 
+Schema
+------
+
+You must select the subset of the Shotgun schema that you want to cache,
+and set :attr:`~sgcache.config.SCHEMA` to point to the containing YAML file.
+The ``schema/keystone-basic.yml`` file demonstrates the format, and is
+generated from our live Shotgun and basic rules via::
+
+    ./schema/dump > schema/keystone-full.yml
+    ./schema/filter -f schema/basic-filters.txt schema/keystone-full.yml > schema/keystone-basic.yml
+
+
+
 
 Execution
 ---------

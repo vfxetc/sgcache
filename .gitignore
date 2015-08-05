@@ -7,4 +7,4 @@ _build
 /*.db
 /var
 
-/schema/*full.yaml
+/schema/*full*

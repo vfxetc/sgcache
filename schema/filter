@@ -14,6 +14,7 @@ parser.add_argument('patterns', nargs='*')
 parser.add_argument('schema', default='-')
 args = parser.parse_args()
 
+
 raw_patterns = list(args.patterns)
 for path in args.file:
     raw_patterns.extend(open(path))
@@ -36,6 +37,7 @@ for raw in raw_patterns:
     
     include = flag in (None, '+')
     patterns.append((entity_type, field_name, data_type, include))
+
 
 def apply_patterns(entity_type, name=None, data_type=None, default=True):
 
