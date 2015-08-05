@@ -117,7 +117,7 @@ for k, v in os.environ.iteritems():
 if isinstance(CONFIG, basestring):
     CONFIG = filter(None, CONFIG.split(':'))
 if CONFIG:
-    for path in CONFIG.split(':'):
+    for path in CONFIG:
         execfile(path)
 
 

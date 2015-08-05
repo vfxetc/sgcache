@@ -29,7 +29,7 @@ if app.config['SCAN_CHANGES']:
     log.info('starting scanner')
     threads.append(cache.scan(
         async=True,
-        auto_last_time=app.config['AUTO_LAST_ID'],
+        #auto_last_time=app.config['AUTO_LAST_ID'],
         last_time=app.config['SCAN_SINCE'],
         interval=app.config['SCAN_INTERVAL'],
     ))
