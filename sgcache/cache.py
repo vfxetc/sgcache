@@ -99,22 +99,19 @@ class Cache(collections.Mapping):
         This is optionally used to seed :meth:`watch` and :meth:`scan`.
 
         """
-
-        last_id = 0
+        last_id = None
         last_time = None
         for entity_type in self._entity_types.itervalues():
             row = sa.select([
                 sa.func.max(entity_type.table.c._last_log_event_id),
                 sa.func.max(entity_type.table.c._cache_updated_at),
             ]).execute().fetchone()
-            last_id = max(
-                last_id or 0,
-                row[0] or 0
-            ) or None
-            last_time = max(
-                last_time or '',
-                row[1].replace(microsecond=0).isoformat('T') + 'Z' if row[1] else ''
-            ) or None
+
+            # We can max(None, 1), so this is ok...
+            last_id = max(last_id, row[0]) 
+            # ... but datetime does not compare against None directly.
+            last_time = max(last_time, row[1]) if (last_time and row[1]) else (last_time or row[1])
+
         return last_id, last_time
 
     def watch(self, last_id=None, last_time=None, auto_last_id=False, idle_delay=5.0, async=False):

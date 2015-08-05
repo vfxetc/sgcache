@@ -76,12 +76,8 @@ class Scanner(object):
                 filters.append(('project', 'in', [{'type': 'Project', 'id': pid} for pid in self.projects]))
 
             return_fields = sorted(entity_type.fields)
-
-            #print entity_type.type_name, filters, return_fields
-            #continue
-
+            
             for entity in self._find_active_and_retired(entity_type.type_name, filters, return_fields, threads=1, per_page=100):
-
                 for key, field in entity_type.fields.iteritems():
                     value = entity[key]
                     #if field.type_name in ('entity', ) and v:
