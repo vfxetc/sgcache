@@ -38,6 +38,12 @@ FALLBACK_URL = FALLBACK_SERVER + '/api3/json'
 http_session = requests.Session()
 
 
+
+@app.route('/ping')
+def on_ping():
+    return 'pong', 200, [('Content-Type', 'text/plain')]
+
+
 @app.route('/api3/json', methods=['POST'])
 @app.route('/<path:params>/api3/json', methods=['POST'])
 def json_api(params=None):
