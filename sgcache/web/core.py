@@ -48,27 +48,41 @@ def on_ping():
 @app.route('/<path:params>/api3/json', methods=['POST'])
 def json_api(params=None):
 
-    # TODO: pull server URL from params
-
     payload = json.loads(request.data)
 
     if not isinstance(payload, dict):
         return '', 400, []
 
-    #print json.dumps(payload, sort_keys=True, indent=4)
-
     try:
         method_name = payload['method_name']
+        params = payload['params']
+        auth_params = params[0] if params else {}
+        method_params = params[1] if len(params) > 1 else {}
     except KeyError:
         return '', 400, []
+
+    # Log the base of the request.
+    headline_chunks = ['Starting %s' % method_name]
+    entity_type = method_params.get('type')
+    if entity_type:
+        headline_chunks.append('on %s' % entity_type)
+    script_name = auth_params.get('script_name')
+    if script_name:
+        headline_chunks.append('by script "%s"' % script_name)
+        sudo_as_login = auth_params.get('sudo_as_login')
+        if sudo_as_login:
+            headline_chunks.append('as user "%s"' % sudo_as_login)
+    else:
+        user_login = auth_params.get('user_login')
+        if user_login:
+            headline_chunks.append('by user "%s"' % user_login)
+    log.info(' '.join(headline_chunks))
 
     try:
         method = _api3_methods[method_name]
     except KeyError as e:
-        log.info('Passing through %s request due to unknown API method' % method_name)
+        log.info('Passing through "%s" due to unknown API method' % method_name)
         return passthrough()
-
-    method_params = payload['params'][1] if len(payload['params']) > 1 else {}
 
     try:
         start_time = time.time()
@@ -76,8 +90,7 @@ def json_api(params=None):
         res_tuple = json.dumps(res_data), 200, [('Content-Type', 'application/json')]
 
     except Passthrough as e:
-
-        log.info('Passing through %s request due to %s("%s"):%s%s' % (
+        log.info('Passing through %s due to %s("%s"):%s%s' % (
             method_name,
             e.__class__.__name__,
             e,
@@ -88,10 +101,8 @@ def json_api(params=None):
         res_tuple = passthrough()
 
     elapsed_ms = 1000 * (time.time() - start_time)
-    log.info('%s request on %s returned %sin %.1fms' % (
-        method_name.title(),
-        method_params.get('type'),
-        '%s entities ' % len(res_data['entities']) if 'entities' in res_data else '',
+    log.info('Returned %sin %.1fms' % (
+        '%s %ss ' % (len(res_data['entities']), entity_type) if 'entities' in res_data else '',
         elapsed_ms
     ))
     log_globals.skip_http_log = True
