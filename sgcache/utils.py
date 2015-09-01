@@ -47,20 +47,25 @@ def get_shotgun_class(provider=None, strict=True):
         raise RuntimeError("no Shotgun APIs installed")
 
 
-def get_shotgun_args():
+def get_shotgun_kwargs():
     if config.SHOTGUN_URL:
-        return (config.SHOTGUN_URL, config.SHOTGUN_SCRIPT_NAME, config.SHOTGUN_API_KEY)
+        return {
+            'base_url': config.SHOTGUN_URL,
+            'script_name': config.SHOTGUN_SCRIPT_NAME,
+            'api_key': config.SHOTGUN_API_KEY,
+        }
+
     elif shotgun_api3_registry:
         # In Western Post, this envvar signals to return the cache. That would
         # make very little sense here.
         os.environ.pop('SGCACHE', None)
-        return shotgun_api3_registry.get_args()
+        return shotgun_api3_registry.get_kwargs()
     else:
-        raise RuntimeError('please set SHOTGUN_URL, or provide shotgun_api3_registry.get_args')
+        raise RuntimeError('please set SHOTGUN_URL, or provide shotgun_api3_registry.get_kwargs')
 
 
 def get_shotgun(*args, **kwargs):
-    return get_shotgun_class(*args, **kwargs)(*get_shotgun_args())
+    return get_shotgun_class(*args, **kwargs)(**get_shotgun_kwargs())
 
 
 @contextlib.contextmanager

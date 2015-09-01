@@ -14,7 +14,7 @@ from ..cache import Cache
 from ..exceptions import Passthrough
 from ..logs import setup_logs, log_globals
 from ..schema import Schema
-from ..utils import get_shotgun_args
+from ..utils import get_shotgun_kwargs
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ schema = Schema.from_yaml(app.config['SCHEMA'])
 cache = Cache(db, schema) # SQL DDL is executed here; watch out!
 
 # Get the fallback server from shotgun_api3_registry.
-FALLBACK_SERVER = get_shotgun_args()[0].strip('/')
+FALLBACK_SERVER = get_shotgun_kwargs()['base_url'].strip('/')
 FALLBACK_URL = FALLBACK_SERVER + '/api3/json'
 
 # We use one HTTP session for everything.
