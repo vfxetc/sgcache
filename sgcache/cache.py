@@ -158,7 +158,7 @@ class Cache(collections.Mapping):
                 log.exception('error during event iteration; sleeping for 10s')
                 time.sleep(10)
 
-    def scan(self, interval=None, last_time=None, auto_last_time=False, async=False):
+    def scan(self, interval=None, last_time=None, auto_last_time=False, async=False, **kwargs):
         """Periodically scan Shotgun for updated entities.
 
         :param float interval: Seconds between scans; ``None`` implies a single scan.
@@ -173,7 +173,7 @@ class Cache(collections.Mapping):
         """
 
         if async:
-            thread = threading.Thread(target=self.scan, args=(interval, last_time, auto_last_time))
+            thread = threading.Thread(target=self.scan, args=(interval, last_time, auto_last_time), kwargs=kwargs)
             thread.daemon = True
             thread.start()
             return thread
@@ -181,7 +181,7 @@ class Cache(collections.Mapping):
         if auto_last_time:
             last_id, last_time = self.get_last_event()
 
-        self.scanner = Scanner(self, last_time=last_time)
+        self.scanner = Scanner(self, last_time=last_time, **kwargs)
         while True:
             try:
                 self.scanner.scan(interval)

@@ -67,7 +67,7 @@ class Scanner(object):
             #log.info('scanning %ss' % entity_type.type_name)
 
             filters = base_filters[:]
-            if self.projects and args.project and 'project' in entity_type.fields and entity_type.type_name not in ('ApiUser', 'HumanUser'):
+            if self.projects and 'project' in entity_type.fields and entity_type.type_name not in ('ApiUser', 'HumanUser'):
                 filters.append(('project', 'in', [{'type': 'Project', 'id': pid} for pid in self.projects]))
 
             return_fields = sorted(entity_type.fields)
@@ -117,7 +117,8 @@ if __name__ == '__main__':
 
     from . import config
     from .logs import setup_logs
-    from .schema.core import Schema
+    from .cache import Cache
+    from .schema import Schema
 
     parser = argparse.ArgumentParser()
 
@@ -146,8 +147,8 @@ if __name__ == '__main__':
     # Setup logging *after* SQLA so that it can deal with its handlers.
     setup_logs()
 
-    schema_spec = yaml.load(open(config.SCHEMA).read())
-    schema = Schema(db, schema_spec) # SQL DDL is executed here; watch out!
+    schema = Schema.from_yaml(config.SCHEMA)
+    cache = Cache(db, schema)
 
-    scanner = Scanner(schema, last_time=args.last_time, types=args.type, projects=args.project)
-    scanner.scan(args.interval)
+    cache.scan(interval=args.interval, last_time=args.last_time, types=args.type, projects=args.project)
+

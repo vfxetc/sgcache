@@ -69,7 +69,7 @@ def setup_logs(app=None):
     add_handler(logging.StreamHandler(sys.stderr))
 
     # File logging.
-    if app.config['LOGGING_FILE_DIR']:
+    if app and app.config['LOGGING_FILE_DIR']:
         if not os.path.exists(app.config['LOGGING_FILE_DIR']):
             os.makedirs(app.config['LOGGING_FILE_DIR'])
         handler = PatternedFileHandler(os.path.join(app.config['LOGGING_FILE_DIR'], '{date}.{pid}.log'))
@@ -77,7 +77,7 @@ def setup_logs(app=None):
         add_handler(handler)
 
     # Email logging.
-    if app.config['LOGGING_SMTP_ARGS']:
+    if app and app.config['LOGGING_SMTP_ARGS']:
         handler = logging.handlers.SMTPHandler(*app.config['LOGGING_SMTP_ARGS'])
         handler.setLevel(app.config['LOGGING_SMTP_LEVEL'])
         add_handler(handler)
