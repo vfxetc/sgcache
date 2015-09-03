@@ -145,6 +145,16 @@ class Field(object):
 
         """
         column = read_op.get_table(path).c[self.name]
+
+        # Strings are case insensitive, so we use ILIKE.
+        if relation in ('is', 'is_not') and isinstance(values[0], basestring):
+            # This is quite awkward, but correct.
+            pattern = re.sub(r'([\\%_])', '\\\\\\1', values[0])
+            if relation == 'is':
+                return column.ilike(pattern)
+            else:
+                return sa.not_(column.ilike(pattern))
+
         if relation == 'is':
             return column == values[0]
         elif relation == 'is_not':
