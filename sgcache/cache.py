@@ -11,6 +11,7 @@ import collections
 import sqlalchemy as sa
 
 from sgevents import EventLog
+from sgapi import TransportError
 
 from . import fields
 from .api3.create import Api3CreateOperation
@@ -140,22 +141,53 @@ class Cache(collections.Mapping):
         self.event_log = EventLog(shotgun=get_shotgun('sgapi'), last_id=last_id, last_time=last_time)
         self.event_processor = EventProcessor(self)
 
+        io_error_count = 0
+        error_count = 0
+
         while True:
             try:
-                for event in self.event_log.iter_events(idle_delay=idle_delay):
-                    log_globals.meta = {'event': event.id}
-                    log.info(event.summary)
+                for event in self.event_log.iter_events_forever(idle_delay=idle_delay):
+                    
+                    io_error_count = error_count = 0
+                    log_globals.meta = {'event': event['id']}
+
                     try:
+                        log.info(event.summary)
                         handler = self.event_processor.get_handler(event)
                         if not handler:
                             continue
                         with self.db.begin() as con:
                             handler(con)
                     except:
-                        log.exception('error during event %d:\n%s' % (event.id, event.dumps(pretty=True)))
+                        log.exception('Error during event %d:\n%s' % (event['id'], event.dumps(pretty=True)))
+                    finally:
+                        log_globals.meta = {}
+
+            except IOError as e:
+                io_error_count += 1
+                log.log(
+                    logging.ERROR if io_error_count % 60 == 2 else logging.WARNING,
+                    'No connection to Shotgun for ~%d minutes; sleeping for 10s' % (io_error_count / 6),
+                    exc_info=True,
+                )
+                time.sleep(10)
+
             except:
-                # NOTE: The event log may have corrupted its ID tracking.
-                log.exception('error during event iteration; sleeping for 10s')
+                # NOTE: The event log may have corrupted its ID tracking, and
+                # be in an infinite loop. Only send emails about the first few,
+                # because inboxes can fill up.
+                error_count += 1
+                if error_count <= 10 or error_count % 60 == 1:
+                    if error_count >= 10:
+                        log.exception('Error %d during event iteration; silencing for ~10 minutes; sleeping for 10s' % error_count)
+                    else:
+                        log.exception('Error %d during event iteration; sleeping for 10s' % error_count)
+                else:
+                    log.warning('Error %d during event iteration; sleeping for 10s' % error_count, exc_info=True)
+                time.sleep(10)
+
+            else:
+                log.warning('EventLog.iter_events_forever() returned; sleeping for 10s')
                 time.sleep(10)
 
     def scan(self, interval=None, last_time=None, auto_last_time=False, async=False, **kwargs):
