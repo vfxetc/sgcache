@@ -3,7 +3,7 @@ import re
 
 import sqlalchemy as sa
 
-from .exceptions import FilterNotImplemented, NoFieldData
+from .exceptions import FilterNotImplemented, NoFieldData, ClientFault
 from .utils import iter_unique
 
 
@@ -184,6 +184,11 @@ class Field(object):
         """
         return {self.name: value}
 
+    # Other update methods.
+
+    def include_in_scan(self):
+        return True
+
 
 
 class Scalar(Field):
@@ -193,6 +198,35 @@ class Scalar(Field):
     def _construct_schema(self, table):
         self.column = self._create_or_check(table, sa.Column(self.name, self.sa_type))
 
+
+@sg_field_type
+class Absent(Field):
+    """Special case, indicating that this field does not exist."""
+
+    sa_type = None
+
+    # Ignore a few methods; Shotgun silently discards fields that don't exist
+    # in return_fields, and order.
+    def _pass(self, *args, **kwargs):
+        pass
+    _construct_schema = _pass
+    check_for_join = _pass
+    prepare_join = _pass
+    prepare_order = _pass
+    prepare_select = _pass
+    include_in_scan = _pass
+
+    # Need to signal that we have no data specifically.
+    def extract_select(self, *args, **kwargs):
+        raise NoFieldData()
+
+    # Throw faults to match Shotgun's behaviour:
+    # sgapi.core.ShotgunError: API read() Task.code doesn't exist:
+    # {"values"=>["something"], "path"=>"code", "relation"=>"is"}
+    def _fault(self, *args, **kwargs):
+        raise ClientFault('%s.%s does not exist' % (self.entity.type_name, self.name))
+    prepare_filter = _fault
+    prepare_upsert_data = _fault
 
 
 @sg_field_type
@@ -204,8 +238,11 @@ class Checkbox(Scalar):
 @sg_field_type
 class Number(Field):
 
+    # This might not be true...
+    sa_type = sa.Integer
+
     def _construct_schema(self, table):
-        self.column = self._create_or_check(table, sa.Column(self.name, sa.Integer, primary_key=self.name == 'id'))
+        self.column = self._create_or_check(table, sa.Column(self.name, self.sa_type, primary_key=self.name == 'id'))
 
 
 @sg_field_type

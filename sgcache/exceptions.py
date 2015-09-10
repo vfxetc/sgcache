@@ -17,3 +17,20 @@ class FilterNotImplemented(NotImplementedError, Passthrough):
 class NoFieldData(KeyError):
     '''Non-error signal that requested data doesn't exist.'''
 
+
+class Fault(ValueError):
+    '''Mimicking a Shotgun fault.'''
+
+    _default_code = 999
+
+    @property
+    def code(self):
+        try:
+            return self.args[1]
+        except IndexError:
+            return self._default_code
+
+
+class ClientFault(Fault):
+
+    _default_code = 103

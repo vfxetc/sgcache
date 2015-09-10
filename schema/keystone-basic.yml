@@ -1,9 +1,25 @@
 ApiUser:
+    code: absent
     created_at: date_time
     created_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
     description: text
+    entity: absent
+    link: absent
+    name: absent
+    project: absent
+    sg_code: absent
+    sg_entity: absent
+    sg_link: absent
+    sg_name: absent
+    sg_path_to_frames: absent
+    sg_path_to_movie: absent
+    sg_status: absent
+    sg_status_list: absent
+    short_name: absent
+    status: absent
+    status_list: absent
     updated_at: date_time
     updated_by:
         data_type: entity
@@ -15,26 +31,54 @@ Asset:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
     description: text
+    entity: absent
+    link: absent
+    name: absent
     project:
         data_type: entity
         entity_types: [Project]
     sg_asset_type: list
+    sg_code: absent
+    sg_entity: absent
+    sg_link: absent
+    sg_name: absent
+    sg_path_to_frames: absent
+    sg_path_to_movie: absent
+    sg_status: absent
     sg_status_list: status_list
+    short_name: absent
+    status: absent
+    status_list: absent
     updated_at: date_time
     updated_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
 HumanUser:
+    code: absent
     created_at: date_time
     created_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    description: absent
     email: text
+    entity: absent
     firstname: text
     lastname: text
+    link: absent
     login: text
     name: text
+    project: absent
+    sg_code: absent
+    sg_entity: absent
+    sg_link: absent
+    sg_name: absent
+    sg_path_to_frames: absent
+    sg_path_to_movie: absent
+    sg_status: absent
     sg_status_list: status_list
+    short_name: absent
+    status: absent
+    status_list: absent
     updated_at: date_time
     updated_by:
         data_type: entity
@@ -45,8 +89,22 @@ Project:
     created_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    description: absent
+    entity: absent
+    link: absent
     name: text
+    project: absent
+    sg_code: absent
+    sg_entity: absent
+    sg_link: absent
+    sg_name: absent
+    sg_path_to_frames: absent
+    sg_path_to_movie: absent
     sg_status: list
+    sg_status_list: absent
+    short_name: absent
+    status: absent
+    status_list: absent
     updated_at: date_time
     updated_by:
         data_type: entity
@@ -58,18 +116,28 @@ PublishEvent:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
     description: text
+    entity: absent
+    link: absent
+    name: absent
     project:
         data_type: entity
         entity_types: [Project]
+    sg_code: absent
+    sg_entity: absent
     sg_link:
         data_type: entity
         entity_types: [Task]
+    sg_name: absent
     sg_path: text
     sg_path_to_frames: text
     sg_path_to_movie: text
     sg_status: status_list
+    sg_status_list: absent
     sg_type: text
     sg_version: number
+    short_name: absent
+    status: absent
+    status_list: absent
     updated_at: date_time
     updated_by:
         data_type: entity
@@ -81,28 +149,55 @@ Sequence:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
     description: text
+    entity: absent
+    link: absent
+    name: absent
     project:
         data_type: entity
         entity_types: [Project]
+    sg_code: absent
+    sg_entity: absent
+    sg_link: absent
+    sg_name: absent
+    sg_path_to_frames: absent
+    sg_path_to_movie: absent
+    sg_status: absent
     sg_status_list: status_list
+    short_name: absent
+    status: absent
+    status_list: absent
     updated_at: date_time
     updated_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
 Shot:
+    '*sequence': absent
     code: text
     created_at: date_time
     created_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
     description: text
+    entity: absent
+    link: absent
+    name: absent
     project:
         data_type: entity
         entity_types: [Project]
+    sg_code: absent
+    sg_entity: absent
+    sg_link: absent
+    sg_name: absent
+    sg_path_to_frames: absent
+    sg_path_to_movie: absent
     sg_sequence:
         data_type: entity
         entity_types: [Sequence]
+    sg_status: absent
     sg_status_list: status_list
+    short_name: absent
+    status: absent
+    status_list: absent
     updated_at: date_time
     updated_by:
         data_type: entity
@@ -115,26 +210,54 @@ Step:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
     description: text
+    entity: absent
     entity_type: entity_type
+    link: absent
+    name: absent
+    project: absent
+    sg_code: absent
+    sg_entity: absent
+    sg_link: absent
+    sg_name: absent
+    sg_path_to_frames: absent
+    sg_path_to_movie: absent
+    sg_status: absent
+    sg_status_list: absent
     short_name: text
+    status: absent
+    status_list: absent
     updated_at: date_time
     updated_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
 Task:
+    code: absent
     color: color
     content: text
     created_at: date_time
     created_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    description: absent
     entity:
         data_type: entity
         entity_types: [Asset, Element, Scene, Sequence, Shot]
+    link: absent
+    name: absent
     project:
         data_type: entity
         entity_types: [Project]
+    sg_code: absent
+    sg_entity: absent
+    sg_link: absent
+    sg_name: absent
+    sg_path_to_frames: absent
+    sg_path_to_movie: absent
+    sg_status: absent
     sg_status_list: status_list
+    short_name: absent
+    status: absent
+    status_list: absent
     step:
         data_type: entity
         entity_types: [Step]
@@ -155,15 +278,25 @@ Version:
     entity:
         data_type: entity
         entity_types: [Asset, Shot, Scene, Sequence]
+    link: absent
+    name: absent
     project:
         data_type: entity
         entity_types: [Project]
+    sg_code: absent
+    sg_entity: absent
+    sg_link: absent
+    sg_name: absent
     sg_path_to_frames: text
     sg_path_to_movie: text
+    sg_status: absent
     sg_status_list: status_list
     sg_task:
         data_type: entity
         entity_types: [Task]
+    short_name: absent
+    status: absent
+    status_list: absent
     updated_at: date_time
     updated_by:
         data_type: entity

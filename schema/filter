@@ -9,6 +9,7 @@ import yaml
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument('-a', '--absent', action='store_true')
 parser.add_argument('-f', '--file', action='append')
 parser.add_argument('patterns', nargs='*')
 parser.add_argument('schema', default='-')
@@ -83,6 +84,23 @@ for entity_type, entity_spec in old_schema.iteritems():
 
     if new_entity:
         new_schema[entity_type] = new_entity
+
+
+if args.absent:
+    for entity_pattern, name_pattern, type_pattern, include in patterns:
+        
+        # Only things to include (although it wouldn't really hurt to not).
+        if not include:
+            continue
+
+        # Only specific names.
+        if not name_pattern or re.match(r'[(?\[\]]', name_pattern):
+            continue
+
+        for entity_type, entity_spec in new_schema.iteritems():
+            if not fnmatch.fnmatch(entity_type, entity_pattern):
+                continue
+            entity_spec.setdefault(name_pattern, 'absent')
 
 
 print yaml.dump(new_schema, indent=4)

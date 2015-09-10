@@ -70,13 +70,12 @@ class Scanner(object):
             if self.projects and 'project' in entity_type.fields and entity_type.type_name not in ('ApiUser', 'HumanUser'):
                 filters.append(('project', 'in', [{'type': 'Project', 'id': pid} for pid in self.projects]))
 
-            return_fields = sorted(entity_type.fields)
+            return_fields = sorted(name for name, field in entity_type.fields.iteritems() if field.include_in_scan())
 
             for entity in self._find_active_and_retired(entity_type.type_name, filters, return_fields, threads=1, per_page=100):
-                for key, field in entity_type.fields.iteritems():
+
+                for key in return_fields:
                     value = entity[key]
-                    #if field.type_name in ('entity', ) and v:
-                    #    e[k] = {'type': v['type'], 'id': v['id']}
                     if isinstance(value, datetime.datetime):
                         entity[key] = v.isoformat() + 'Z'
 

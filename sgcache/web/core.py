@@ -11,7 +11,7 @@ import yaml
 
 from .. import config
 from ..cache import Cache
-from ..exceptions import Passthrough
+from ..exceptions import Passthrough, Fault
 from ..logs import setup_logs, log_globals
 from ..schema import Schema
 from ..utils import get_shotgun_kwargs
@@ -87,6 +87,16 @@ def json_api(params=None):
     try:
         start_time = time.time()
         res_data = method(method_params)
+        res_tuple = json.dumps(res_data), 200, [('Content-Type', 'application/json')]
+
+    except Fault as e:
+        log.warning('%s (%s): %s' % (e.__class__.__name__, e.code, e.args[0]))
+        res_data = {
+            'exception': True,
+            'error_code': e.code,
+            'message': e.args[0],
+        }
+        # Shotgun does still return a 200 here.
         res_tuple = json.dumps(res_data), 200, [('Content-Type', 'application/json')]
 
     except Passthrough as e:
