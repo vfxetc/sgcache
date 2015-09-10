@@ -1,5 +1,5 @@
 
-- remote all global state:
+- remove all global state:
     - Config object to represent the config
     - make_app to make the flask app
     - make_cache to make the schema and cache
@@ -14,6 +14,18 @@
     - split up the processes
     - nginx proxy to real thing when down?
 
+- how to perform rolling schema upgrades?
+    1. move event watcher to new schema
+    2. perform full scan
+    3. restart interval scanner
+    4. restart cache with new schema
+
+    - this generally needs services to be independant
+    - would also be great if we have a system for sending messages into the
+      running services, and having them reload the schema, or adding fields
+      live on the fly
+        - unix socket in a thread with json messages
+    
 - get and parse private schema
     s = requests.Session()
     s.cookies['_session_id'] = sg._get_session_token()

@@ -51,10 +51,16 @@ class EventProcessor(object):
             log.warning('could not find "new" %s %d' % (entity_type.type_name, event.entity_id))
             return
 
-        self.cache.create_or_update(entity_type.type_name, data=entity, create_with_id=True, con=con, extra={
-            '_last_log_event_id': event['id'],
-            '_active': True, # for revived entities
-        })
+        self.cache.create_or_update(entity_type.type_name,
+            data=entity,
+            create_with_id=True,
+            con=con,
+            source_event=event,
+            extra={
+                '_last_log_event_id': event['id'],
+                '_active': True, # for revived entities
+            },
+        )
 
     def _process_change_event(self, con, event, entity_type):
         '''
@@ -169,9 +175,15 @@ class EventProcessor(object):
         else:
             data[event['attribute_name']] = event['meta']['new_value']
 
-        handler = self.cache.create_or_update(entity_type.type_name, data=data, create_with_id=True, con=con, extra={
-            '_last_log_event_id': event['id'],
-        })
+        handler = self.cache.create_or_update(entity_type.type_name,
+            data=data,
+            create_with_id=True,
+            con=con,
+            source_event=event,
+            extra={
+                '_last_log_event_id': event['id'],
+            },
+        )
 
         # If we did not know about it, then fetch all data as if it is new.
         if not handler.entity_exists:

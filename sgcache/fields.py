@@ -226,7 +226,15 @@ class Absent(Field):
     def _fault(self, *args, **kwargs):
         raise ClientFault('%s.%s does not exist' % (self.entity.type_name, self.name))
     prepare_filter = _fault
-    prepare_upsert_data = _fault
+    
+    def prepare_upsert_data(self, req, value):
+        # If triggered by an event, just ignore the request. This can happen
+        # a lot with identifier columns (usually "name"), in which it seems
+        # like we get a "name", but it really doesn't exist.
+        if req.source_event:
+            return
+        else:
+            self._fault()
 
 
 @sg_field_type

@@ -27,7 +27,7 @@ class Api3CreateOperation(object):
 
     """
 
-    def __init__(self, request, create_with_id=False):
+    def __init__(self, request, create_with_id=False, source_event=None):
 
         self.entity_type_name = request['type']
         self.data = {x['field_name']: x['value'] for x in request['fields']}
@@ -48,6 +48,9 @@ class Api3CreateOperation(object):
         #: List of functions to call with the transaction after the primary query is
         #: executed; generally appended to by the ``multi_entity`` :class:`~sgcache.fields.Base`.
         self.after_query = []
+
+        #: The :class:`~sgevents.event.Event` that triggered this query.
+        self.source_event = source_event
 
     def run(self, cache, con=None, extra=None):
         """Run the create operation.

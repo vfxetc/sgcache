@@ -62,7 +62,7 @@ class Cache(collections.Mapping):
     def __len__(self):
         return len(self._entity_types)
 
-    def create_or_update(self, type_name, data, create_with_id=False, **kwargs):
+    def create_or_update(self, type_name, data, create_with_id=False, source_event=None, **kwargs):
         """Create or update an entity, with an API eerily similar to ``python_api3``.
 
         This is a wrapper around :class:`.Api3CreateOperation`.
@@ -90,7 +90,7 @@ class Cache(collections.Mapping):
             'fields': [{'field_name': k, 'value': v} for k, v in data.iteritems()],
             'return_fields': ['id'],
         }
-        op = Api3CreateOperation(request, create_with_id=create_with_id)
+        op = Api3CreateOperation(request, create_with_id=create_with_id, source_event=source_event)
         op.run(self, **kwargs)
         return op
 
