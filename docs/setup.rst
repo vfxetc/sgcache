@@ -46,7 +46,7 @@ The ``schema/keystone-basic.yml`` file demonstrates the format, and is
 generated from our live Shotgun and basic rules via::
 
     ./schema/dump > schema/keystone-full.yml
-    ./schema/filter -f schema/basic-filters.txt schema/keystone-full.yml > schema/keystone-basic.yml
+    ./schema/filter --absent -f schema/basic-filters.txt schema/keystone-full.yml > schema/keystone-basic.yml
 
 
 

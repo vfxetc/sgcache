@@ -9,8 +9,10 @@ import yaml
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-a', '--absent', action='store_true')
-parser.add_argument('-f', '--file', action='append')
+parser.add_argument('-a', '--absent', action='store_true',
+    help='Include fields which we may have filtered for, but are known to not exist')
+parser.add_argument('-f', '--file', action='append',
+    help='File of patterns; one per line')
 parser.add_argument('patterns', nargs='*')
 parser.add_argument('schema', default='-')
 args = parser.parse_args()

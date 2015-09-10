@@ -4,7 +4,9 @@ Reverse Engineering
 Herein lies the more complex matters that we have discovered about Shotgun
 while poking through it in order to create SGCache.
 
-.. note:: This information is as of ``v6.0.3 (build 04eae45)``.
+.. note:: This information is as of ``v6.0.3 (build 04eae45)``, and only
+    contains as much as we have discovered. There are very likely unknown
+    edge cases everywhere.
 
 
 .. _private_schema:
@@ -21,9 +23,6 @@ schema given to the Shotgun web page. This is available at::
 
 Field Types
 -----------
-
-.. warning:: Much of this information is incomplete. Especially null-ability;
-             assume fields are null-able unless they say otherwise.
 
 .. sg_field_type:: checkbox
 
