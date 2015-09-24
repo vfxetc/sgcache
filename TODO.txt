@@ -4,15 +4,21 @@
     - make_app to make the flask app
     - make_cache to make the schema and cache
 
+- Skip change events that follow a create event.
+
 - split non-indempotent parts of Api3ReadOperation into Api3ReadQuery
 
 - return accurate paging info; currently we are cheating a bit
 
 - redirect Shotgun pages to actual Shotgun
 
-- devops
-    - split up the processes
-    - nginx proxy to real thing when down?
+- document the ping/pong feature, OR remove it after adding {'sgcache': true} to
+  the info call
+
+- split process up
+    - sgcache-server
+    - sgcache-scanner
+    - sgcache-events
 
 - how to perform rolling schema upgrades?
     1. move event watcher to new schema
@@ -31,24 +37,13 @@
     s.cookies['_session_id'] = sg._get_session_token()
     s.get('https://keystone.shotgunstudio.com/page/schema')
 
-
-
-- use sudo_as_login in logs
-
 - return a fake "name" (as determined by the identifier_column in the 
   private schema) with entities/multi-entities
-
-
-
-- sgcache-scanner -> grab updated data periodically
 
 - sgcache-reprocess --retirement -> reprocess retirement events
 
 - table with log of data updates
 - the actual event logs?
-
-
-
 
 - docs:
     ./bin/grep-schema -f schema/basic-filters.txt schema/keystone-full.yaml > schema/keystone-basic.yml
@@ -68,23 +63,7 @@
     ./bin/dump-data -p 115 -s schema/keystone-basic.yml | tee all.json
     PYTHONPATH=.:$PYTHONPATH ./bin/update-data -u postgres:///sgcache -s schema/keystone-basic.yml all.json
 
-
-
-- dump-schema.py which creates a schema.json
-- dump-data.py which takes a schema.json, and a $TYPE.json (which is an
-  entity per line, json encoded)
-    - sphinx docs for everything that we learn as we test it
-    √ ask Shotgun how much it costs to host our own
-
-- daemons:
-    - master server which holds the last_event_id lock
-    - tiny web app
-    - one sgevent server (which could be another project)
-    - multiple API servers (because Python threads suck)
-
 - what must be do for `s3_uploads_enabled` in server info?
-
-- how to pull apart the results of those queries
 
 - URLS could include the real shotgun server:
     >>> sg = Shotgun('http://localhost:8000/next=keystone.shotgunstudio.com/', 'xxx', 'yyy')

@@ -77,7 +77,7 @@ class Scanner(object):
                 for key in return_fields:
                     value = entity[key]
                     if isinstance(value, datetime.datetime):
-                        entity[key] = v.isoformat() + 'Z'
+                        entity[key] = value.isoformat() + 'Z'
 
                 log.info('updating %s %s %d%s' % (
                     'active' if entity['_active'] else 'retired',

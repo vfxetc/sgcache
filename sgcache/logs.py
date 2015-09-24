@@ -44,7 +44,9 @@ def setup_logs(app=None):
 
             return response
 
-
+    # Silence requests
+    logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.WARNING)
+    
     root = logging.getLogger()
     root.setLevel(logging.DEBUG if app and app.debug else logging.INFO)
 
@@ -66,7 +68,9 @@ def setup_logs(app=None):
         root.addHandler(handler)
 
     # Console logging.
-    add_handler(logging.StreamHandler(sys.stderr))
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setLevel(logging.DEBUG if app and app.debug else logging.INFO)
+    add_handler(handler)
 
     # File logging.
     if app and app.config['LOGGING_FILE_DIR']:

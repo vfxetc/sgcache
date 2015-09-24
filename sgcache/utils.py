@@ -1,8 +1,9 @@
 import contextlib
 import datetime
 import logging
-import re
 import os
+import re
+import traceback
 
 from . import config
 
@@ -122,4 +123,10 @@ def parse_interval(interval):
     return delta.total_seconds()
 
 
+def try_call_except_traceback(func, *args, **kwargs):
+    try:
+        func(*args, **kwargs)
+    except:
+        traceback.print_exc()
+        raise
         

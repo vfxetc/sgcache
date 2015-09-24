@@ -1,12 +1,12 @@
+import collections
 import datetime
+import functools
 import json
 import logging
 import pprint
 import re
 import threading
 import time
-
-import collections
 
 import sqlalchemy as sa
 
@@ -20,7 +20,7 @@ from .events import EventProcessor
 from .exceptions import EntityMissing
 from .logs import log_globals
 from .scanner import Scanner
-from .utils import log_exceptions, get_shotgun
+from .utils import log_exceptions, get_shotgun, try_call_except_traceback
 
 log = logging.getLogger(__name__)
 
@@ -130,7 +130,7 @@ class Cache(collections.Mapping):
         """
 
         if async:
-            thread = threading.Thread(target=self.watch, args=(last_id, last_time, auto_last_id, idle_delay))
+            thread = threading.Thread(target=functools.partial(try_call_except_traceback, self.watch, last_id, last_time, auto_last_id, idle_delay))
             thread.daemon = True
             thread.start()
             return thread
@@ -205,7 +205,7 @@ class Cache(collections.Mapping):
         """
 
         if async:
-            thread = threading.Thread(target=self.scan, args=(interval, last_time, auto_last_time), kwargs=kwargs)
+            thread = threading.Thread(target=functools.partial(try_call_except_traceback, self.scan, interval, last_time, auto_last_time, **kwargs))
             thread.daemon = True
             thread.start()
             return thread
