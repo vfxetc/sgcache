@@ -1,7 +1,14 @@
 import os
 import logging
+import socket
+
 
 log = logging.getLogger('sgcache.main')
+
+# Set a global socket timeout, so that nothing socket related will ever
+# lock us up. This is likely to cause a few extra problems, but we can
+# deal with them.
+socket.setdefaulttimeout(60.1)
 
 
 from sgcache import config
