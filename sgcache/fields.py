@@ -1,10 +1,14 @@
 import functools
+import logging
 import re
 
 import sqlalchemy as sa
 
-from .exceptions import FilterNotImplemented, NoFieldData, ClientFault
+from .exceptions import FieldNotImplemented, FilterNotImplemented, NoFieldData, ClientFault
 from .utils import iter_unique
+
+
+log = logging.getLogger(__name__)
 
 
 sg_field_types = {}
@@ -155,6 +159,8 @@ class Field(object):
             else:
                 return sa.not_(column.ilike(pattern))
 
+        # TODO: How does case-insensitivity affect other comparisons?
+
         if relation == 'is':
             return column == values[0]
         elif relation == 'is_not':
@@ -209,24 +215,27 @@ class Absent(Field):
     # in return_fields, and order.
     def _pass(self, *args, **kwargs):
         pass
+
+    # Throw faults to match Shotgun's behaviour:
+    # sgapi.core.ShotgunError: API read() Task.code doesn't exist:
+    # {"values"=>["something"], "path"=>"code", "relation"=>"is"}
+    def _raise(self, *args, **kwargs):
+        raise ClientFault('%s.%s does not exist' % (self.entity.type_name, self.name))
+    
     _construct_schema = _pass
-    check_for_join = _pass
+    include_in_scan = _pass
+
+    # Generally ignore the field, but do complain in a filter.
+    prepare_filter = _raise
     prepare_join = _pass
     prepare_order = _pass
     prepare_select = _pass
-    include_in_scan = _pass
+    check_for_join = _pass
 
     # Need to signal that we have no data specifically.
     def extract_select(self, *args, **kwargs):
         raise NoFieldData()
 
-    # Throw faults to match Shotgun's behaviour:
-    # sgapi.core.ShotgunError: API read() Task.code doesn't exist:
-    # {"values"=>["something"], "path"=>"code", "relation"=>"is"}
-    def _fault(self, *args, **kwargs):
-        raise ClientFault('%s.%s does not exist' % (self.entity.type_name, self.name))
-    prepare_filter = _fault
-    
     def prepare_upsert_data(self, req, value):
         # If triggered by an event, just ignore the request. This can happen
         # a lot with identifier columns (usually "name"), in which it seems
@@ -234,7 +243,34 @@ class Absent(Field):
         if req.source_event:
             return
         else:
-            self._fault()
+            self._raise()
+
+
+class NonCacheableField(Field):
+    """Special case, indicating that we don't support anything about this field."""
+
+    sa_type = None
+
+    def _pass(self, *args, **kwargs):
+        pass
+
+    def _raise(self, *args, **kwargs):
+        raise FieldNotImplemented('%s.%s uses unsupported data_type "%s"' % (
+            self.entity.type_name, self.name, self.schema.data_type
+        ))
+
+    _construct_schema = _pass
+    include_in_scan = _pass
+
+    prepare_filter = _raise
+    prepare_join = _raise
+    prepare_order = _raise
+    prepare_select = _raise
+    check_for_join = _raise
+    extract_select = _raise # Should never be run.
+
+    prepare_upsert_data = _raise # Likely never to run.
+
 
 
 @sg_field_type
@@ -299,25 +335,17 @@ class Color(Text):
     pass
 
 @sg_field_type
-class Image(Text):
-    # TODO: affected by `api_return_image_urls`?
-    pass
-
-@sg_field_type
 class List(Text):
     pass
 
 @sg_field_type
 class StatusList(Text):
-    pass
-
-@sg_field_type
-class URLTemplate(Text):
-    # TODO: affected by `api_return_image_urls`?
+    # Despite the name, it is just a string.
     pass
 
 @sg_field_type
 class UUID(Text):
+    # Just a string, but should reject non-UUID formatted ones.
     pass
 
 
@@ -325,11 +353,13 @@ class UUID(Text):
 @sg_field_type
 class Date(Text):
     # TODO: understand this better
+    # Just a string, but should reject malformed ones.
     pass
 
 @sg_field_type
 class DateTime(Text):
     # TODO: understand this better
+    # Just a string, but should reject malformed ones.
     pass
 
 
@@ -533,21 +563,36 @@ class MultiEntity(Field):
 
 
 @sg_field_type
-class TagList(Field):
-    # TODO: JSON?
+class Image(NonCacheableField):
+    # May need to locally cache contents.
     pass
 
-
-
 @sg_field_type
-class Serializable(Field):
-    # TODO: JSON?
+class PivotTable(NonCacheableField):
+    # This one does respond to the API at all AFAICT.
     pass
 
-
+@sg_field_type
+class URLTemplate(NonCacheableField):
+    # Needs template rendering.
+    # Can't be used in a filter.
+    pass
 
 @sg_field_type
-class URL(Field):
-    # TODO: JSON?
+class TagList(NonCacheableField):
+    # List of strings, AFAICT.
+    # Can be used in a filter to some degree.
+    pass
+
+@sg_field_type
+class Serializable(NonCacheableField):
+    # Does not respond to much of the API, and only in EventLogEntry.
+    # Can't be used in a filter.
+    pass
+
+@sg_field_type
+class URL(NonCacheableField):
+    # May need to locally cache contents.
+    # Can't be used in a filter.
     pass
 

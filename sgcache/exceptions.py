@@ -10,7 +10,10 @@ class EntityMissing(KeyError, Passthrough):
 class FieldMissing(KeyError, Passthrough):
     '''Signal that a required field does not exist in our schema.'''
 
-class FilterNotImplemented(NotImplementedError, Passthrough):
+class FieldNotImplemented(NotImplementedError, Passthrough):
+    '''Signal that we don't implement anything about the given field.'''
+    
+class FilterNotImplemented(FieldNotImplemented, Passthrough):
     '''Signal that we can't process the requested filter.'''
 
 
