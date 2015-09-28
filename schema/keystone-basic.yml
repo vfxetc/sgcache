@@ -10,9 +10,11 @@ ApiUser:
     name: absent
     project: absent
     sg_code: absent
+    sg_directory: absent
     sg_entity: absent
     sg_link: absent
     sg_name: absent
+    sg_path: absent
     sg_path_to_frames: absent
     sg_path_to_movie: absent
     sg_status: absent
@@ -24,6 +26,7 @@ ApiUser:
     updated_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    user: absent
 Asset:
     code: text
     created_at: date_time
@@ -39,9 +42,11 @@ Asset:
         entity_types: [Project]
     sg_asset_type: list
     sg_code: absent
+    sg_directory: absent
     sg_entity: absent
     sg_link: absent
     sg_name: absent
+    sg_path: absent
     sg_path_to_frames: absent
     sg_path_to_movie: absent
     sg_status: absent
@@ -53,6 +58,7 @@ Asset:
     updated_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    user: absent
 HumanUser:
     code: absent
     created_at: date_time
@@ -69,9 +75,11 @@ HumanUser:
     name: text
     project: absent
     sg_code: absent
+    sg_directory: absent
     sg_entity: absent
     sg_link: absent
     sg_name: absent
+    sg_path: absent
     sg_path_to_frames: absent
     sg_path_to_movie: absent
     sg_status: absent
@@ -83,6 +91,7 @@ HumanUser:
     updated_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    user: absent
 Project:
     code: text
     created_at: date_time
@@ -95,9 +104,11 @@ Project:
     name: text
     project: absent
     sg_code: absent
+    sg_directory: absent
     sg_entity: absent
     sg_link: absent
     sg_name: absent
+    sg_path: absent
     sg_path_to_frames: absent
     sg_path_to_movie: absent
     sg_status: list
@@ -109,6 +120,7 @@ Project:
     updated_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    user: absent
 PublishEvent:
     code: text
     created_at: date_time
@@ -123,6 +135,7 @@ PublishEvent:
         data_type: entity
         entity_types: [Project]
     sg_code: absent
+    sg_directory: absent
     sg_entity: absent
     sg_link:
         data_type: entity
@@ -131,10 +144,17 @@ PublishEvent:
     sg_path: text
     sg_path_to_frames: text
     sg_path_to_movie: text
+    sg_qt: url
+    sg_source_publishes:
+        data_type: multi_entity
+        entity_types: [PublishEvent]
     sg_status: status_list
     sg_status_list: absent
+    sg_trigger_event_id: number
     sg_type: text
+    sg_uploaded_movie: url
     sg_version: number
+    sg_viewer_link: url_template
     short_name: absent
     status: absent
     status_list: absent
@@ -142,6 +162,7 @@ PublishEvent:
     updated_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    user: absent
 Sequence:
     code: text
     created_at: date_time
@@ -156,9 +177,11 @@ Sequence:
         data_type: entity
         entity_types: [Project]
     sg_code: absent
+    sg_directory: absent
     sg_entity: absent
     sg_link: absent
     sg_name: absent
+    sg_path: absent
     sg_path_to_frames: absent
     sg_path_to_movie: absent
     sg_status: absent
@@ -170,8 +193,8 @@ Sequence:
     updated_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    user: absent
 Shot:
-    '*sequence': absent
     code: text
     created_at: date_time
     created_by:
@@ -185,9 +208,11 @@ Shot:
         data_type: entity
         entity_types: [Project]
     sg_code: absent
+    sg_directory: absent
     sg_entity: absent
     sg_link: absent
     sg_name: absent
+    sg_path: absent
     sg_path_to_frames: absent
     sg_path_to_movie: absent
     sg_sequence:
@@ -202,6 +227,38 @@ Shot:
     updated_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    user: absent
+Slate:
+    code: text
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    description: text
+    entity: absent
+    link: absent
+    name: absent
+    project:
+        data_type: entity
+        entity_types: [Project]
+    sg_code: absent
+    sg_directory: absent
+    sg_entity: absent
+    sg_link: absent
+    sg_name: absent
+    sg_path: absent
+    sg_path_to_frames: absent
+    sg_path_to_movie: absent
+    sg_status: absent
+    sg_status_list: status_list
+    short_name: absent
+    status: absent
+    status_list: absent
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    user: absent
 Step:
     code: text
     color: color
@@ -216,9 +273,11 @@ Step:
     name: absent
     project: absent
     sg_code: absent
+    sg_directory: absent
     sg_entity: absent
     sg_link: absent
     sg_name: absent
+    sg_path: absent
     sg_path_to_frames: absent
     sg_path_to_movie: absent
     sg_status: absent
@@ -230,6 +289,7 @@ Step:
     updated_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    user: absent
 Task:
     code: absent
     color: color
@@ -248,9 +308,11 @@ Task:
         data_type: entity
         entity_types: [Project]
     sg_code: absent
+    sg_directory: absent
     sg_entity: absent
     sg_link: absent
     sg_name: absent
+    sg_path: absent
     sg_path_to_frames: absent
     sg_path_to_movie: absent
     sg_status: absent
@@ -268,6 +330,7 @@ Task:
     updated_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    user: absent
 Version:
     code: text
     created_at: date_time
@@ -284,9 +347,11 @@ Version:
         data_type: entity
         entity_types: [Project]
     sg_code: absent
+    sg_directory: absent
     sg_entity: absent
     sg_link: absent
     sg_name: absent
+    sg_path: absent
     sg_path_to_frames: text
     sg_path_to_movie: text
     sg_status: absent
@@ -301,4 +366,7 @@ Version:
     updated_by:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
+    user:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser, Group]
 

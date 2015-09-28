@@ -9,7 +9,7 @@ import yaml
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-a', '--absent', action='store_true',
+parser.add_argument('-x', '--no-absent', action='store_true',
     help='Include fields which we may have filtered for, but are known to not exist')
 parser.add_argument('-f', '--file', action='append',
     help='File of patterns; one per line')
@@ -88,7 +88,7 @@ for entity_type, entity_spec in old_schema.iteritems():
         new_schema[entity_type] = new_entity
 
 
-if args.absent:
+if not args.no_absent:
     for entity_pattern, name_pattern, type_pattern, include in patterns:
         
         # Only things to include (although it wouldn't really hurt to not).
@@ -96,7 +96,7 @@ if args.absent:
             continue
 
         # Only specific names.
-        if not name_pattern or re.match(r'[(?\[\]]', name_pattern):
+        if not name_pattern or re.search(r'[\[\]*?]', name_pattern):
             continue
 
         for entity_type, entity_spec in new_schema.iteritems():

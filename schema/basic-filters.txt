@@ -15,14 +15,14 @@
 + Project
 
 + PublishEvent
-+ PublishEvent.sg_path
-+ PublishEvent.sg_type
-+ PublishEvent.sg_version
++ PublishEvent.sg_*
 
 + Sequence
 
 + Shot
 + Shot.*sequence
+
++ Slate
 
 + Step
 + Step.color
@@ -40,12 +40,6 @@
 
 ### FIELDS
 
-# we can't cache S3 URLs yet; bummer
-- *:image
-
-# these don't work with the API at all
-- *:pivot_table
-
 + *.code
 + *.created_at
 + *.created_by
@@ -55,9 +49,11 @@
 + *.name
 + *.project
 + *.sg_code
++ *.sg_directory
 + *.sg_entity
 + *.sg_link
 + *.sg_name
++ *.sg_path
 + *.sg_path_to_frames
 + *.sg_path_to_movie
 + *.sg_status
@@ -67,6 +63,7 @@
 + *.status_list
 + *.updated_at
 + *.updated_by
++ *.user
 
 
 # exclude everything else
