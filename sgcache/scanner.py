@@ -70,7 +70,7 @@ class Scanner(object):
             if self.projects and 'project' in entity_type.fields and entity_type.type_name not in ('ApiUser', 'HumanUser'):
                 filters.append(('project', 'in', [{'type': 'Project', 'id': pid} for pid in self.projects]))
 
-            return_fields = sorted(name for name, field in entity_type.fields.iteritems() if field.include_in_scan())
+            return_fields = sorted(name for name, field in entity_type.fields.iteritems() if field.is_cached())
 
             for entity in self._find_active_and_retired(entity_type.type_name, filters, return_fields, threads=1, per_page=100):
 

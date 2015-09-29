@@ -1,4 +1,6 @@
 
+- multi_entity is_not None -> True if there is something in there
+
 - remove all global state:
     - Config object to represent the config
     - make_app to make the flask app

@@ -63,6 +63,9 @@ class Field(object):
     def _construct_schema(self, table):
         raise NotImplementedError()
 
+    def is_cached(self):
+        return True
+
     # Query construction methods
     # ==========================
 
@@ -190,11 +193,6 @@ class Field(object):
         """
         return {self.name: value}
 
-    # Other update methods.
-
-    def include_in_scan(self):
-        return True
-
 
 
 class Scalar(Field):
@@ -223,7 +221,7 @@ class Absent(Field):
         raise ClientFault('%s.%s does not exist' % (self.entity.type_name, self.name))
     
     _construct_schema = _pass
-    include_in_scan = _pass
+    is_cached = _pass
 
     # Generally ignore the field, but do complain in a filter.
     prepare_filter = _raise
@@ -260,7 +258,7 @@ class NonCacheableField(Field):
         ))
 
     _construct_schema = _pass
-    include_in_scan = _pass
+    is_cached = _pass
 
     prepare_filter = _raise
     prepare_join = _raise
@@ -269,7 +267,10 @@ class NonCacheableField(Field):
     check_for_join = _raise
     extract_select = _raise # Should never be run.
 
-    prepare_upsert_data = _raise # Likely never to run.
+    # Likely never to run. We would special case events like we do for
+    # absent fields, except we don't expect to have anything that behaves
+    # like "name" exist for a non-cacheable field.
+    prepare_upsert_data = _raise 
 
 
 

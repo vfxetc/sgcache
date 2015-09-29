@@ -42,10 +42,10 @@ class EventProcessor(object):
          u'type': u'EventLogEntry'}
         '''
 
-        # we need to fetch all of the data from the server. bleh
+        # We need to fetch all of the data from the server; bleh.
         entity = self.cache.event_log.shotgun.find_one(entity_type.type_name, [
             ('id', 'is', event.entity_id),
-        ], entity_type.fields.keys())
+        ], [key for key, field in entity_type.fields.iteritems() if field.is_cached()])
 
         if not entity:
             log.warning('could not find "new" %s %d' % (entity_type.type_name, event.entity_id))
