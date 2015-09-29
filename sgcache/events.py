@@ -158,6 +158,14 @@ class EventProcessor(object):
 
         '''
 
+        # Make sure it is a field we care about.
+        try:
+            field = self.cache[event.entity_type][event['attribute_name']]
+        except KeyError:
+            return
+        if not field.is_cached():
+            return
+
         # This could be a retired entity, in which case we just need the ID.
         if event.entity:
             data = event.entity.copy()
