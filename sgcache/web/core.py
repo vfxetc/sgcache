@@ -3,7 +3,7 @@ import logging
 import os
 import time
 
-from flask import Flask, request, Response, stream_with_context, g
+from flask import Flask, request, Response, stream_with_context, g, redirect
 from werkzeug.http import remove_hop_by_hop_headers
 import requests
 import sqlalchemy as sa
@@ -38,10 +38,22 @@ FALLBACK_URL = FALLBACK_SERVER + '/api3/json'
 http_session = requests.Session()
 
 
-
+# This is used by our shotgun_api3_registry to assert that the cache is up.
+# In the future we may have something with a bit more information, or have the
+# "info" method return a bit more.
 @app.route('/ping')
 def on_ping():
     return 'pong', 200, [('Content-Type', 'text/plain')]
+
+
+# Forward detail requests through to the real thing.
+@app.route('/')
+@app.route('/detail/<path:path>')
+@app.route('/page/<path:path>')
+def forward_details(path=''):
+    url = FALLBACK_SERVER + request.path
+    return redirect(url)
+
 
 
 @app.route('/api3/json', methods=['POST'])
@@ -136,14 +148,11 @@ def passthrough():
 
 
 def _process_passthrough_response(res):
-
     buffer_ = []
     for chunk in res.iter_content(8192):
         yield chunk
         buffer_.append(chunk)
-
     # TODO: analyze it here
-
 
 
 # For handing a Flask stream to Requests; the iter API is likely
@@ -151,7 +160,6 @@ def _process_passthrough_response(res):
 class _StreamReadWrapper(object):
     def __init__(self, fh):
         self.read = fh.read
-
 
 @app.route('/file_serve/<path:path>', methods=['GET', 'POST'])
 @app.route('/thumbnail/<path:path>', methods=['GET', 'POST'])
