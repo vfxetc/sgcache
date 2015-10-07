@@ -1,4 +1,9 @@
 
+- demo create and update
+    e = sg.create('PublishEvent', {'code': 'test5', 'project': {'type': 'Project', 'id': 66}}); print e; print sg.find_one('PublishEvent', [('id', 'is', e['id'])], ['code'])
+
+    sg.update('PublishEvent', 10502, {'code': 'test4'}); print sg.find_one('PublishEvent', [('id', 'is', 10502)], ['code'])
+
 - multi_entity is_not None -> True if there is something in there
 
 - remove all global state:

@@ -60,7 +60,7 @@ def forward_details(path=''):
 @app.route('/<path:params>/api3/json', methods=['POST'])
 def json_api(params=None):
 
-    payload = json.loads(request.data)
+    payload = g.api3_payload = json.loads(request.data)
 
     if not isinstance(payload, dict):
         return '', 400, []
@@ -99,7 +99,12 @@ def json_api(params=None):
     try:
         start_time = time.time()
         res_data = method(method_params)
-        res_tuple = json.dumps(res_data), 200, [('Content-Type', 'application/json')]
+        if isinstance(res_data, dict):
+            res_tuple = json.dumps(res_data), 200, [('Content-Type', 'application/json')]
+        elif isinstance(res_data, tuple):
+            res_tuple = res_data
+        else:
+            raise TypeError('api3 method returned %s' % type(res_data))
 
     except Fault as e:
         log.warning('%s (%s): %s' % (e.__class__.__name__, e.code, e.args[0]))
