@@ -109,7 +109,9 @@ class Cache(collections.Mapping):
         if source_event:
             data['_last_log_event_id'] = source_event.id
 
-        res = (con or self.db.connect()).execute(entity_type.table.update().where(entity_type.table.c.id == entity_id), **data)
+        con = con or self.db.connect()
+        with con.begin():
+            res = con.execute(entity_type.table.update().where(entity_type.table.c.id == entity_id), **data)
 
         if strict and not res.rowcount:
             raise ValueError('cannot %s un-cached %s %d' % ('revive' if state else 'retire', type_name, entity_id))

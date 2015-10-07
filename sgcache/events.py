@@ -195,7 +195,7 @@ class EventProcessor(object):
 
         # If we did not know about it, then fetch all data as if it is new.
         if not handler.entity_exists:
-            log.warning('updated un-cached %s %d; fetching all data' % (event.entity_type, event.entity_id))
+            log.warning('updated un-cached %s %s; fetching all data' % (event.entity_type, event.entity_id))
             self._process_new_event(con, event, entity_type)
 
     def _process_retirement_event(self, con, event, entity_type):
@@ -230,7 +230,7 @@ class EventProcessor(object):
         '''
 
         if not self.cache.retire(event.entity_type, event.entity_id, con=con, source_event=event, strict=False):
-            log.warning('retired un-cached %s %d; ignoring' % (event.entity_type, event.entity_id))
+            log.warning('retired un-cached %s %s; ignoring' % (event.entity_type, event.entity_id))
 
     def _process_revival_event(self, con, event, entity_type):
         '''

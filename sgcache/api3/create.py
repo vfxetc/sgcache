@@ -80,7 +80,8 @@ class Api3CreateOperation(object):
                 if field_params:
                     query_params.update(field_params)
 
-        with (con or cache.db.connect()) as con:
+        con = con or cache.db.connect()
+        with con.begin():
 
             table = cache[self.entity_type_name].table
 
