@@ -4,6 +4,9 @@ import logging
 import os
 
 
+# Flask config.
+MAX_CONTENT_LENGTH = 1024**3 # 1GB.
+
 
 #: Base URL of the Shotgun server. If this is not set, we will use the follwing
 #: code to get arguments::
