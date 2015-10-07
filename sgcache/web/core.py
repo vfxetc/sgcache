@@ -1,3 +1,4 @@
+import copy
 import json
 import logging
 import os
@@ -36,6 +37,52 @@ FALLBACK_URL = FALLBACK_SERVER + '/api3/json'
 
 # We use one HTTP session for everything.
 http_session = requests.Session()
+
+
+class ReturnResponse(ValueError):
+    pass
+
+class ReturnPassthroughError(ReturnResponse):
+    pass
+
+
+def passthrough(payload=None, params=None, raise_exceptions=True, stream=False, final=False):
+
+    # Remove headers which we should not pass on.
+    headers = [(k, v) for k, v in request.headers.iteritems() if k.lower() != 'host']
+    remove_hop_by_hop_headers(headers)
+    headers = dict(headers)
+
+    if payload is None:
+        payload = copy.deepcopy(g.api3_payload)
+    if params is not None:
+        payload['params'][-1] = params
+
+    if not isinstance(payload, basestring):
+        payload = json.dumps(payload)
+
+    http_response = http_session.post(FALLBACK_URL, data=payload, headers=headers, stream=stream)
+
+    if http_response.status_code != 200:
+        raise ReturnPassthroughError(Response(
+            http_response.iter_content(8192) if stream else http_response.text,
+            http_response.status_code,
+            mimetype='application/json',
+        ))
+
+    if stream or final:
+        return Response(
+            http_response.iter_content(8192) if stream else http_response.text,
+            200,
+            mimetype='application/json'
+        )
+
+    else:
+        response_data = json.loads(http_response.text)
+        if raise_exceptions and 'exception' in response_data:
+            raise ReturnResponse((http_response.text, 200, [('Content-Type', 'application/json')]))
+        else:
+            return response_data
 
 
 # This is used by our shotgun_api3_registry to assert that the cache is up.
@@ -94,18 +141,19 @@ def json_api(params=None):
         method = _api3_methods[method_name]
     except KeyError as e:
         log.info('Passing through "%s" due to unknown API method' % method_name)
-        return passthrough()
+        print json.dumps(method_params, indent=4, sort_keys=True)
+        return passthrough(stream=True)
 
     try:
         start_time = time.time()
         res_data = method(method_params)
-        if isinstance(res_data, dict):
-            res_tuple = json.dumps(res_data), 200, [('Content-Type', 'application/json')]
-        elif isinstance(res_data, tuple):
-            res_tuple = res_data
-        else:
-            raise TypeError('api3 method returned %s' % type(res_data))
 
+    # Exceptions as control flow.
+    except ReturnResponse as e:
+        res_data = {}
+        res_tuple = e.args
+
+    # An (emulated) Shotgun fault has occoured.
     except Fault as e:
         log.warning('%s (%s): %s' % (e.__class__.__name__, e.code, e.args[0]))
         res_data = {
@@ -116,6 +164,7 @@ def json_api(params=None):
         # Shotgun does still return a 200 here.
         res_tuple = json.dumps(res_data), 200, [('Content-Type', 'application/json')]
 
+    # Some operation has resulted in a request to pass through the request.
     except Passthrough as e:
         log.info('Passing through %s due to %s("%s"):%s%s' % (
             method_name,
@@ -125,7 +174,17 @@ def json_api(params=None):
             json.dumps(method_params or {}, sort_keys=True, indent=4) if method_params else '',
         ))
         res_data = {}
-        res_tuple = passthrough()
+        res_tuple = passthrough(stream=True)
+
+    else:
+        # api3 methods are permitted to return a tuple of the raw response,
+        # or a dict that is serialized.
+        if isinstance(res_data, dict):
+            res_tuple = json.dumps(res_data), 200, [('Content-Type', 'application/json')]
+        elif isinstance(res_data, tuple):
+            res_tuple = res_data
+        else:
+            raise TypeError('api3 method returned %s' % type(res_data))
 
     elapsed_ms = 1000 * (time.time() - start_time)
     log.info('Returned %sin %.1fms' % (
@@ -136,28 +195,6 @@ def json_api(params=None):
 
     return res_tuple
 
-
-
-def passthrough():
-
-    # our "Host" is different than theirs
-    headers = dict(request.headers)
-    headers.pop('Host')
-
-    res = http_session.post(FALLBACK_URL, data=request.data, headers=headers, stream=True)
-
-    if res.status_code == 200:
-        return Response(stream_with_context(_process_passthrough_response(res)), mimetype='application/json')
-    else:
-        return res.text, res.status_code, [('Content-Type', 'application/json')]
-
-
-def _process_passthrough_response(res):
-    buffer_ = []
-    for chunk in res.iter_content(8192):
-        yield chunk
-        buffer_.append(chunk)
-    # TODO: analyze it here
 
 
 # For handing a Flask stream to Requests; the iter API is likely
@@ -202,4 +239,5 @@ _api3_methods = {}
 def api3_method(func):
     _api3_methods[func.__name__] = func
     return func
+
 from . import api3

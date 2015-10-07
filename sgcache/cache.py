@@ -1,4 +1,5 @@
 import collections
+import contextlib
 import datetime
 import functools
 import json
@@ -93,6 +94,27 @@ class Cache(collections.Mapping):
         op = Api3CreateOperation(request, create_with_id=create_with_id, source_event=source_event)
         op.run(self, **kwargs)
         return op
+
+    def retire(self, type_name, entity_id, **kwargs):
+        return self._set_active(type_name, entity_id, False, **kwargs)
+
+    def revive(self, type_name, entity_id, **kwargs):
+        return self._set_active(type_name, entity_id, True, **kwargs)
+
+    def _set_active(self, type_name, entity_id, state, source_event=None, con=None, strict=True):
+
+        entity_type = self[type_name]
+
+        data = {'_active': bool(state), '_cache_updated_at': datetime.datetime.utcnow()}
+        if source_event:
+            data['_last_log_event_id'] = source_event.id
+
+        res = (con or self.db.connect()).execute(entity_type.table.update().where(entity_type.table.c.id == entity_id), **data)
+
+        if strict and not res.rowcount:
+            raise ValueError('cannot %s un-cached %s %d' % ('revive' if state else 'retire', type_name, entity_id))
+
+        return bool(res.rowcount)
 
     def get_last_event(self):
         """Get tuple of ``(last_id, last_time)`` stored in the cache.

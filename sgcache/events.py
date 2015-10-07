@@ -229,12 +229,7 @@ class EventProcessor(object):
         }
         '''
 
-        res = con.execute(entity_type.table.update().where(entity_type.table.c.id == event.entity_id),
-            _active=False,
-            _last_log_event_id=event.id,
-            _cache_updated_at=datetime.datetime.utcnow(),
-        )
-        if not res.rowcount:
+        if not self.cache.retire(event.entity_type, event.entity_id, con=con, source_event=event, strict=False):
             log.warning('retired un-cached %s %d; ignoring' % (event.entity_type, event.entity_id))
 
     def _process_revival_event(self, con, event, entity_type):
@@ -270,13 +265,8 @@ class EventProcessor(object):
         }
         '''
 
-        res = con.execute(entity_type.table.update().where(entity_type.table.c.id == event.entity_id),
-            _active=True,
-            _last_log_event_id=event.id,
-            _cache_updated_at=datetime.datetime.utcnow(),
-        )
-        if not res.rowcount:
-            log.warning('revived un-cached %s %d; fetching all data' % (event.entity_type, event.entity_id))
+        if not self.cache.revive(event.entity_type, event.entity_id, con=con, source_event=event, strict=False):
+            log.warning('revived un-cached %s %d; processing as new' % (event.entity_type, entity_id))
             self._process_new_event(con, event, entity_type)
 
 

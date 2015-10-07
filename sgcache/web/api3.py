@@ -1,11 +1,6 @@
-import copy
-import json
-
-from flask import request, Response, g
-
 from ..api3.read import Api3ReadOperation
 from ..exceptions import Passthrough
-from .core import api3_method, cache, FALLBACK_URL, http_session
+from .core import api3_method, cache, passthrough
 
 
 @api3_method
@@ -29,71 +24,64 @@ def create(api3_request):
 
     return_fields = api3_request['return_fields'][:]
 
-    passthrough_payload = copy.deepcopy(g.api3_payload)
-    create_params = passthrough_payload['params'][1] = copy.deepcopy(api3_request)
+    params = api3_request.copy()
 
     # Add all fields that we cache to the return_fields.
-    request_fields = create_params['return_fields'] = return_fields[:]
+    request_fields = params['return_fields'] = return_fields[:]
     entity_type = cache[api3_request['type']]
     for name, field in entity_type.fields.iteritems():
         if field.is_cached():
             request_fields.append(name)
 
-    # Make the modified request to the real server.
-    headers = dict(request.headers)
-    headers.pop('Host') # Our "Host" is different.
-    http_response = http_session.post(FALLBACK_URL, data=json.dumps(passthrough_payload), headers=headers)
+    # Make the modified request.
+    response = passthrough(params=params)
 
-    if http_response.status_code == 200:
+    # Fail very hard if "results" doesn't exist since we want to know if the schema changes).
+    created_data = response['results']
 
-        create_res_payload = json.loads(http_response.text)
+    # Cache this new entity.
+    cache.create_or_update(entity_type.type_name, created_data, create_with_id=True)
 
-        if 'exception' in create_res_payload:
-            return create_res_payload
+    # Reduce the returned data to that which was requested.
+    return_data = {
+        'type': entity_type.type_name,
+        'id': created_data['id'],
+    }
+    for field in return_fields:
+        try:
+            return_data[field] = created_data[field]
+        except KeyError:
+            pass
 
-        # We don't check for results, since we want to fail very hard if
-        # this doesn't have the shape we expect it to.
-        created_data = create_res_payload['results']
-
-        # Cache this new entity.
-        cache.create_or_update(entity_type.type_name, created_data, create_with_id=True)
-
-        # Reduce the returned data to that which was requested.
-        return_data = {
-            'type': entity_type.type_name,
-            'id': created_data['id'],
-        }
-        for field in return_fields:
-            try:
-                return_data[field] = created_data[field]
-            except KeyError:
-                pass
-
-        return {'results': return_data}
-
-    else:
-        # An error, or something.
-        return http_response.text, http_response.status_code, [('Content-Type', 'application/json')]
+    return {'results': return_data}
 
 
 @api3_method
 def update(api3_request):
 
-    # Pass through the request.
-    headers = dict(request.headers)
-    headers.pop('Host') # Our "Host" is different.
-    http_response = http_session.post(FALLBACK_URL, data=request.data, headers=headers)
+    response = passthrough()
 
-    if http_response.status_code == 200:
+    # Fail very hard if "results" doesn't exist since we want to know if the schema changes).
+    updated_data = response['results']
 
-        res_payload = json.loads(http_response.text)
+    # Cache the updates (failing very hard if "results" doesn't exist since
+    # we want to know if the schema changes).
+    cache.create_or_update(api3_request['type'], updated_data, create_with_id=True)
 
-        # Cache the updates.
-        cache.create_or_update(api3_request['type'], res_payload['results'], create_with_id=True)
+    return response
 
-        return res_payload
 
-    else:
-        # An error, or something.
-        return http_response.text, http_response.status_code, [('Content-Type', 'application/json')]
+@api3_method
+def delete(api3_request):
+    response = passthrough()
+    cache.retire(api3_request['type'], api3_request['id'], strict=False)
+    return response
+
+
+@api3_method
+def revive(api3_request):
+    response = passthrough()
+    cache.revive(api3_request['type'], api3_request['id'], strict=False)
+    return response
+
 

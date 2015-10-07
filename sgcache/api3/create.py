@@ -80,13 +80,7 @@ class Api3CreateOperation(object):
                 if field_params:
                     query_params.update(field_params)
 
-        # Transaction handling is a little gross in here; sorry.
-        transaction = None
-        if not con:
-            con = cache.db.connect()
-            transaction = con.begin()
-
-        try:
+        with (con or cache.db.connect()) as con:
 
             table = cache[self.entity_type_name].table
 
@@ -123,19 +117,6 @@ class Api3CreateOperation(object):
             # Callbacks for multi_entity fields.
             for func in self.after_query:
                 func(con)
-
-        # Again, I'm sorry for the gross transaction handling.
-        # TODO: Make a context manager to abstract this.
-        except:
-            if transaction:
-                transaction.rollback()
-            raise
-        else:
-            if transaction:
-                transaction.commit()
-        finally:
-            if transaction:
-                con.close()
         
         return {'type': self.entity_type_name, 'id': self.entity_id}
 
