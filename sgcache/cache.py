@@ -4,15 +4,15 @@ import datetime
 import functools
 import json
 import logging
-import pprint
 import re
 import threading
 import time
 
 import sqlalchemy as sa
+from sqlalchemy.engine.base import Transaction as _sa_Transaction
 
-from sgevents import EventLog
 from sgapi import TransportError
+from sgevents import EventLog
 
 from . import fields
 from .api3.create import Api3CreateOperation
@@ -22,6 +22,7 @@ from .exceptions import EntityMissing
 from .logs import log_globals
 from .scanner import Scanner
 from .utils import log_exceptions, get_shotgun, try_call_except_traceback
+
 
 log = logging.getLogger(__name__)
 
@@ -50,6 +51,35 @@ class Cache(collections.Mapping):
         self.metadata.reflect()
         for entity in self._entity_types.itervalues():
             entity._construct_schema()
+
+    @contextlib.contextmanager
+    def db_connect(self, con=None):
+
+        # If given a connection, use that.
+        if con is not None:
+            yield con
+
+        else:
+            with self.db.connect() as con:
+                yield con
+
+    @contextlib.contextmanager
+    def db_begin(self, con=None):
+
+        # If we have a "connection" that came from Engine.begin(),
+        # then just pass it through.
+        if con is not None and isinstance(con, _sa_Transaction):
+            yield con
+
+        # If we have a "real" connection, start a transaction.
+        elif con is not None:
+            with con.begin():
+                yield con
+
+        # Yield a combo connection/transaction.
+        else:
+            with self.db.begin() as con:
+                yield con
 
     def __getitem__(self, key):
         try:
@@ -134,8 +164,7 @@ class Cache(collections.Mapping):
         if source_event:
             data['_last_log_event_id'] = source_event.id
 
-        con = con or self.db.connect()
-        with con.begin():
+        with self.db_begin(con) as con:
             res = con.execute(entity_type.table.update().where(entity_type.table.c.id == entity_id), **data)
 
         if strict and not res.rowcount:
