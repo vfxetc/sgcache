@@ -199,7 +199,6 @@ def json_api(params=None):
     ))
     log_globals.skip_http_log = True
 
-    log.info('RESULT: %s' % repr(res_tuple))
     return res_tuple
 
 
