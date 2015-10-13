@@ -63,6 +63,31 @@ class Cache(collections.Mapping):
     def __len__(self):
         return len(self._entity_types)
 
+    def filter_cacheable_data(self, type_name, data=None):
+
+        if isinstance(type_name, dict):
+            data = type_name.copy()
+            type_name = data.pop('type')
+        
+        cacheable_data = {}
+        if 'id' in data:
+            cacheable_data['id'] = data.pop('id')
+        data.pop('type', None)
+
+        entity_type = self[type_name]
+        for field_name, value in data.iteritems():
+            field = self.get(field_name)
+            if field and field.is_cached():
+                cacheable_data[field_name] = value
+
+        return cacheable_data
+
+    def filter_cacheable_entity(self, entity):
+        type_ = entity['type']
+        cacheable = self.filter_cacheable_data(entity)
+        cacheable['type'] = type_
+        return cacheable
+
     def create_or_update(self, type_name, data, create_with_id=False, source_event=None, **kwargs):
         """Create or update an entity, with an API eerily similar to ``python_api3``.
 

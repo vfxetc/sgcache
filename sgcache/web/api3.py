@@ -38,9 +38,11 @@ def create(api3_request):
 
     # Fail very hard if "results" doesn't exist since we want to know if the schema changes).
     created_data = response['results']
+    cacheable_data = cache.filter_cacheable_data(created_data)
 
     # Cache this new entity.
-    cache.create_or_update(entity_type.type_name, created_data, create_with_id=True)
+    if cacheable_data:
+        cache.create_or_update(entity_type.type_name, cacheable_data, create_with_id=True)
 
     # Reduce the returned data to that which was requested.
     return_data = {
@@ -63,10 +65,11 @@ def update(api3_request):
 
     # Fail very hard if "results" doesn't exist since we want to know if the schema changes).
     updated_data = response['results']
+    cacheable_data = cache.filter_cacheable_data(updated_data)
 
-    # Cache the updates (failing very hard if "results" doesn't exist since
-    # we want to know if the schema changes).
-    cache.create_or_update(api3_request['type'], updated_data, create_with_id=True)
+    # Cache the updates
+    if cacheable_data:
+        cache.create_or_update(api3_request['type'], cacheable_data, create_with_id=True)
 
     return response
 

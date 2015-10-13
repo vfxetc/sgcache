@@ -140,8 +140,11 @@ def json_api(params=None):
     try:
         method = _api3_methods[method_name]
     except KeyError as e:
-        log.info('Passing through "%s" due to unknown API method' % method_name)
-        print json.dumps(method_params, indent=4, sort_keys=True)
+        if app.debug and method_params:
+            detail = ':\n' + json.dumps(method_params, sort_keys=True, indent=4)
+        else:
+            detail = ''
+        log.info('Passing through "%s" due to unknown API method%s' % (method_name, detail))
         return passthrough(stream=True)
 
     try:
@@ -166,12 +169,15 @@ def json_api(params=None):
 
     # Some operation has resulted in a request to pass through the request.
     except Passthrough as e:
-        log.info('Passing through %s due to %s("%s"):%s%s' % (
+        if app.debug and method_params:
+            detail = ':\n' + json.dumps(method_params, sort_keys=True, indent=4)
+        else:
+            detail = ''
+        log.info('Passing through %s due to %s("%s")%s' % (
             method_name,
             e.__class__.__name__,
             e,
-            '\n' if method_params else '',
-            json.dumps(method_params or {}, sort_keys=True, indent=4) if method_params else '',
+            detail,
         ))
         res_data = {}
         res_tuple = passthrough(stream=True)
@@ -193,6 +199,7 @@ def json_api(params=None):
     ))
     log_globals.skip_http_log = True
 
+    log.info('RESULT: %s' % repr(res_tuple))
     return res_tuple
 
 

@@ -234,14 +234,8 @@ class Absent(Field):
     def extract_select(self, *args, **kwargs):
         raise NoFieldData()
 
-    def prepare_upsert_data(self, req, value):
-        # If triggered by an event, just ignore the request. This can happen
-        # a lot with identifier columns (usually "name"), in which it seems
-        # like we get a "name", but it really doesn't exist.
-        if req.source_event:
-            return
-        else:
-            self._raise()
+    # Creating or updating an absent field is a failure.
+    prepare_upsert_data = _raise
 
 
 class NonCacheableField(Field):
@@ -267,9 +261,6 @@ class NonCacheableField(Field):
     check_for_join = _raise
     extract_select = _raise # Should never be run.
 
-    # Likely never to run. We would special case events like we do for
-    # absent fields, except we don't expect to have anything that behaves
-    # like "name" exist for a non-cacheable field.
     prepare_upsert_data = _raise 
 
 

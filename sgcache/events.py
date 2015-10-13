@@ -51,6 +51,9 @@ class EventProcessor(object):
             log.warning('could not find "new" %s %d' % (entity_type.type_name, event.entity_id))
             return
 
+        # Strip our any extra columns Shotgun might have sent us.
+        entity = self.cache.filter_cacheable_entity(entity)
+
         self.cache.create_or_update(entity_type.type_name,
             data=entity,
             create_with_id=True,
@@ -168,7 +171,7 @@ class EventProcessor(object):
 
         # This could be a retired entity, in which case we just need the ID.
         if event.entity:
-            data = event.entity.copy()
+            data = self.cache.filter_cacheable_entity(event.entity)
         else:
             data = {'type': event.entity_type, 'id': event.entity_id}
 

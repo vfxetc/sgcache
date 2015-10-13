@@ -1,8 +1,16 @@
 
-- demo create and update
-    e = sg.create('PublishEvent', {'code': 'test5', 'project': {'type': 'Project', 'id': 66}}); print e; print sg.find_one('PublishEvent', [('id', 'is', e['id'])], ['code'])
+- If we cache all entity and multi_entity fields, then we can infer the
+  existance of new entities upon return of a creation. E.g. creating a Shot
+  with a task_template results in a few new Tasks. If we cache Shot.tasks,
+  then we will immediately see those, and the multi_entity field can be
+  responsible for making sure they exist. Likely a _complete column would be
+  added to signal incomplete entities which need fetching. A thread can wait
+  for a signal that such entities exist, then scan the database looking for them,
+  and fully cache them.
 
-    sg.update('PublishEvent', 10502, {'code': 'test4'}); print sg.find_one('PublishEvent', [('id', 'is', 10502)], ['code'])
+- We can cache SOME url fields, depending on their "link_type" (e.g. we can
+  cache those of "web" type). Would generally need support for raising an
+  exception for a single field of a single entity.
 
 - multi_entity is_not None -> True if there is something in there
 
