@@ -106,7 +106,7 @@ class Cache(collections.Mapping):
 
         entity_type = self[type_name]
         for field_name, value in data.iteritems():
-            field = self.get(field_name)
+            field = entity_type.get(field_name)
             if field and field.is_cached():
                 cacheable_data[field_name] = value
 
