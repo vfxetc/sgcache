@@ -43,13 +43,17 @@ class EventProcessor(object):
         '''
 
         # We need to fetch all of the data from the server; bleh.
-        entity = self.cache.event_log.shotgun.find_one(entity_type.type_name, [
-            ('id', 'is', event.entity_id),
-        ], [key for key, field in entity_type.fields.iteritems() if field.is_cached()])
+        entity = self.cache.event_log.shotgun.find_one(entity_type.type_name,
+            filters=[('id', 'is', event.entity_id)],
+            fields=[key for key, field in entity_type.fields.iteritems() if field.is_cached()]
+        )
 
         if not entity:
             log.warning('could not find "new" %s %d' % (entity_type.type_name, event.entity_id))
             return
+
+        # We assume that updated_at is pulled in from Shotgun, as it only
+        # really matters if we are caching it anyways.
 
         # Strip our any extra columns Shotgun might have sent us.
         entity = self.cache.filter_cacheable_entity(entity)
@@ -61,7 +65,7 @@ class EventProcessor(object):
             source_event=event,
             extra={
                 '_last_log_event_id': event['id'],
-                '_active': True, # for revived entities
+                '_active': not event.entity_is_retired,
             },
         )
 
@@ -170,13 +174,10 @@ class EventProcessor(object):
             return
 
         # This could be a retired entity, in which case we just need the ID.
-        if event.entity:
-            data = self.cache.filter_cacheable_entity(event.entity)
-        else:
-            data = {'type': event.entity_type, 'id': event.entity_id}
+        data = event.entity.copy() if event.entity else {'type': event.entity_type, 'id': event.entity_id}
 
         if event.get('project'):
-            data['project'] = event['project']
+            data.setdefault('project', event['project'])
 
         # Use an internal syntax for adding or removing from multi-entities.
         added = event.meta.get('added')
@@ -186,6 +187,11 @@ class EventProcessor(object):
         else:
             data[event['attribute_name']] = event['meta']['new_value']
 
+        # Pull in the updated_at (assuming that it is cached, of course).
+        data.setdefault('updated_at', event.get('entity.%s.updated_at' % event.entity_type))
+
+        data = self.cache.filter_cacheable_entity(data)
+        
         handler = self.cache.create_or_update(entity_type.type_name,
             data=data,
             create_with_id=True,
@@ -268,7 +274,13 @@ class EventProcessor(object):
         }
         '''
 
-        if not self.cache.revive(event.entity_type, event.entity_id, con=con, source_event=event, strict=False):
+        # Pull in updated_at.
+        extra = {}
+        updated_at = event.get('entity.%s.updated_at' % event.entity_type)
+        if updated_at:
+            extra['updated_at'] = updated_at
+
+        if not self.cache.revive(event.entity_type, event.entity_id, con=con, source_event=event, extra=extra, strict=False):
             log.warning('revived un-cached %s %d; processing as new' % (event.entity_type, entity_id))
             self._process_new_event(con, event, entity_type)
 

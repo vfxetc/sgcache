@@ -106,6 +106,14 @@ class Api3CreateOperation(object):
                 if not explicit_active:
                     del query_params['_active']
 
+                # _last_event_id and updated_at should be the max of the existing
+                # and new values. This can cause problems with updated_by not
+                # matching up until the next scan, but *shrugs*.
+                for name in ('_last_event_id', 'updated_at'):
+                    value = query_params.get(value)
+                    if value:
+                        query_params[name] = sa.func.max(table.c[name], value)
+                
                 # Update!
                 con.execute(table.update().where(table.c.id == self.entity_id), **query_params)
 

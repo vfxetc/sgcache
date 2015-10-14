@@ -12,6 +12,19 @@
   cache those of "web" type). Would generally need support for raising an
   exception for a single field of a single entity.
 
+  If we want to immediately deal with partially cached data, start by collecting
+  the uncached_entities and uncached_fields on some object. Those must then
+  be resolved immediatly via a ('id', 'in', set_of_ids) query (because if
+  we do a simple passthrough that requires our order_by to match that of
+  Shotgun's).
+
+  Another method is to have another thread listening to a queue for encounters
+  with uncached values. When encountered, a signal can be sent to that thread,
+  and an exception raised in order to pass the request through.
+
+  Passthrough find(s) could be augmented to return every field, such that we
+  are able to cache those entities immediately.
+
 - multi_entity is_not None -> True if there is something in there
 
 - remove all global state:

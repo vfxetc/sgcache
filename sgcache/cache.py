@@ -156,11 +156,13 @@ class Cache(collections.Mapping):
     def revive(self, type_name, entity_id, **kwargs):
         return self._set_active(type_name, entity_id, True, **kwargs)
 
-    def _set_active(self, type_name, entity_id, state, source_event=None, con=None, strict=True):
+    def _set_active(self, type_name, entity_id, state, extra=None, source_event=None, con=None, strict=True):
 
         entity_type = self[type_name]
 
-        data = {'_active': bool(state), '_cache_updated_at': datetime.datetime.utcnow()}
+        data = self.filter_cacheable_data(type_name, extra) if extra else {}
+        data['_active'] = bool(state)
+        data['_cache_updated_at'] = datetime.datetime.utcnow() # TODO: isn't this automatic?
         if source_event:
             data['_last_log_event_id'] = source_event.id
 
@@ -216,7 +218,13 @@ class Cache(collections.Mapping):
         if auto_last_id:
             last_id, last_time = self.get_last_event()
 
-        self.event_log = EventLog(shotgun=get_shotgun('sgapi'), last_id=last_id, last_time=last_time)
+        # Ask for the updated_at of every entity that we care about.
+        # This is used in the handling of "change" events.
+        extra_fields = []
+        for entity_name in self:
+            extra_fields.append('entity.%s.updated_at' % entity_name)
+
+        self.event_log = EventLog(shotgun=get_shotgun('sgapi'), last_id=last_id, last_time=last_time, extra_fields=extra_fields)
         self.event_processor = EventProcessor(self)
 
         io_error_count = 0
