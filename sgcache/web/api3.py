@@ -44,16 +44,27 @@ def create(api3_request):
     if cacheable_data:
         cache.create_or_update(entity_type.type_name, cacheable_data, create_with_id=True)
 
-    # Reduce the returned data to that which was requested.
+    # Reduce the returned data...
     return_data = {
         'type': entity_type.type_name,
         'id': created_data['id'],
     }
+    # ... to that which was specified in the creation...
+    for data_spec in api3_request['fields']:
+        field = data_spec['field_name']
+        try:
+            return_data[field] = created_data[field]
+        except KeyError:
+            # Should never get here; everything passed in should have been
+            # returned to us.
+            pass
+    # ... and additionally what was explicitly requested.
     for field in return_fields:
         try:
             return_data[field] = created_data[field]
         except KeyError:
             pass
+
 
     return {'results': return_data}
 
