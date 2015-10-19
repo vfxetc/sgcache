@@ -86,6 +86,9 @@ def setup_logs(app=None):
         handler.setLevel(app.config['LOGGING_SMTP_LEVEL'])
         add_handler(handler)
 
+        # Also Flask-level errors.
+        app.logger.addHandler(handler)
+
 
 
 class RequestContextInjector(logging.Filter):
