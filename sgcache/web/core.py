@@ -122,9 +122,18 @@ def json_api(params=None):
 
     # Log the base of the request.
     headline_chunks = ['Starting %s' % method_name]
-    entity_type = method_params.get('type')
-    if entity_type:
-        headline_chunks.append('on %s' % entity_type)
+    if isinstance(method_params, dict):
+        entity_type = method_params.get('type')
+        if entity_type:
+            headline_chunks.append('on %s' % entity_type)
+    elif method_name == 'batch' and isinstance(method_params, list):
+        batch_chunks = []
+        batch_counts = {}
+        for x in method_params:
+            batch_counts[x['request_type']] = batch_counts.get(x['request_type'], 0) + 1
+        for name, count in sorted(batch_counts.iteritems(), key=lambda x: x[1]):
+            batch_chunks.append('%d %s%s' % (count, name, 's' if count != 1 else ''))
+        headline_chunks.append('(%s)' % ', '.join(batch_chunks))
     script_name = auth_params.get('script_name')
     if script_name:
         headline_chunks.append('by script "%s"' % script_name)
