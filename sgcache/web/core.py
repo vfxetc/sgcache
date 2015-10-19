@@ -1,3 +1,4 @@
+from types import GeneratorType
 import copy
 import json
 import logging
@@ -156,27 +157,45 @@ def json_api(params=None):
         log.info('Passing through "%s" due to unknown API method%s' % (method_name, detail))
         return passthrough(stream=True)
 
+    start_time = time.time()
+
     try:
-        start_time = time.time()
-        res_data = method(method_params)
+
+        result = method(method_params)
+
+        # If the method is a generator, then it will yield the params to use
+        # for passthrough requests, and we send it back the results. We do
+        # this to generalize our handling of requests so that the same code
+        # will work in batch mode.
+        if isinstance(result, GeneratorType):
+            coroutine = result
+            passthrough_params = next(coroutine)
+            try:
+                passthrough_results = passthrough(params=passthrough_params)
+            except:
+                coroutine.throw(*sys.exc_info())
+            else:
+                result = coroutine.send(passthrough_results)
+                for x in coroutine:
+                    log.warning('Extra yielded from generator method: %r' % x)
+
 
     # Exceptions as control flow.
     except ReturnResponse as e:
-        res_data = {}
-        res_tuple = e.args
+        result = e.args
 
     # An (emulated) Shotgun fault has occoured.
     except Fault as e:
         log.warning('%s (%s): %s' % (e.__class__.__name__, e.code, e.args[0]))
-        res_data = {
+        result_data = {
             'exception': True,
             'error_code': e.code,
             'message': e.args[0],
         }
         # Shotgun does still return a 200 here.
-        res_tuple = json.dumps(res_data), 200, [('Content-Type', 'application/json')]
+        result = json.dumps(res_data), 200, [('Content-Type', 'application/json')]
 
-    # Some operation has resulted in a request to pass through the request.
+    # Some operation has resulted in an abortive request to pass through the request.
     except Passthrough as e:
         if app.debug and method_params:
             detail = ':\n' + json.dumps(method_params, sort_keys=True, indent=4)
@@ -188,27 +207,26 @@ def json_api(params=None):
             e,
             detail,
         ))
-        res_data = {}
-        res_tuple = passthrough(stream=True)
+        result = passthrough(stream=True)
 
+    if isinstance(result, dict):
+        num_entities = len(result['entities']) if 'entities' in result else None
     else:
-        # api3 methods are permitted to return a tuple of the raw response,
-        # or a dict that is serialized.
-        if isinstance(res_data, dict):
-            res_tuple = json.dumps(res_data), 200, [('Content-Type', 'application/json')]
-        elif isinstance(res_data, tuple):
-            res_tuple = res_data
-        else:
-            raise TypeError('api3 method returned %s' % type(res_data))
+        num_entities = None
+
+    # If the results are not a Result (or tuple/list with one), then treat
+    # it as raw data to serialize.
+    if not (isinstance(result, Response) or (isinstance(result, (list, tuple)) and isinstance(result[0], Response))):
+        result = json.dumps(result), 200, [('Content-Type', 'application/json')]
 
     elapsed_ms = 1000 * (time.time() - start_time)
     log.info('Returned %sin %.1fms' % (
-        '%s %ss ' % (len(res_data['entities']), entity_type) if 'entities' in res_data else '',
+        '%s %ss ' % (num_entities, entity_type) if num_entities else '',
         elapsed_ms
     ))
     log_globals.skip_http_log = True
 
-    return res_tuple
+    return result
 
 
 
