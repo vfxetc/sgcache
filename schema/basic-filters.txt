@@ -21,8 +21,10 @@
 
 + Shot
 + Shot.*sequence
++ Shot.sg_main_slate
 
 + Slate
++ Slate.sg_focal_length_*
 
 + Step
 + Step.color
@@ -56,6 +58,7 @@
 + *.sg_path
 + *.sg_path_to_frames
 + *.sg_path_to_movie
++ *.sg_slate
 + *.sg_status
 + *.sg_status_list
 + *.short_name

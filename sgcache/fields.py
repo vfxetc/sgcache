@@ -20,6 +20,17 @@ def sg_field_type(cls):
     return cls
 
 
+_schema_attribute_normalizations = {
+    'type': {
+        'DOUBLE PRECISION': 'FLOAT',
+    }
+}
+def _normalize_schema_attribute(name, value):
+    if not isinstance(value, basestring):
+        return value
+    return _schema_attribute_normalizations.get(name, {}).get(value, value)
+
+
 class Field(object):
 
     """The model of a single field of an entity, extended into a class
@@ -53,6 +64,11 @@ class Field(object):
             else:
                 ev = getattr(existing, attr)
                 cv = getattr(column, attr)
+
+            # For some reason, they still can come back a little wonky
+            # on reflection.
+            ev = _normalize_schema_attribute(attr, ev)
+            cv = _normalize_schema_attribute(attr, cv)
 
             if ev != cv:
                 raise RuntimeError('schema mismatch on %s.%s; existing %s %r != %r' % (
