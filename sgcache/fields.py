@@ -435,6 +435,27 @@ class Entity(Field):
                 type_column == values[0]['type'],
                 id_column == values[0]['id']
             )
+
+        if relation in ('in', 'not_in'):
+            types = set(v['type'] for v in values)
+            if len(types) == 1:
+                # We can be relatively efficient and use an "in".
+                clause = sa.and_(
+                    type_column == values[0]['type'],
+                    id_column.in_(set(v['id'] for v in values)),
+                )
+            else:
+                # Slightly gross.
+                clause = sa.or_(*(
+                    sa.and_(
+                        type_column == value['type'],
+                        id_column == value['id']
+                    ) for value in values
+                ))
+            if relation == 'in':
+                return clause
+            else:
+                return sa.not_(clause)
         
         raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 
