@@ -16,7 +16,7 @@ from sgcache import config
 config.update_from_argv()
 
 # Must import app after config.
-from sgcache.web.core import cache, app
+from sgcache.web.core import cache, app, post_fork
 
 threads = []
 
@@ -56,6 +56,10 @@ if port:
 
             def load_config(self):
                 self.cfg.set('bind', '0.0.0.0:%s' % port)
+                
+                # Need to reset engine pools.
+                self.cfg.set('post_fork', post_fork)
+
                 for k, v in app.config.__dict__.iteritems():
                     if k.startswith('GUNICORN_') and v is not None:
                         # This is a bit fragile.

@@ -48,6 +48,14 @@ class ReturnPassthroughError(ReturnResponse):
     pass
 
 
+def post_fork(server, worker):
+    log.info('Post-fork cleanup.')
+
+    # We need to dispose of all of the existing connections, otherwise it seems
+    # like the pools tend to walk over each other.
+    db.dispose()
+
+
 def passthrough(payload=None, params=None, raise_exceptions=True, stream=False, final=False):
 
     # Remove headers which we should not pass on.
