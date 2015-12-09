@@ -1,3 +1,4 @@
+from datetime import datetime, date
 import functools
 import logging
 import re
@@ -358,18 +359,25 @@ class UUID(Text):
 
 
 
-@sg_field_type
-class Date(Text):
-    # TODO: understand this better
-    # Just a string, but should reject malformed ones.
-    pass
 
 @sg_field_type
 class DateTime(Text):
-    # TODO: understand this better
-    # Just a string, but should reject malformed ones.
-    pass
+    def prepare_upsert_data(self, create_op, value):
+        # We can get either strings or datetime[s]. If they are strings, we
+        # assume they are properly formated; perhaps we should assert this
+        # in the future. If they are datetime, we format them in the way that
+        # the shotgun_api3 expects, otherwise they will be returned as strings.
+        if isinstance(value, datetime):
+            value = value.strftime('%Y-%m-%dT%H:%M:%SZ')
+        return {self.name: value}
 
+@sg_field_type
+class Date(Text):
+    def prepare_upsert_data(self, create_op, value):
+        # See the comments on the DateTime field type.
+        if isinstance(value, date):
+            value = value.strftime('%Y-%m-%d')
+        return {self.name: value}
 
 
 @sg_field_type
