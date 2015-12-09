@@ -206,15 +206,10 @@ def json_api(params=None):
 
     # Some operation has resulted in an abortive request to pass through the request.
     except Passthrough as e:
-        if app.debug and method_params:
-            detail = ':\n' + json.dumps(method_params, sort_keys=True, indent=4)
-        else:
-            detail = ''
-        log.info('Passing through %s due to %s("%s")%s' % (
+        log.info('Passing through %s due to %s("%s")' % (
             method_name,
             e.__class__.__name__,
-            e,
-            detail,
+            e
         ))
         result = passthrough(stream=True)
 
