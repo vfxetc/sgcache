@@ -18,12 +18,16 @@
 + PublishEvent.sg_*
 
 + Sequence
++ Sequence.assets
 
 + Shot
 + Shot.*sequence
++ Shot.assets
 + Shot.sg_main_slate
++ Shot.sg_shot_length
 
 + Slate
++ Slate.sg_colorspace
 + Slate.sg_focal_length_*
 
 + Step
@@ -33,11 +37,14 @@
 + Task
 + Task.color
 + Task.content
++ Task.sg_assets
 + Task.step
 + Task.task_assignees
 
 + Version
 + Version.sg_task
++ Version.sg_qt
++ Version.sg_latest
 
 
 ### FIELDS

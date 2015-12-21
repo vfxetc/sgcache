@@ -144,12 +144,15 @@ PublishEvent:
     sg_link:
         data_type: entity
         entity_types: [Task]
+    sg_metadata: text
     sg_name: absent
     sg_path: text
     sg_path_to_frames: text
     sg_path_to_movie: text
     sg_qt: url
-    sg_slate: absent
+    sg_slate:
+        data_type: entity
+        entity_types: [Slate]
     sg_source_publishes:
         data_type: multi_entity
         entity_types: [PublishEvent]
@@ -169,6 +172,9 @@ PublishEvent:
         entity_types: [HumanUser, ApiUser]
     user: absent
 Sequence:
+    assets:
+        data_type: multi_entity
+        entity_types: [Asset]
     code: text
     created_at: date_time
     created_by:
@@ -201,6 +207,9 @@ Sequence:
         entity_types: [HumanUser, ApiUser]
     user: absent
 Shot:
+    assets:
+        data_type: multi_entity
+        entity_types: [Asset]
     code: text
     created_at: date_time
     created_by:
@@ -227,6 +236,7 @@ Shot:
     sg_sequence:
         data_type: entity
         entity_types: [Sequence]
+    sg_shot_length: text
     sg_slate: text
     sg_status: absent
     sg_status_list: status_list
@@ -252,6 +262,7 @@ Slate:
         data_type: entity
         entity_types: [Project]
     sg_code: absent
+    sg_colorspace: list
     sg_directory: absent
     sg_entity: absent
     sg_focal_length_start: float
@@ -322,6 +333,9 @@ Task:
     project:
         data_type: entity
         entity_types: [Project]
+    sg_assets:
+        data_type: multi_entity
+        entity_types: [Asset]
     sg_code: absent
     sg_directory: absent
     sg_entity: absent
@@ -365,12 +379,16 @@ Version:
     sg_code: absent
     sg_directory: absent
     sg_entity: absent
+    sg_latest: absent
     sg_link: absent
     sg_name: absent
     sg_path: absent
     sg_path_to_frames: text
     sg_path_to_movie: text
-    sg_slate: absent
+    sg_qt: url
+    sg_slate:
+        data_type: entity
+        entity_types: [Slate]
     sg_status: absent
     sg_status_list: status_list
     sg_task:
