@@ -1,4 +1,5 @@
 import sys
+import logging
 
 from . import DaemonCommand
 from ..web.core import make_app

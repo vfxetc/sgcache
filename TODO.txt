@@ -1,5 +1,6 @@
 
-- Replace config module with a Config class
+- tag various config fields with their usage by the various subsections, such
+  that only relavent config can be exposed to argparse
 
 - If we cache all entity and multi_entity fields, then we can infer the
   existance of new entities upon return of a creation. E.g. creating a Shot

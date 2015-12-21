@@ -255,6 +255,10 @@ def proxy(path):
     headers = [(k, v) for k, v in request.headers.items() if k.lower() != 'host']
     remove_hop_by_hop_headers(headers)
 
+    start_time = time.time()
+    if request.method == 'POST':
+        log.info('Proxying %s %s' % (request.method, request.path))
+
     remote_response = current_app.http_session.request(request.method, url,
         data=_StreamReadWrapper(request.stream),
         params=request.args,
@@ -264,6 +268,14 @@ def proxy(path):
 
     headers = remote_response.headers.items()
     remove_hop_by_hop_headers(headers)
+
+    elapsed_ms = 1000 * (time.time() - start_time)
+    log.info('Proxy %s %s returned %s in %.1fms' % (
+        request.method,
+        request.path,
+        remote_response.status_code,
+        elapsed_ms,
+    ))
 
     return Response(
         remote_response.iter_content(8192),

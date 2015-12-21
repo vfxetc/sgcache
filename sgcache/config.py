@@ -156,7 +156,11 @@ class Config(dict):
         for k in defaults:
             if not k.isupper(): # Extra protection.
                 continue
-            parser.add_argument('--' + k.lower().replace('_', '-'), dest='config_' + k, default=NotSet)
+            parser.add_argument('--' + k.lower().replace('_', '-'),
+                dest='config_' + k,
+                metavar=k,
+                default=NotSet,
+            )
 
     def parse_args(self, args):
         for name, value in args.__dict__.iteritems():
