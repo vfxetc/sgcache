@@ -5,7 +5,7 @@ import sys
 
 from ..api3.read import Api3ReadOperation
 from ..exceptions import Passthrough
-from .core import _api3_methods, api3_method, cache, passthrough
+from .core import _api3_methods, api3_method, current_app, passthrough
 
 
 @api3_method
@@ -89,12 +89,14 @@ def batch(api3_requests):
 
 @api3_method
 def read(api3_request):
-    return Api3ReadOperation(api3_request).run(cache)
+    return Api3ReadOperation(api3_request).run(current_app.cache)
 
 
 @api3_method
 def create(api3_request):
 
+    cache = current_app.cache
+    
     return_fields = api3_request['return_fields'][:]
 
     params = api3_request.copy()
@@ -111,11 +113,11 @@ def create(api3_request):
 
     # Fail very hard if "results" doesn't exist since we want to know if the schema changes).
     created_data = response['results']
-    cacheable_data = cache.filter_cacheable_data(created_data)
+    cacheable_data = current_app.cache.filter_cacheable_data(created_data)
 
     # Cache this new entity.
     if cacheable_data:
-        cache.create_or_update(entity_type.type_name, cacheable_data, create_with_id=True)
+        current_app.cache.create_or_update(entity_type.type_name, cacheable_data, create_with_id=True)
 
     # Reduce the returned data...
     return_data = {
@@ -149,11 +151,11 @@ def update(api3_request):
 
     # Fail very hard if "results" doesn't exist since we want to know if the schema changes).
     updated_data = response['results']
-    cacheable_data = cache.filter_cacheable_data(updated_data)
+    cacheable_data = current_app.cache.filter_cacheable_data(updated_data)
 
     # Cache the updates
     if cacheable_data:
-        cache.create_or_update(api3_request['type'], cacheable_data, create_with_id=True)
+        current_app.cache.create_or_update(api3_request['type'], cacheable_data, create_with_id=True)
 
     yield response
 
@@ -161,14 +163,14 @@ def update(api3_request):
 @api3_method
 def delete(api3_request):
     response = yield
-    cache.retire(api3_request['type'], api3_request['id'], strict=False)
+    current_app.cache.retire(api3_request['type'], api3_request['id'], strict=False)
     yield response
 
 
 @api3_method
 def revive(api3_request):
     response = yield
-    cache.revive(api3_request['type'], api3_request['id'], strict=False)
+    current_app.cache.revive(api3_request['type'], api3_request['id'], strict=False)
     yield response
 
 

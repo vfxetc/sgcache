@@ -17,6 +17,18 @@ setup(
         # TODO: a few things go here
     ],
 
+    entry_points={
+        'console_scripts': '''
+            
+            sgcache-ctrl = sgcache.commands.ctrl:main
+
+            sgcache-web = sgcache.commands.web:main
+            sgcache-scanner = sgcache.commands.scanner:main
+            sgcache-events = sgcache.commands.events:main
+
+        ''',
+    },
+    
     classifiers=[
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',

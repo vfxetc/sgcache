@@ -6,14 +6,14 @@ import os
 import sys
 import time
 
-from flask import Flask, request, Response, stream_with_context, g, redirect
+from flask import Blueprint, Flask, request, Response, stream_with_context, g, redirect, current_app
 from werkzeug.http import remove_hop_by_hop_headers
 import requests
 import sqlalchemy as sa
 import yaml
 
-from .. import config
 from ..cache import Cache
+from ..config import Config
 from ..exceptions import Passthrough, Fault
 from ..logs import setup_logs, log_globals
 from ..schema import Schema
@@ -22,23 +22,33 @@ from ..utils import get_shotgun_kwargs
 log = logging.getLogger(__name__)
 
 
-app = Flask(__name__)
-app.config.from_object(config)
+blueprint = Blueprint('sgcache_web', __name__)
 
-db = sa.create_engine(app.config['SQLA_URL'], echo=bool(app.config['SQLA_ECHO']))
 
-# Setup logging *after* SQLA so that it can deal with its handlers.
-setup_logs(app)
+def make_app(cache=None, config=None):
 
-schema = Schema.from_yaml(app.config['SCHEMA'])
-cache = Cache(db, schema) # SQL DDL is executed here; watch out!
+    if config is None:
+        config = Config()
 
-# Get the fallback server from shotgun_api3_registry.
-FALLBACK_SERVER = get_shotgun_kwargs()['base_url'].strip('/')
-FALLBACK_URL = FALLBACK_SERVER + '/api3/json'
+    app = Flask(__name__)
+    app.config.update(config)
 
-# We use one HTTP session for everything.
-http_session = requests.Session()
+    if cache is None:
+        cache = Cache(config=config)
+
+    app.cache = cache
+
+    # Get the fallback server from shotgun_api3_registry.
+    passthrough_server = app.config.setdefault('PASSTHROUGH_SERVER', get_shotgun_kwargs(config)['base_url'].strip('/'))
+    app.config.setdefault('PASSTHROUGH_URL', passthrough_server + '/api3/json')
+
+    # We use one HTTP session for everything.
+    app.http_session = requests.Session()
+
+    # Register the logic.
+    app.register_blueprint(blueprint)
+
+    return app
 
 
 class ReturnResponse(ValueError):
@@ -47,13 +57,6 @@ class ReturnResponse(ValueError):
 class ReturnPassthroughError(ReturnResponse):
     pass
 
-
-def post_fork(server, worker):
-    log.info('Post-fork cleanup.')
-
-    # We need to dispose of all of the existing connections, otherwise it seems
-    # like the pools tend to walk over each other.
-    db.dispose()
 
 
 def passthrough(payload=None, params=None, raise_exceptions=True, stream=False, final=False):
@@ -71,7 +74,7 @@ def passthrough(payload=None, params=None, raise_exceptions=True, stream=False, 
     if not isinstance(payload, basestring):
         payload = json.dumps(payload)
 
-    http_response = http_session.post(FALLBACK_URL, data=payload, headers=headers, stream=stream)
+    http_response = current_app.http_session.post(current_app.config['PASSTHROUGH_URL'], data=payload, headers=headers, stream=stream)
 
     if http_response.status_code != 200:
         raise ReturnPassthroughError(Response(
@@ -98,23 +101,23 @@ def passthrough(payload=None, params=None, raise_exceptions=True, stream=False, 
 # This is used by our shotgun_api3_registry to assert that the cache is up.
 # In the future we may have something with a bit more information, or have the
 # "info" method return a bit more.
-@app.route('/ping')
+@blueprint.route('/ping')
 def on_ping():
     return 'pong', 200, [('Content-Type', 'text/plain')]
 
 
 # Forward detail requests through to the real thing.
-@app.route('/')
-@app.route('/detail/<path:path>')
-@app.route('/page/<path:path>')
+@blueprint.route('/')
+@blueprint.route('/detail/<path:path>')
+@blueprint.route('/page/<path:path>')
 def forward_details(path=''):
-    url = FALLBACK_SERVER + request.path
+    url = current_app.config['PASSTHROUGH_SERVER'] + request.path
     return redirect(url)
 
 
 
-@app.route('/api3/json', methods=['POST'])
-@app.route('/<path:params>/api3/json', methods=['POST'])
+@blueprint.route('/api3/json', methods=['POST'])
+@blueprint.route('/<path:params>/api3/json', methods=['POST'])
 def json_api(params=None):
 
     payload = g.api3_payload = json.loads(request.data)
@@ -159,7 +162,7 @@ def json_api(params=None):
     try:
         method = _api3_methods[method_name]
     except KeyError as e:
-        if app.debug and method_params:
+        if current_app.debug and method_params:
             detail = ':\n' + json.dumps(method_params, sort_keys=True, indent=4)
         else:
             detail = ''
@@ -240,19 +243,19 @@ class _StreamReadWrapper(object):
     def __init__(self, fh):
         self.read = fh.read
 
-@app.route('/file_serve/<path:path>', methods=['GET', 'POST'])
-@app.route('/thumbnail/<path:path>', methods=['GET', 'POST'])
-@app.route('/upload/<path:path>', methods=['GET', 'POST'])
+@blueprint.route('/file_serve/<path:path>', methods=['GET', 'POST'])
+@blueprint.route('/thumbnail/<path:path>', methods=['GET', 'POST'])
+@blueprint.route('/upload/<path:path>', methods=['GET', 'POST'])
 def proxy(path):
 
-    url = FALLBACK_SERVER + request.path
+    url = current_app.config['PASSTHROUGH_SERVER'] + request.path
 
     # Strip out the hop-by-hop headers, AND the host (since that likely points
     # to the cache and not Shotgun).
     headers = [(k, v) for k, v in request.headers.items() if k.lower() != 'host']
     remove_hop_by_hop_headers(headers)
 
-    remote_response = http_session.request(request.method, url,
+    remote_response = current_app.http_session.request(request.method, url,
         data=_StreamReadWrapper(request.stream),
         params=request.args,
         headers=dict(headers),

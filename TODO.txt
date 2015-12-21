@@ -1,4 +1,6 @@
 
+- Replace config module with a Config class
+
 - If we cache all entity and multi_entity fields, then we can infer the
   existance of new entities upon return of a creation. E.g. creating a Shot
   with a task_template results in a few new Tasks. If we cache Shot.tasks,

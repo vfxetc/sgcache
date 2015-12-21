@@ -1,0 +1,58 @@
+#!/bin/bash
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd)"
+ROOT="${1-/etc/systemd/system}"
+
+if [[ ! -d "$ROOT" ]]; then
+    echo "systemd root ($ROOT) does not exist"
+    exit 1
+fi
+
+
+cat >> "$ROOT/sgcache-web.service" <<EOF
+[Unit]
+Description=Shotgun Cache Web
+PartOf=sgcache
+[Service]
+ExecStart=/var/lib/sgcache/var/sgcache.sh
+User=sgcache
+Restart=on-failure
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat >> "$ROOT/sgcache-scanner.service" <<EOF
+[Unit]
+Description=Shotgun Cache Scanner
+PartOf=sgcache
+[Service]
+ExecStart=/var/lib/sgcache/var/sgcache.sh
+User=sgcache
+Restart=on-failure
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat >> "$ROOT/sgcache-events.service" <<EOF
+[Unit]
+Description=Shotgun Cache Events
+PartOf=sgcache
+[Service]
+ExecStart=/var/lib/sgcache/var/sgcache.sh
+User=sgcache
+Restart=on-failure
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Overall.
+cat >> "$ROOT/sgcache.service" <<EOF
+[Unit]
+Description=Shotgun Cache
+[Service]
+ExecStart=/var/lib/sgcache/var/sgcache.sh
+User=sgcache
+Restart=on-failure
+[Install]
+WantedBy=multi-user.target
+EOF

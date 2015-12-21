@@ -5,7 +5,6 @@ import os
 import re
 import traceback
 
-from . import config
 
 try:
     import sgapi
@@ -48,8 +47,9 @@ def get_shotgun_class(provider=None, strict=True):
         raise RuntimeError("no Shotgun APIs installed")
 
 
-def get_shotgun_kwargs():
-    if config.SHOTGUN_URL:
+def get_shotgun_kwargs(config=None):
+
+    if config and config.SHOTGUN_URL:
         return {
             'base_url': config.SHOTGUN_URL,
             'script_name': config.SHOTGUN_SCRIPT_NAME,
@@ -61,6 +61,7 @@ def get_shotgun_kwargs():
         # make very little sense here.
         os.environ.pop('SGCACHE', None)
         return shotgun_api3_registry.get_kwargs()
+    
     else:
         raise RuntimeError('please set SHOTGUN_URL, or provide shotgun_api3_registry.get_kwargs')
 

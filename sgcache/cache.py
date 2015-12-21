@@ -21,6 +21,7 @@ from .events import EventProcessor
 from .exceptions import EntityMissing
 from .logs import log_globals
 from .scanner import Scanner
+from .schema import Schema
 from .utils import log_exceptions, get_shotgun, try_call_except_traceback
 
 
@@ -36,7 +37,15 @@ class Cache(collections.Mapping):
 
     """
 
-    def __init__(self, db, schema):
+    def __init__(self, db=None, schema=None, config=None):
+
+        if (config and (db or schema)) or ((db or schema) and not (db and schema)):
+            raise ValueError('provide either config, or db and schema')
+
+        if config:
+            db = sa.create_engine(config['SQLA_URL'], echo=bool(config['SQLA_ECHO']))
+            schema = Schema.from_yaml(config['SCHEMA'])
+
         self.db = db
         self.metadata = sa.MetaData(bind=db)
         self.schema = schema
