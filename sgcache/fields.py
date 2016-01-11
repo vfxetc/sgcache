@@ -468,7 +468,10 @@ class Entity(Field):
         raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 
     def prepare_upsert_data(self, req, value):
-        return {self.type_column.name: value['type'], self.id_column.name: value['id']}
+        if value is None:
+            return {self.type_column.name: None,          self.id_column.name: None       }
+        else:
+            return {self.type_column.name: value['type'], self.id_column.name: value['id']}
 
 
 
@@ -556,6 +559,7 @@ class MultiEntity(Field):
         raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 
     def prepare_upsert_data(self, req, value):
+
         if req.entity_id:
             # Schedule deletion of existing data.
             req.before_query.append(functools.partial(self._before_upsert, req, value))

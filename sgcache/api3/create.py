@@ -74,11 +74,12 @@ class Api3CreateOperation(object):
         query_params['_cache_created_at'] = query_params['_cache_updated_at'] = datetime.datetime.utcnow()
 
         for field_name, field in cache[self.entity_type_name].fields.iteritems():
-            value = self.data.get(field_name)
-            if value is not None:
-                field_params = field.prepare_upsert_data(self, value)
-                if field_params:
-                    query_params.update(field_params)
+            if field_name not in self.data:
+                continue
+            value = self.data[field_name]
+            field_params = field.prepare_upsert_data(self, value)
+            if field_params:
+                query_params.update(field_params)
 
         with cache.db_begin(con) as con:
 
