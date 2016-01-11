@@ -429,7 +429,7 @@ class Entity(Field):
     def extract_select(self, req, row, state):
         type_column, id_column = state
         if row[type_column] is None:
-            raise NoFieldData()
+            return None
         return {'type': row[type_column], 'id': row[id_column]}
 
     def prepare_filter(self, req, path, relation, values):
