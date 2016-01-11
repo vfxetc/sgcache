@@ -89,7 +89,9 @@ class Api3CreateOperation(object):
             # update or insert, but also for multi_entity fields to know
             # if they need to do pre-processing).
             if self.entity_id:
-                self.entity_exists = list(con.execute(sa.select([table.c.id]).where(table.c.id == self.entity_id).limit(1)))
+                existing_row = con.execute(sa.select([table.c._last_log_event_id, table.c.updated_at]).where(table.c.id == self.entity_id).limit(1)).fetchone()
+                self.entity_exists = existing_row is not None
+
 
             # Callbacks for multi_entity fields.
             for func in self.before_query:
@@ -107,13 +109,17 @@ class Api3CreateOperation(object):
                 if not explicit_active:
                     del query_params['_active']
 
-                # _last_event_id and updated_at should be the max of the existing
+                # _last_log_event_id and updated_at should be the max of the existing
                 # and new values. This can cause problems with updated_by not
                 # matching up until the next scan, but *shrugs*.
-                for name in ('_last_event_id', 'updated_at'):
-                    value = query_params.get(value)
-                    if value:
-                        query_params[name] = sa.func.max(table.c[name], value)
+                for name in ('_last_log_event_id', 'updated_at'):
+                    try:
+                        v1 = query_params[name]
+                        v2 = existing_row[name]
+                    except KeyError:
+                        continue
+                    if v1 and v2:
+                        query_params[name] = max(v1, v2)
                 
                 # Update!
                 con.execute(table.update().where(table.c.id == self.entity_id), **query_params)
