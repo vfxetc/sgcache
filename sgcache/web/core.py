@@ -221,9 +221,9 @@ def json_api(params=None):
     else:
         num_entities = None
 
-    # If the results are not a Result (or tuple/list with one), then treat
+    # If the results are not a Response/string (or tuple/list with one), then treat
     # it as raw data to serialize.
-    if not (isinstance(result, Response) or (isinstance(result, (list, tuple)) and isinstance(result[0], Response))):
+    if not (isinstance(result, (Response, basestring)) or (isinstance(result, (list, tuple)) and isinstance(result[0], (Response, basestring)))):
         result = json.dumps(result), 200, [('Content-Type', 'application/json')]
 
     elapsed_ms = 1000 * (time.time() - start_time)
