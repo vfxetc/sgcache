@@ -50,6 +50,8 @@ class Cache(collections.Mapping):
         self.metadata = sa.MetaData(bind=db)
         self.schema = schema
 
+        self.shotgun = get_shotgun('sgapi')
+
         # Build model objects from the schema; these will not be complete
         # until we reflect the database below.
         self._entity_types = {}
@@ -126,6 +128,38 @@ class Cache(collections.Mapping):
         cacheable = self.filter_cacheable_data(entity)
         cacheable['type'] = type_
         return cacheable
+
+    def fetch_via_find(self, type_name, filters, async=False):
+        entity_type = self[type_name]
+        entities = self.shotgun.find(type_name, filters,
+            fields=[key for key, field in entity_type.fields.iteritems() if field.is_cached()],
+            async=async,
+        )
+        for found in entities:
+            cacheable = self.filter_cacheable_entity(found)
+            if cacheable:
+                self.create_or_update(type_name, cacheable, create_with_id=True)
+        return entities
+
+    def fetch_partial_entities(self, template_entities):
+
+        # Split up by type.
+        ids_by_type = {}
+        for e in template_entities:
+            ids_by_type.setdefault(e['type'], []).append(e['id'])
+
+        # Do the updates.
+        for type_name, ids in entities.iteritems():
+            # We need to fetch all of the data from the real server; bleh.
+            entity_type = self[type_name]
+            future = self.fetch_via_find(type_name, [('id', 'is', ids)], async=True)
+            futures.append((entity_type, ids, future))
+
+        # Cache everything as it comes back.
+        for entity_type, ids, future in futures:
+            fetched_entities = future.result()
+            if len(fetched_entities) != len(ids):
+                log.error('Only found %d of %d provided %s' % (len(ids), len(fetched_entities), entity_type.type_name))
 
     def create_or_update(self, type_name, data, create_with_id=False, source_event=None, **kwargs):
         """Create or update an entity, with an API eerily similar to ``python_api3``.
@@ -233,7 +267,7 @@ class Cache(collections.Mapping):
         for entity_name in self:
             extra_fields.append('entity.%s.updated_at' % entity_name)
 
-        self.event_log = EventLog(shotgun=get_shotgun('sgapi'), last_id=last_id, last_time=last_time, extra_fields=extra_fields)
+        self.event_log = EventLog(shotgun=self.shotgun, last_id=last_id, last_time=last_time, extra_fields=extra_fields)
         self.event_processor = EventProcessor(self)
 
         io_error_count = 0

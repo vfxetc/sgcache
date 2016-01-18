@@ -2,10 +2,14 @@ from inspect import isgeneratorfunction
 from types import GeneratorType
 import json
 import sys
+import logging
 
 from ..api3.read import Api3ReadOperation
 from ..exceptions import Passthrough
 from .core import _api3_methods, api3_method, current_app, passthrough
+
+
+log = logging.getLogger(__name__)
 
 
 @api3_method
@@ -113,11 +117,23 @@ def create(api3_request):
 
     # Fail very hard if "results" doesn't exist since we want to know if the schema changes).
     created_data = response['results']
-    cacheable_data = current_app.cache.filter_cacheable_data(created_data)
+    cacheable_data = cache.filter_cacheable_data(created_data)
 
     # Cache this new entity.
     if cacheable_data:
-        current_app.cache.create_or_update(entity_type.type_name, cacheable_data, create_with_id=True)
+        cache.create_or_update(entity_type.type_name, cacheable_data, create_with_id=True)
+
+    # The only special case we know: when creating a Shot with a task_template,
+    # Shotgun will immediately create some Tasks, and link them into the "tasks"
+    # field. Some of our tools will immediately query for those tasks, but the
+    # cache may not know of them for a few seconds (until the events come in).
+    # We have opted to take the safest route, and immediately cache those tasks.
+    # Unfortunately Shotgun does not even return them to us immediately, so we
+    # need to make an extra query for them.
+    if entity_type.type_name == 'Shot' and any(f['field_name'] == 'task_template' and f['value'] for f in params['fields']):
+        tasks = cache.fetch_via_find('Task', [('entity', 'is', {'type': 'Shot', 'id': created_data['id']})])
+        if tasks:
+            log.info('Cached %s Tasks created from Shot.task_template' % len(tasks))
 
     # Reduce the returned data...
     return_data = {
