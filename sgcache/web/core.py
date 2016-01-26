@@ -205,7 +205,7 @@ def json_api(params=None):
             'message': e.args[0],
         }
         # Shotgun does still return a 200 here.
-        result = json.dumps(res_data), 200, [('Content-Type', 'application/json')]
+        result = json.dumps(result_data), 200, [('Content-Type', 'application/json')]
 
     # Some operation has resulted in an abortive request to pass through the request.
     except Passthrough as e:
