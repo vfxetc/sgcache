@@ -46,6 +46,11 @@
 + Version.sg_qt
 + Version.sg_latest
 
+# $RemotePack
++ CustomEntity04
++ CustomEntity04.sg_manifest
++ CustomEntity04.sg_metadata
++ CustomEntity04.sg_user
 
 ### FIELDS
 

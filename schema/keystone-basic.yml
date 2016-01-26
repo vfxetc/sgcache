@@ -61,6 +61,43 @@ Asset:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
     user: absent
+CustomEntity04:
+    code: text
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    description: text
+    entity: absent
+    link: absent
+    name: absent
+    project:
+        data_type: entity
+        entity_types: [Project]
+    sg_code: absent
+    sg_directory: absent
+    sg_entity: absent
+    sg_link: absent
+    sg_manifest: text
+    sg_metadata: text
+    sg_name: absent
+    sg_path: absent
+    sg_path_to_frames: absent
+    sg_path_to_movie: absent
+    sg_slate: absent
+    sg_status: absent
+    sg_status_list: status_list
+    sg_user:
+        data_type: entity
+        entity_types: [HumanUser]
+    short_name: absent
+    status: absent
+    status_list: absent
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    user: absent
 HumanUser:
     code: absent
     created_at: date_time
