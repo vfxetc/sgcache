@@ -6,10 +6,11 @@ import sys
 import yaml
 
 sys.path.append(os.path.abspath(os.path.join(__file__, '..', '..')))
+from sgcache.config import Config
 from sgcache.utils import get_shotgun
 
-
-sg = get_shotgun()
+config = Config()
+sg = get_shotgun(config=config)
 
 
 raw_schema = sg.schema_read()
@@ -29,4 +30,3 @@ for entity_type, raw_fields in raw_schema.iteritems():
 
 
 print yaml.dump(our_schema, indent=4)
-

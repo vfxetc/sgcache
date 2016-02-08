@@ -10,10 +10,12 @@ from ..logs import setup_logs
 
 class DaemonCommand(object):
 
+    args_sections = ['core', 'shotgun']
+
     def __init__(self):
         self.parser = argparse.ArgumentParser()
         self.config = Config()
-        self.config.add_arguments(self.parser)
+        self.config.add_arguments(self.parser, self.args_sections)
         self.log = logging.getLogger(self.__class__.__module__)
 
     def load_app(self):

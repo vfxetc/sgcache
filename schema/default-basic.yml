@@ -1,0 +1,322 @@
+!!python/unicode 'ApiUser':
+    code: absent
+    !!python/unicode 'created_at': !!python/unicode 'date_time'
+    !!python/unicode 'created_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    !!python/unicode 'description': !!python/unicode 'text'
+    entity: absent
+    link: absent
+    name: absent
+    project: absent
+    sg_code: absent
+    sg_directory: absent
+    sg_entity: absent
+    sg_link: absent
+    sg_name: absent
+    sg_path: absent
+    sg_path_to_frames: absent
+    sg_path_to_movie: absent
+    sg_slate: absent
+    sg_status: absent
+    sg_status_list: absent
+    short_name: absent
+    status: absent
+    status_list: absent
+    !!python/unicode 'updated_at': !!python/unicode 'date_time'
+    !!python/unicode 'updated_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    user: absent
+!!python/unicode 'Asset':
+    !!python/unicode 'code': !!python/unicode 'text'
+    !!python/unicode 'created_at': !!python/unicode 'date_time'
+    !!python/unicode 'created_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    !!python/unicode 'description': !!python/unicode 'text'
+    entity: absent
+    link: absent
+    name: absent
+    !!python/unicode 'project':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'Project']
+    !!python/unicode 'sg_asset_type': !!python/unicode 'list'
+    sg_code: absent
+    sg_directory: absent
+    sg_entity: absent
+    sg_link: absent
+    sg_name: absent
+    sg_path: absent
+    sg_path_to_frames: absent
+    sg_path_to_movie: absent
+    sg_slate: absent
+    sg_status: absent
+    !!python/unicode 'sg_status_list': !!python/unicode 'status_list'
+    short_name: absent
+    status: absent
+    status_list: absent
+    !!python/unicode 'updated_at': !!python/unicode 'date_time'
+    !!python/unicode 'updated_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    user: absent
+!!python/unicode 'HumanUser':
+    code: absent
+    !!python/unicode 'created_at': !!python/unicode 'date_time'
+    !!python/unicode 'created_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    description: absent
+    !!python/unicode 'email': !!python/unicode 'text'
+    entity: absent
+    !!python/unicode 'firstname': !!python/unicode 'text'
+    !!python/unicode 'lastname': !!python/unicode 'text'
+    link: absent
+    !!python/unicode 'login': !!python/unicode 'text'
+    !!python/unicode 'name': !!python/unicode 'text'
+    project: absent
+    sg_code: absent
+    sg_directory: absent
+    sg_entity: absent
+    sg_link: absent
+    sg_name: absent
+    sg_path: absent
+    sg_path_to_frames: absent
+    sg_path_to_movie: absent
+    sg_slate: absent
+    sg_status: absent
+    !!python/unicode 'sg_status_list': !!python/unicode 'status_list'
+    short_name: absent
+    status: absent
+    status_list: absent
+    !!python/unicode 'updated_at': !!python/unicode 'date_time'
+    !!python/unicode 'updated_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    user: absent
+!!python/unicode 'Project':
+    code: absent
+    !!python/unicode 'created_at': !!python/unicode 'date_time'
+    !!python/unicode 'created_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    description: absent
+    entity: absent
+    link: absent
+    !!python/unicode 'name': !!python/unicode 'text'
+    project: absent
+    sg_code: absent
+    sg_directory: absent
+    sg_entity: absent
+    sg_link: absent
+    sg_name: absent
+    sg_path: absent
+    sg_path_to_frames: absent
+    sg_path_to_movie: absent
+    sg_slate: absent
+    !!python/unicode 'sg_status': !!python/unicode 'list'
+    sg_status_list: absent
+    short_name: absent
+    status: absent
+    status_list: absent
+    !!python/unicode 'updated_at': !!python/unicode 'date_time'
+    !!python/unicode 'updated_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    user: absent
+!!python/unicode 'Sequence':
+    !!python/unicode 'assets':
+        data_type: !!python/unicode 'multi_entity'
+        entity_types: [!!python/unicode 'Asset']
+    !!python/unicode 'code': !!python/unicode 'text'
+    !!python/unicode 'created_at': !!python/unicode 'date_time'
+    !!python/unicode 'created_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    !!python/unicode 'description': !!python/unicode 'text'
+    entity: absent
+    link: absent
+    name: absent
+    !!python/unicode 'project':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'Project']
+    sg_code: absent
+    sg_directory: absent
+    sg_entity: absent
+    sg_link: absent
+    sg_name: absent
+    sg_path: absent
+    sg_path_to_frames: absent
+    sg_path_to_movie: absent
+    sg_slate: absent
+    sg_status: absent
+    !!python/unicode 'sg_status_list': !!python/unicode 'status_list'
+    short_name: absent
+    status: absent
+    status_list: absent
+    !!python/unicode 'updated_at': !!python/unicode 'date_time'
+    !!python/unicode 'updated_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    user: absent
+!!python/unicode 'Shot':
+    !!python/unicode 'assets':
+        data_type: !!python/unicode 'multi_entity'
+        entity_types: [!!python/unicode 'Asset']
+    !!python/unicode 'code': !!python/unicode 'text'
+    !!python/unicode 'created_at': !!python/unicode 'date_time'
+    !!python/unicode 'created_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    !!python/unicode 'description': !!python/unicode 'text'
+    entity: absent
+    link: absent
+    name: absent
+    !!python/unicode 'project':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'Project']
+    sg_code: absent
+    sg_directory: absent
+    sg_entity: absent
+    sg_link: absent
+    sg_main_slate: absent
+    sg_name: absent
+    sg_path: absent
+    sg_path_to_frames: absent
+    sg_path_to_movie: absent
+    !!python/unicode 'sg_sequence':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'Sequence']
+    sg_shot_length: absent
+    sg_slate: absent
+    sg_status: absent
+    !!python/unicode 'sg_status_list': !!python/unicode 'status_list'
+    short_name: absent
+    status: absent
+    status_list: absent
+    !!python/unicode 'updated_at': !!python/unicode 'date_time'
+    !!python/unicode 'updated_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    user: absent
+!!python/unicode 'Step':
+    !!python/unicode 'code': !!python/unicode 'text'
+    !!python/unicode 'color': !!python/unicode 'color'
+    !!python/unicode 'created_at': !!python/unicode 'date_time'
+    !!python/unicode 'created_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    !!python/unicode 'description': !!python/unicode 'text'
+    entity: absent
+    !!python/unicode 'entity_type': !!python/unicode 'entity_type'
+    link: absent
+    name: absent
+    project: absent
+    sg_code: absent
+    sg_directory: absent
+    sg_entity: absent
+    sg_link: absent
+    sg_name: absent
+    sg_path: absent
+    sg_path_to_frames: absent
+    sg_path_to_movie: absent
+    sg_slate: absent
+    sg_status: absent
+    sg_status_list: absent
+    !!python/unicode 'short_name': !!python/unicode 'text'
+    status: absent
+    status_list: absent
+    !!python/unicode 'updated_at': !!python/unicode 'date_time'
+    !!python/unicode 'updated_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    user: absent
+!!python/unicode 'Task':
+    code: absent
+    !!python/unicode 'color': !!python/unicode 'color'
+    !!python/unicode 'content': !!python/unicode 'text'
+    !!python/unicode 'created_at': !!python/unicode 'date_time'
+    !!python/unicode 'created_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    description: absent
+    !!python/unicode 'entity':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'Asset', !!python/unicode 'Element', !!python/unicode 'Scene',
+            !!python/unicode 'Sequence', !!python/unicode 'Shot', !!python/unicode 'PhysicalAsset',
+            !!python/unicode 'Project', !!python/unicode 'Tool', !!python/unicode 'CustomEntity01']
+    link: absent
+    name: absent
+    !!python/unicode 'project':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'Project']
+    sg_assets: absent
+    sg_code: absent
+    sg_directory: absent
+    sg_entity: absent
+    sg_link: absent
+    sg_name: absent
+    sg_path: absent
+    sg_path_to_frames: absent
+    sg_path_to_movie: absent
+    sg_slate: absent
+    sg_status: absent
+    !!python/unicode 'sg_status_list': !!python/unicode 'status_list'
+    short_name: absent
+    status: absent
+    status_list: absent
+    !!python/unicode 'step':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'Step']
+    !!python/unicode 'task_assignees':
+        data_type: !!python/unicode 'multi_entity'
+        entity_types: [!!python/unicode 'Group', !!python/unicode 'HumanUser']
+    !!python/unicode 'updated_at': !!python/unicode 'date_time'
+    !!python/unicode 'updated_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    user: absent
+!!python/unicode 'Version':
+    !!python/unicode 'code': !!python/unicode 'text'
+    !!python/unicode 'created_at': !!python/unicode 'date_time'
+    !!python/unicode 'created_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    !!python/unicode 'description': !!python/unicode 'text'
+    !!python/unicode 'entity':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'Asset', !!python/unicode 'Scene', !!python/unicode 'Sequence',
+            !!python/unicode 'Shot', !!python/unicode 'CustomEntity01']
+    link: absent
+    name: absent
+    !!python/unicode 'project':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'Project']
+    sg_code: absent
+    sg_directory: absent
+    sg_entity: absent
+    sg_latest: absent
+    sg_link: absent
+    sg_name: absent
+    sg_path: absent
+    !!python/unicode 'sg_path_to_frames': !!python/unicode 'text'
+    !!python/unicode 'sg_path_to_movie': !!python/unicode 'text'
+    sg_qt: absent
+    sg_slate: absent
+    sg_status: absent
+    !!python/unicode 'sg_status_list': !!python/unicode 'status_list'
+    !!python/unicode 'sg_task':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'Task']
+    short_name: absent
+    status: absent
+    status_list: absent
+    !!python/unicode 'updated_at': !!python/unicode 'date_time'
+    !!python/unicode 'updated_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    !!python/unicode 'user':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser', !!python/unicode 'Group']
+

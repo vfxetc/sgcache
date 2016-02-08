@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 class Scanner(object):
 
-    def __init__(self, schema, last_time=None, types=None, projects=None):
+    def __init__(self, schema, last_time=None, types=None, projects=None, config=None):
 
         self.schema = schema
         self.last_time = parse_interval(last_time) if isinstance(last_time, basestring) else last_time
@@ -22,7 +22,7 @@ class Scanner(object):
         self.projects = projects
 
         self._log_counter = itertools.count(1)
-        self.shotgun = get_shotgun('sgapi')
+        self.shotgun = get_shotgun('sgapi', config=config)
 
     def scan(self, interval=None):
 
@@ -150,4 +150,3 @@ if __name__ == '__main__':
     cache = Cache(db, schema)
 
     cache.scan(interval=args.interval, last_time=args.last_time, types=args.type, projects=args.project)
-

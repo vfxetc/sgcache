@@ -6,21 +6,24 @@ setup(
     version='0.1-dev',
     description='A site-local Shotgun cache',
     url='http://github.com/westernx/sgcache',
-    
+
     packages=find_packages(exclude=['build*', 'tests*']),
-    
+
     author='Mike Boers',
     author_email='sgcache@mikeboers.com',
     license='BSD-3',
-    
+
     install_requires=[
         # TODO: a few things go here
     ],
 
     entry_points={
         'console_scripts': '''
+
+            sgcache-auto = sgcache.commands.auto:main
             
-            sgcache-ctrl = sgcache.commands.ctrl:main
+            # For WesternX backwards compatibility (until I can remove it).
+            sgcache-ctrl = sgcache.commands.auto:main
 
             sgcache-web = sgcache.commands.web:main
             sgcache-scanner = sgcache.commands.scanner:main
@@ -28,7 +31,7 @@ setup(
 
         ''',
     },
-    
+
     classifiers=[
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
@@ -37,5 +40,5 @@ setup(
         'Programming Language :: Python :: 2',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
-    
+
 )

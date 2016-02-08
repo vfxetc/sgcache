@@ -72,4 +72,3 @@ Configuration Reference
 -----------------------
 
 .. automodule:: sgcache.config
-    :members:

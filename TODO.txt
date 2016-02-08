@@ -1,6 +1,15 @@
 
-- tag various config fields with their usage by the various subsections, such
+
+- Document the ping/pong feature, OR remove it after adding {'sgcache': true} to
+  the info call.
+
+- Tag various config fields with their usage by the various subsections, such
   that only relavent config can be exposed to argparse
+
+
+OLDER (and not nessesarily still TODD)
+======================================
+
 
 - If we cache all entity and multi_entity fields, then we can infer the
   existance of new entities upon return of a creation. E.g. creating a Shot
@@ -30,26 +39,11 @@
 
 - multi_entity is_not None -> True if there is something in there
 
-- remove all global state:
-    - Config object to represent the config
-    - make_app to make the flask app
-    - make_cache to make the schema and cache
-
 - Skip change events that follow a create event.
 
 - split non-indempotent parts of Api3ReadOperation into Api3ReadQuery
 
 - return accurate paging info; currently we are cheating a bit
-
-- redirect Shotgun pages to actual Shotgun
-
-- document the ping/pong feature, OR remove it after adding {'sgcache': true} to
-  the info call
-
-- split process up
-    - sgcache-server
-    - sgcache-scanner
-    - sgcache-events
 
 - how to perform rolling schema upgrades?
     1. move event watcher to new schema
@@ -62,13 +56,13 @@
       running services, and having them reload the schema, or adding fields
       live on the fly
         - unix socket in a thread with json messages
-    
+
 - get and parse private schema
     s = requests.Session()
     s.cookies['_session_id'] = sg._get_session_token()
     s.get('https://keystone.shotgunstudio.com/page/schema')
 
-- return a fake "name" (as determined by the identifier_column in the 
+- return a fake "name" (as determined by the identifier_column in the
   private schema) with entities/multi-entities
 
 - sgcache-reprocess --retirement -> reprocess retirement events

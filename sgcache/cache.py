@@ -42,6 +42,8 @@ class Cache(collections.Mapping):
         if (config and (db or schema)) or ((db or schema) and not (db and schema)):
             raise ValueError('provide either config, or db and schema')
 
+        self.config = config
+        
         if config:
             db = sa.create_engine(config['SQLA_URL'], echo=bool(config['SQLA_ECHO']))
             schema = Schema.from_yaml(config['SCHEMA'])
@@ -50,7 +52,7 @@ class Cache(collections.Mapping):
         self.metadata = sa.MetaData(bind=db)
         self.schema = schema
 
-        self.shotgun = get_shotgun('sgapi')
+        self.shotgun = get_shotgun('sgapi', config=config)
 
         # Build model objects from the schema; these will not be complete
         # until we reflect the database below.
@@ -97,7 +99,7 @@ class Cache(collections.Mapping):
             return self._entity_types[key]
         except KeyError as e:
             raise EntityMissing(e.args[0])
-    
+
     def __iter__(self):
         return iter(self._entity_types)
 
@@ -109,7 +111,7 @@ class Cache(collections.Mapping):
         if isinstance(type_name, dict):
             data = type_name.copy()
             type_name = data.pop('type')
-        
+
         cacheable_data = {}
         if 'id' in data:
             cacheable_data['id'] = data.pop('id')
@@ -165,7 +167,7 @@ class Cache(collections.Mapping):
         """Create or update an entity, with an API eerily similar to ``python_api3``.
 
         This is a wrapper around :class:`.Api3CreateOperation`.
-        
+
         :param str type_name: The name of the type of entity to create/update.
         :param dict data: The key-value data for that entity.
         :param bool create_with_id: Should ``id`` be allowed within the ``data`` param?
@@ -232,7 +234,7 @@ class Cache(collections.Mapping):
             ]).execute().fetchone()
 
             # We can max(None, 1), so this is ok...
-            last_id = max(last_id, row[0]) 
+            last_id = max(last_id, row[0])
             # ... but datetime does not compare against None directly.
             last_time = max(last_time, row[1]) if (last_time and row[1]) else (last_time or row[1])
 
@@ -276,7 +278,7 @@ class Cache(collections.Mapping):
         while True:
             try:
                 for event in self.event_log.iter_events_forever(idle_delay=idle_delay):
-                    
+
                     io_error_count = error_count = 0
                     log_globals.meta = {'event': event['id']}
 
@@ -342,7 +344,7 @@ class Cache(collections.Mapping):
         if auto_last_time:
             last_id, last_time = self.get_last_event()
 
-        self.scanner = Scanner(self, last_time=last_time, **kwargs)
+        self.scanner = Scanner(self, last_time=last_time, config=self.config, **kwargs)
         while True:
             try:
                 self.scanner.scan(interval)
@@ -351,7 +353,3 @@ class Cache(collections.Mapping):
             except:
                 log.exception('error during scan; sleeping for 30s')
                 time.sleep(30)
-
-
-
-

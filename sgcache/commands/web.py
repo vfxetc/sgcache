@@ -19,7 +19,7 @@ class GunicornRunner(BaseApplication):
     def load_config(self):
 
         self.cfg.set('bind', '0.0.0.0:%s' % self.__command.config['PORT'])
-        
+
         def post_fork(server, worker):
             self.__command.log.info('Post-fork cleanup.')
             self.__command.cache.db.dispose()
@@ -40,6 +40,8 @@ class GunicornRunner(BaseApplication):
 
 class WebCommand(DaemonCommand):
 
+    args_sections = ['web', 'shotgun', 'core']
+    
     def __init__(self):
         super(WebCommand, self).__init__()
         self._app = None
@@ -72,5 +74,3 @@ class WebCommand(DaemonCommand):
 
 def main():
     WebCommand()()
-
-

@@ -4,13 +4,15 @@ import signal
 import time
 import errno
 import traceback
+import sys
+
 from ..logs import setup_logs
 
 log = logging.getLogger(__name__)
 
 
 def call_in_child(module_name, func_name='main'):
-    
+
     pid = os.fork()
     if pid:
         log.info('Started child %s:%s (%d)' % (module_name, func_name, pid))
@@ -28,6 +30,12 @@ def call_in_child(module_name, func_name='main'):
 
 
 def main():
+
+    # The different modules will parse the CLI differently, so we must force
+    # the user to provide envvars.
+    if len(sys.argv) > 1:
+        print >> sys.stderr, os.path.basename(sys.argv[0]), 'takes no arguments; everything must be configured by envvars.'
+        exit(1)
 
     setup_logs()
 

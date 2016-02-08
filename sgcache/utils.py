@@ -61,13 +61,14 @@ def get_shotgun_kwargs(config=None):
         # make very little sense here.
         os.environ.pop('SGCACHE', None)
         return shotgun_api3_registry.get_kwargs()
-    
+
     else:
         raise RuntimeError('please set SHOTGUN_URL, or provide shotgun_api3_registry.get_kwargs')
 
 
 def get_shotgun(*args, **kwargs):
-    return get_shotgun_class(*args, **kwargs)(**get_shotgun_kwargs())
+    config = kwargs.pop('config', None)
+    return get_shotgun_class(*args, **kwargs)(**get_shotgun_kwargs(config))
 
 
 @contextlib.contextmanager
@@ -95,7 +96,7 @@ def iter_unique(source, key=None):
 
 
 def parse_interval(interval):
-    
+
     if isinstance(interval, (int, float)):
         return interval
 
@@ -111,7 +112,7 @@ def parse_interval(interval):
         raise ValueError('bad interval: %r' % interval)
 
     number, unit = m.group(1, 2)
-    
+
     unit = {
         's': 'seconds',
         'm': 'minutes',
@@ -130,4 +131,3 @@ def try_call_except_traceback(func, *args, **kwargs):
     except:
         traceback.print_exc()
         raise
-        

@@ -17,6 +17,9 @@ import os
 import shlex
 from docutils import nodes
 
+# Signal to others that this is the docs.
+os.environ['IS_SPHINX'] = '1'
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -323,10 +326,3 @@ def setup(app):
     app.add_object_type('sg_entity_type', 'sg_entity_type', '%s; Shotgun entity type')
     app.add_object_type('sg_field', 'sg_field', '%s; Shotgun entity field')
     return {'version': version}
-
-
-
-
-
-
-
