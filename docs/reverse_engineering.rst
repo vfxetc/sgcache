@@ -171,6 +171,8 @@ Field Types
 
 
 
+.. _identifier_column:
+
 Identifier Column
 -----------------
 

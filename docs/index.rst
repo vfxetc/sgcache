@@ -27,6 +27,23 @@ Prospective longer term goals include:
   Shotgun pages.
 
 
+Limitations
+...........
+
+At this point in the project, it should be a drop-in replacement for your use
+of the Shotgun API, except in a few circumstances:
+
+1. There is a slight delay for changes made in the Shotgun web UI to propagate
+   to the cache. By default it averages to ~3 seconds.
+
+2. API use which does not pass through the cache will not be immediately caught
+   if their API keys do not generate events.
+
+3. The cache does not return the ``name`` :ref:`identifier_column` that Shotgun does.
+   This is by design, but could be added as a configurable feature if there
+   is enough demand.
+
+
 
 Contents
 --------
@@ -48,4 +65,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
