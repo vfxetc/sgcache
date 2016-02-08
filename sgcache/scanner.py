@@ -67,8 +67,12 @@ class Scanner(object):
             #log.info('scanning %ss' % entity_type.type_name)
 
             filters = base_filters[:]
-            if self.projects and 'project' in entity_type.fields and entity_type.type_name not in ('ApiUser', 'HumanUser'):
-                filters.append(('project', 'in', [{'type': 'Project', 'id': pid} for pid in self.projects]))
+
+            if self.projects and entity_type.type_name not in ('ApiUser', 'HumanUser'):
+                # Need to make sure the project field actually exists.
+                project_field = entity_type.fields['project']
+                if project_field and project_field.is_cached():
+                    filters.append(('project', 'in', [{'type': 'Project', 'id': pid} for pid in self.projects]))
 
             return_fields = sorted(name for name, field in entity_type.fields.iteritems() if field.is_cached())
 
@@ -98,55 +102,3 @@ class Scanner(object):
             for e in self.shotgun.find(*args, **kwargs):
                 e['_active'] = active
                 yield e
-
-
-
-
-
-
-
-
-
-if __name__ == '__main__':
-
-    import argparse
-
-    import sqlalchemy as sa
-    import yaml
-
-    from . import config
-    from .logs import setup_logs
-    from .cache import Cache
-    from .schema import Schema
-
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('-i', '--interval', type=parse_interval)
-    parser.add_argument('-t', '--type', action='append')
-    parser.add_argument('-p', '--project', type=int, action='append')
-
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('--last-id', type=int)
-    group.add_argument('--last-time', type=parse_interval)
-    group.add_argument('--full', action='store_true')
-
-    args = parser.parse_args()
-
-    if args.last_id:
-        print >> sys.stderr, '--last-id is not supported yet'
-        exit(1)
-    if not args.last_time and not args.full:
-        print >> sys.stderr, '--last-time or --full is required'
-        exit(1)
-
-
-
-    db = sa.create_engine(config.SQLA_URL, echo=bool(config.SQLA_ECHO))
-
-    # Setup logging *after* SQLA so that it can deal with its handlers.
-    setup_logs()
-
-    schema = Schema.from_yaml(config.SCHEMA)
-    cache = Cache(db, schema)
-
-    cache.scan(interval=args.interval, last_time=args.last_time, types=args.type, projects=args.project)

@@ -175,6 +175,7 @@ Config.register('WATCH_IDLE_DELAY', 5.0, ['events', 'daemon'], '''
     Delay (in seconds) between polls of :ref:`the event log <event_log>`.
 ''')
 
+
 Config.register('SCAN_INTERVAL', 300, ['scanner'], '''
     Delay (in seconds) between :ref:`scans <periodic_scans>` of changed entities.
 ''')
@@ -185,6 +186,18 @@ Config.register('SCAN_SINCE', 3600, ['scanner'], '''
     .. warning:: Setting this to a falsy value will result in a complete scan
                  of your Shotgun server.
 ''')
+Config.register('SCAN_TYPES', [], ['scanner'], '''
+    Which entity types should be scanned? Falsy values default to all types.
+    Delimit with commas in the command-line.
+''', arg_kwargs=dict(
+    type=lambda x: [y.strip() for y in x.split(',')]
+))
+Config.register('SCAN_PROJECTS', [], ['scanner'], '''
+    Which projects (by ID) should be scanned? Empty values default to all projects.
+    Delimit with commas in the command-line.
+''', arg_kwargs=dict(
+    type=lambda x: [int(y.strip()) for y in x.split(',')]
+))
 
 Config.register('AUTO_LAST_ID', False, ['scanner', 'events'], '''
     Should we automatically detect when the last time the cache was updated?

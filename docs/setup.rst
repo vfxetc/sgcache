@@ -64,7 +64,10 @@ To update the schema asserting the cache does not return invalid data, you must:
 
 1. Update the schema YAML file.
 2. Restart the event watcher and the periodic scanner.
-3. Perform a complete scan.
+3. Perform a complete scan of the modified types::
+
+    sgcache-scanner --full --scan-types Shot,Task
+
 4. Restart the web server only once the full scan finishes.
 
 Restarting the web server prematurely will result in it assuming that the new
@@ -77,10 +80,11 @@ Priming the Cache
 SGCache assumes that it knows about every entity in your Shotgun, so in order
 to return correct results, you must perform a full scan::
 
-    sgcache-scanner --scan-since 0
+    sgcache-scanner --full
 
-Once that scan is complete, you can leave the scanner running, or kill it with
-``Ctrl-C``.
+If you are testing, you can specify individual projects to cache::
+
+    sgcache-scanner --full --scan-projects 66,67
 
 
 Running the Daemons

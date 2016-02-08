@@ -15,8 +15,13 @@ class DaemonCommand(object):
     def __init__(self):
         self.parser = argparse.ArgumentParser()
         self.config = Config()
-        self.config.add_arguments(self.parser, self.args_sections)
+
+        self.add_arguments(self.parser)
+
         self.log = logging.getLogger(self.__class__.__module__)
+
+    def add_arguments(self, parser):
+        self.config.add_arguments(self.parser, self.args_sections)
 
     def load_app(self):
         pass
