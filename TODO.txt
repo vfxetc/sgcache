@@ -6,6 +6,10 @@
 - Tag various config fields with their usage by the various subsections, such
   that only relavent config can be exposed to argparse
 
+- Contain the schema completely within the database itself. Then a `expose_to_api`
+  on each field will let the API know if it is allowed to return it or not. Then
+  it gets tons easier to make safe schema migrations
+
 
 OLDER (and not nessesarily still TODD)
 ======================================

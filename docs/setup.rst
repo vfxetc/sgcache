@@ -23,7 +23,6 @@ A typical install looks like::
     pip install -r requirements-westernx.txt
 
 
-
 Configuration
 -------------
 
@@ -37,6 +36,16 @@ The recommended configuration setup is to write your own Python file with
 your configuration changes, and refer to it via ``$SGCACHE_CONFIG``.
 
 
+Database
+--------
+
+SGCache generally operates with either of SQLite, or PostgreSQL (and maybe others,
+as it uses SQLAlchemy as its database access layer).
+
+SQLite is usually reserved for very small installations, or development. Production
+environments should use PostgreSQL.
+
+
 Schema
 ------
 
@@ -48,25 +57,72 @@ generated from our live Shotgun and basic rules via::
     ./schema/dump > schema/keystone-full.yml
     ./schema/filter --absent -f schema/basic-filters.txt schema/keystone-full.yml > schema/keystone-basic.yml
 
+Changes
+.......
+
+To update the schema asserting the cache does not return invalid data, you must:
+
+1. Update the schema YAML file.
+2. Restart the event watcher and the periodic scanner.
+3. Perform a complete scan.
+4. Restart the web server only once the full scan finishes.
+
+Restarting the web server prematurely will result in it assuming that the new
+fields are empty, and return incomplete data.
 
 
+Priming the Cache
+-----------------
 
-Execution
----------
+SGCache assumes that it knows about every entity in your Shotgun, so in order
+to return correct results, you must perform a full scan::
 
-The main entry point is the ``sgcache/__main__.py`` module, run via::
+    sgcache-scanner --scan-since 0
 
-    python -m sgcache
-
-All configuration options are exposed as command-line flags via :func:`.update_from_argv`::
-
-    python -m sgcache --sqla-url postgres:///sgcache
-
-Alternatively, place your configuration into another (Python) file, and reference it::
-
-    python -m sgcache --config path/to/your/config.py
+Once that scan is complete, you can leave the scanner running, or kill it with
+``Ctrl-C``.
 
 
+Running the Daemons
+-------------------
+
+The three primary daemons are ``sgcache-scanner``, ``sgcache-events``, and ``sgcache-web``.
+It is recommended to run them seperately, but for convenience there is a ``sgcache-auto``
+which will run them all.
+
+All configuration options are exposed as command-line flags, but it is recommended
+to create a ``config.py`` file, and refer to it via ``$SGCACHE_CONFIG``.
+
+
+Reverse Proxying with Nginx
+---------------------------
+
+It is recommended to run SGCache behind an Nginx reverse proxy. This allows
+Nginx to directly transfer of large files, as we have experienced trouble with
+getting the cache to upload massive files itself.
+
+Here is the Nginx config at Western Post::
+
+    server {
+        listen       80;
+        server_name  sgcache.westernx;
+
+        # Fails fast with file uploads without this.
+        client_max_body_size 1G;
+
+        # Pass large uploads/downloads to Shotgun.
+        location ~ ^/(upload|thumbnail|file_serve) {
+            proxy_set_header Host keystone.shotgunstudio.com;
+            proxy_pass https://keystone.shotgunstudio.com;
+        }
+
+        # Everything else goes to SGCache.
+        location / {
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_pass http://127.0.0.1:8010;
+        }
+
+    }
 
 Configuration Reference
 -----------------------

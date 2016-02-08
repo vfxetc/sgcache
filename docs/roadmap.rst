@@ -11,7 +11,9 @@ Herein lies our road map for the progression of this project.
 
 
 1. Lazy, manual schema, and minimal UI
--------------------------------------------
+--------------------------------------
+
+**This stage is complete!**
 
 The first stage is to address all of our :ref:`major goals <major_goals>`
 in a minimally viable, yet useful, form. That form includes:
