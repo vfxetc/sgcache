@@ -27,6 +27,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..')))
 
 # Mock out our dependencies since we have a hard time getting it to build.
 class Mock(object):
+    __path__ = []
     def __getattr__(cls, name):
         return Mock()
 for name in '''
@@ -40,6 +41,8 @@ for name in '''
     sgevents
     shotgun_api3
     sqlalchemy
+    sqlalchemy.engine
+    sqlalchemy.engine.base
     yaml
 '''.strip().split():
   sys.modules[name] = Mock()
