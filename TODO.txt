@@ -3,12 +3,22 @@
 - Document the ping/pong feature, OR remove it after adding {'sgcache': true} to
   the info call.
 
-- Tag various config fields with their usage by the various subsections, such
-  that only relavent config can be exposed to argparse
+- Restrict results of multi_entity to unique results. Shotgun does not allow
+  copies of the same entity, and it does not respect the order.
 
-- Contain the schema completely within the database itself. Then a `expose_to_api`
-  on each field will let the API know if it is allowed to return it or not. Then
-  it gets tons easier to make safe schema migrations
+- Contain the schema completely within the database itself. Column fields include:
+    - db_name: The database column name.
+    - sg_name: The shotgun field name.
+    - do_cache: it should be cached by the events and scanner
+    - do_expose: it should be considered by the web API
+
+    With this, it gets TONS easier to make safe schema migrations.
+
+- Join through multi_entity fields. Do an LEFT OUTER JOIN, but also add a GROUP BY
+  to restrict it to a single column. This allows filters to work through the
+  fields, and this implementation seems to lend towards the precise logic that
+  Shotgun seems to expose. Will likely need to tell Entity.prepare_join if
+  it is for a filter or not, since we can't do this for return fields.
 
 
 OLDER (and not nessesarily still TODD)

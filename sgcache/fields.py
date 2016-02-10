@@ -60,7 +60,7 @@ class Field(object):
             if attr == 'type':
                 # Compare the compiled version in the correct dialect to
                 # correct for enums in different dialects.
-                ev = existing.type.compile(table.metadata.bind.dialect) 
+                ev = existing.type.compile(table.metadata.bind.dialect)
                 cv = column.type.compile(table.metadata.bind.dialect)
             else:
                 ev = getattr(existing, attr)
@@ -199,7 +199,7 @@ class Field(object):
 
         If the data is more complex than can be dealt with in a single mapping
         (e.g. for ``multi_entity`` types), you can append callbacks to
-        :attr:`~.Api3CreateOperation.before_query` and 
+        :attr:`~.Api3CreateOperation.before_query` and
         :attr:`~.Api3CreateOperation.after_query` of the operation,
         which will be called with the database connection as the only argument.
 
@@ -236,7 +236,7 @@ class Absent(Field):
     # {"values"=>["something"], "path"=>"code", "relation"=>"is"}
     def _raise(self, *args, **kwargs):
         raise ClientFault('%s.%s does not exist' % (self.entity.type_name, self.name))
-    
+
     _construct_schema = _pass
     is_cached = _pass
 
@@ -278,7 +278,7 @@ class NonCacheableField(Field):
     check_for_join = _raise
     extract_select = _raise # Should never be run.
 
-    prepare_upsert_data = _raise 
+    prepare_upsert_data = _raise
 
 
 
@@ -321,7 +321,7 @@ class Float(Scalar):
 @sg_field_type
 class Text(Scalar):
     sa_type = sa.Text
-    
+
     def prepare_filter(self, req, path, relation, values):
 
         if relation == 'starts_with':
@@ -464,7 +464,7 @@ class Entity(Field):
                 return clause
             else:
                 return sa.not_(clause)
-        
+
         raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 
     def prepare_upsert_data(self, req, value):
@@ -482,7 +482,7 @@ class MultiEntity(Field):
         super(MultiEntity, self).__init__(entity, name, schema)
         if not self.schema.entity_types:
             raise ValueError('entity field %s needs entity_types' % name)
-    
+
     def _construct_schema(self, table):
         self.assoc_table_name = '%s_%s' % (table.name, self.name)
         self.assoc_table = table.metadata.tables.get(self.assoc_table_name)
@@ -497,15 +497,35 @@ class MultiEntity(Field):
             self.assoc_table.create()
 
     def prepare_join(self, req, self_path, next_path):
-        raise ValueError('you cant join through a multi-entity')
+
+        # Assume that we are joining for a filter. If this is for a return_field
+        # it will add a bit of processing time, but won't actually break anything.
+
+        self_table = req.get_table(self_path)
+        next_table = req.get_table(next_path)
+        join_table = req.get_table(self_path, self.assoc_table, include_tail=False)
+
+        req.join(join_table, self_table.c.id == join_table.c.parent_id)
+        req.join(next_table, sa.and_(
+            join_table.c.child_type == next_path[-1][0],
+            join_table.c.child_id   == next_table.c.id,
+            next_table.c._active == True, # `retired_only` only affects the top-level entity
+        ))
+
+        # Reduce it to a single result.
+        req.group_by_clauses.append(
+            next_table.c.id
+        )
+
+    def check_for_join(self, req, row, state):
+        # We don't return anything linked deeply through a multi_entity.
+        pass
 
     def prepare_select(self, req, path):
 
         table = req.get_table(path)
 
-        # Get an alias of our table (but only if we need to).
-        alias_name = '%s_%s' % (table.name, self.name)
-        assoc_table = self.assoc_table if self.assoc_table.name == alias_name else self.assoc_table.alias(alias_name) 
+        assoc_table = req.get_table(path, self.assoc_table, include_tail=True)
 
         # Postgres will aggregate into an array for us, but for SQLite
         # we convert the group results into a comma-delimited string of results
@@ -526,7 +546,7 @@ class MultiEntity(Field):
             ])
             .select_from(assoc_table)
             .group_by(assoc_table.c.parent_id)
-        ).alias(alias_name + '__grouped')
+        ).alias(assoc_table.name + '__grouped')
 
         # TODO: somehow filter retired entities
 
@@ -636,4 +656,3 @@ class URL(NonCacheableField):
     # May need to locally cache contents.
     # Can't be used in a filter.
     pass
-

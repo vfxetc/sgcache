@@ -78,7 +78,7 @@ class Api3ReadOperation(object):
         :raises: :class:`.EntityMissing` when the requested entity type is not cached;
             allowing this to propigate will result in passing through API3
             requests to the real Shotgun.
-        
+
         """
         try:
             return self.cache[path[-1][0]]
@@ -101,7 +101,7 @@ class Api3ReadOperation(object):
         except KeyError as e:
             raise FieldMissing('%s.%s' % (type_.type_name, e.args[0]))
 
-    def get_table(self, path):
+    def get_table(self, path, table=None, include_tail=False):
         """Get an aliased SQLA table for the entity at the tail of a given path.
 
         The first time a table is requested, it is not aliased. The second time
@@ -116,11 +116,19 @@ class Api3ReadOperation(object):
         :return: A SQLA table, potentially aliased.
 
         """
-        name = path.format(head=True, tail=False)
+
+        # Shortcut association tables.
+        if table is not None and table.name not in self.aliases:
+            self.aliased.add(table.name)
+            self.aliases[table.name] = table
+            return table
+
+        name = path.format(head=True, tail=include_tail)
         if name not in self.aliases:
             # we can return the real table the first path it is used from,
             # but after that we must alias it
-            table = self.get_entity(path).table
+            if table is None:
+                table = self.get_entity(path).table
             if table.name in self.aliased:
                 table = table.alias(name)
             self.aliased.add(table.name)
@@ -188,7 +196,7 @@ class Api3ReadOperation(object):
 
         :param filters: A backend-style Shotgun filter dict.
         :return: A SQLA expression, passable to ``query.where(...)``.
-        
+
         """
 
         clauses = []
@@ -228,9 +236,9 @@ class Api3ReadOperation(object):
         self.select_from = self.get_table(FieldPath([(self.entity_type_name, None)]))
 
         self.where_clauses.append(self.select_from.c._active == self.return_active)
-        
+
         self.return_fields.append('id')
-        
+
         for raw_path in self.return_fields:
 
             path = self.parse_path(raw_path)
@@ -350,4 +358,3 @@ class Api3ReadOperation(object):
                 'entity_count': entity_count,
             },
         }
-
