@@ -132,6 +132,10 @@ HumanUser:
         data_type: entity
         entity_types: [HumanUser, ApiUser]
     user: absent
+
+Group:
+    code: text
+
 Project:
     code: text
     created_at: date_time
@@ -441,4 +445,3 @@ Version:
     user:
         data_type: entity
         entity_types: [HumanUser, ApiUser, Group]
-

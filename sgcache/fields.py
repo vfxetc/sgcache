@@ -86,7 +86,7 @@ class Field(object):
     # Query construction methods
     # ==========================
 
-    def prepare_join(self, read_op, self_path, next_path):
+    def prepare_join(self, read_op, self_path, next_path, for_filter):
         """Prepare any joins required through this field.
 
         Only expected to be implemented by the ``Entity`` field class, this
@@ -405,7 +405,7 @@ class Entity(Field):
         self.type_column = self._create_or_check(table, type_column)
         self.id_column   = self._create_or_check(table, sa.Column('%s__id' % self.name, sa.Integer))
 
-    def prepare_join(self, req, self_path, next_path):
+    def prepare_join(self, req, self_path, next_path, for_filter):
         self_table = req.get_table(self_path)
         next_table = req.get_table(next_path)
         req.select_fields.append(next_table.c.id)
@@ -496,14 +496,15 @@ class MultiEntity(Field):
             )
             self.assoc_table.create()
 
-    def prepare_join(self, req, self_path, next_path):
+    def prepare_join(self, req, self_path, next_path, for_filter):
 
-        # Assume that we are joining for a filter. If this is for a return_field
-        # it will add a bit of processing time, but won't actually break anything.
+        # We can only join through multi_entity for a filter.
+        if not for_filter:
+            return
 
         self_table = req.get_table(self_path)
         next_table = req.get_table(next_path)
-        join_table = req.get_table(self_path, self.assoc_table, include_tail=False)
+        join_table = self.assoc_table.alias() # Must always be unique.
 
         req.join(join_table, self_table.c.id == join_table.c.parent_id)
         req.join(next_table, sa.and_(
@@ -512,10 +513,10 @@ class MultiEntity(Field):
             next_table.c._active == True, # `retired_only` only affects the top-level entity
         ))
 
-        # Reduce it to a single result.
-        req.group_by_clauses.append(
-            next_table.c.id
-        )
+        req.select_fields.append(join_table.c.parent_id)
+        req.row_post_filters.append(lambda row: row[join_table.c.parent_id] is not None)
+
+
 
     def check_for_join(self, req, row, state):
         # We don't return anything linked deeply through a multi_entity.

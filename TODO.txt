@@ -1,5 +1,25 @@
 
 
+- Join through multi_entity fields.
+    - Seems like each filter must be in a subquery, as it must only match a
+      single entity through the multi_entity in order to pass. If we do some
+      fun joins and evaluate two disjoint multi_entity filters at the same time,
+      then they will not pass as a group, even if they pass individually.
+    - Does Postgres' LEFT JOIN LATERAL help, or significantly hinder?
+        - Using LATERAL, the subquery can limit 1
+    - Refactor fields.py into a package of field types
+    - Refactor Api3ReadOperation into a SelectBuilder and the Api3ReadOperation.
+        - SelectBuilder has (from Api3ReadOperation)
+            - entity_type
+            - aliases
+            - select_fields
+            - select_from
+            - joined
+            - where_clauses
+            - group_by_clauses
+            - order_by_clauses
+
+
 - Document the ping/pong feature, OR remove it after adding {'sgcache': true} to
   the info call.
 
@@ -14,11 +34,6 @@
 
     With this, it gets TONS easier to make safe schema migrations.
 
-- Join through multi_entity fields. Do an LEFT OUTER JOIN, but also add a GROUP BY
-  to restrict it to a single column. This allows filters to work through the
-  fields, and this implementation seems to lend towards the precise logic that
-  Shotgun seems to expose. Will likely need to tell Entity.prepare_join if
-  it is for a filter or not, since we can't do this for return fields.
 
 
 OLDER (and not nessesarily still TODD)

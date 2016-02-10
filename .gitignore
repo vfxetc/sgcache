@@ -4,8 +4,8 @@ _build
 /venv*
 *.egg-info
 
-/env.sh
-/.env.sh
+/env*.sh
+/.env*.sh
 /*.json
 /*.db
 /var

@@ -50,6 +50,9 @@ class Api3ReadOperation(object):
         self.group_by_clauses = []
         self.order_by_clauses = []
 
+        #: A list of filters to be run on rows to determine if they should be returned.
+        self.row_post_filters = []
+
         self._start_time = self._last_time = time.time()
 
     def _debug_time(self, msg):
@@ -149,7 +152,7 @@ class Api3ReadOperation(object):
             self.select_from = self.select_from.outerjoin(table, on)
             self.joined.add(table.name)
 
-    def prepare_joins(self, path):
+    def prepare_joins(self, path, for_filter):
         """Prepare all joins that will be required to access the tail of the given path.
 
         If the given path is a deep-field, all tables along that path must be
@@ -169,7 +172,7 @@ class Api3ReadOperation(object):
         for i in xrange(0, len(path) - 1):
             field_path = path[:i+1]
             field = self.get_field(field_path)
-            state = field.prepare_join(self, field_path, path[:i+2])
+            state = field.prepare_join(self, field_path, path[:i+2], for_filter)
 
         # We only need to track the last join to check if it was successful,
         # since the previous ones are a requirement of it
@@ -211,7 +214,7 @@ class Api3ReadOperation(object):
                 values = filter_['values']
 
                 path = self.parse_path(raw_path)
-                self.prepare_joins(path) # make sure it is availible
+                self.prepare_joins(path, for_filter=True) # make sure it is availible
 
                 field = self.get_field(path)
                 clause = field.prepare_filter(self, path, relation, values)
@@ -233,7 +236,8 @@ class Api3ReadOperation(object):
         """
 
         # Hacky use of FieldPath here...
-        self.select_from = self.get_table(FieldPath([(self.entity_type_name, None)]))
+        self.base_table = self.get_table(FieldPath([(self.entity_type_name, None)]))
+        self.select_from = self.base_table
 
         self.where_clauses.append(self.select_from.c._active == self.return_active)
 
@@ -242,7 +246,7 @@ class Api3ReadOperation(object):
         for raw_path in self.return_fields:
 
             path = self.parse_path(raw_path)
-            join_state = self.prepare_joins(path) # make sure it is availible
+            join_state = self.prepare_joins(path, for_filter=False) # make sure it is availible
 
             field = self.get_field(path)
             state = field.prepare_select(self, path)
@@ -287,8 +291,26 @@ class Api3ReadOperation(object):
 
         """
 
+        seen = set()
         rows = []
         for raw_row in res:
+
+            print 'ROW', raw_row
+            
+            # Make sure we only see each entity once.
+            id_ = raw_row[self.base_table.c.id]
+            if id_ in seen:
+                continue
+
+            # Bail if any of the filters reject it.
+            if any(not f(raw_row) for f in self.row_post_filters):
+                continue
+
+            # We waited to add this, because we can often go through dozens of
+            # very similar rows due to deep filters through a multi_entity before
+            # getting to a row that we would return.
+            seen.add(id_)
+
             row = {'type': self.entity_type_name}
             for path, join_state, field, state in self.select_state:
                 if not self.check_for_joins(raw_row, join_state):

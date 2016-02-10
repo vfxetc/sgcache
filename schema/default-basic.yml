@@ -95,6 +95,18 @@
         data_type: !!python/unicode 'entity'
         entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
     user: absent
+Group:
+    code: text
+    project: absent
+    updated_at: date_time
+    created_at: date_time
+    !!python/unicode 'created_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    !!python/unicode 'updated_by':
+        data_type: !!python/unicode 'entity'
+        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+
 !!python/unicode 'Project':
     code: absent
     !!python/unicode 'created_at': !!python/unicode 'date_time'
@@ -319,4 +331,3 @@
     !!python/unicode 'user':
         data_type: !!python/unicode 'entity'
         entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser', !!python/unicode 'Group']
-
