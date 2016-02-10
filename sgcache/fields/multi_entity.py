@@ -28,6 +28,9 @@ class MultiEntity(Field):
             )
             self.assoc_table.create()
 
+    def _clear(self, con):
+        con.execute(self.assoc_table.delete())
+
     def prepare_join(self, req, self_path, next_path, for_filter):
 
         # We can only join through multi_entity for a filter.

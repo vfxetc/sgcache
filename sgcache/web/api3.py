@@ -1,11 +1,12 @@
 from inspect import isgeneratorfunction
 from types import GeneratorType
+import functools
 import json
-import sys
 import logging
+import sys
 
 from ..api3.read import Api3ReadOperation
-from ..exceptions import Passthrough
+from ..exceptions import Passthrough, Fault
 from .core import _api3_methods, api3_method, current_app, passthrough
 
 
@@ -14,13 +15,20 @@ log = logging.getLogger(__name__)
 
 @api3_method
 def info(api3_request):
-    return {
+    cache = current_app.cache
+    cache_info = {
+        'version': [0, 1, 0],
+    }
+    if cache.config['TESTING']:
+        cache_info['testing'] = True
+    info = {
         's3_uploads_enabled': False,
         # 'totango_site_id': '374',
         'version': [6, 0, 3],
         # 'totango_site_name': 'com_shotgunstudio_keystone',
-        'sgcache': True,
+        'sgcache': cache_info,
     }
+    return info
 
 
 @api3_method
@@ -100,7 +108,7 @@ def read(api3_request):
 def create(api3_request):
 
     cache = current_app.cache
-    
+
     return_fields = api3_request['return_fields'][:]
 
     params = api3_request.copy()
@@ -188,5 +196,3 @@ def revive(api3_request):
     response = yield
     current_app.cache.revive(api3_request['type'], api3_request['id'], strict=False)
     yield response
-
-

@@ -87,7 +87,8 @@ class Config(dict):
             kwargs = dict(spec.arg_kwargs or {})
             flags = kwargs.pop('flags', ['--' + k.lower().replace('_', '-')])
             kwargs['dest'] = 'config_' + k
-            kwargs.setdefault('metavar', k)
+            if kwargs.get('action') not in ('store_true', ):
+                kwargs.setdefault('metavar', k)
             kwargs.setdefault('default', NotSet)
             group.add_argument(*flags, **kwargs)
 
@@ -259,6 +260,12 @@ Config.register('CONFIG', None, ['environ'], '''
 ''', arg_kwargs=dict(
     metavar='PATH',
     help='Path to config.py file',
+))
+
+Config.register('TESTING', False, ['core'], '''
+    Allows for unsafe behaviour for unit testing.
+''', arg_kwargs=dict(
+    action='store_true',
 ))
 
 

@@ -14,7 +14,6 @@ try:
     import shotgun_api3
 except ImportError as e:
     shotgun_api3 = None
-
 try:
     import shotgun_api3_registry
 except ImportError:
@@ -47,7 +46,7 @@ def get_shotgun_class(provider=None, strict=True):
         raise RuntimeError("no Shotgun APIs installed")
 
 
-def get_shotgun_kwargs(config=None):
+def get_shotgun_kwargs(config):
 
     if config and config.SHOTGUN_URL:
         return {
@@ -66,9 +65,13 @@ def get_shotgun_kwargs(config=None):
         raise RuntimeError('please set SHOTGUN_URL, or provide shotgun_api3_registry.get_kwargs')
 
 
-def get_shotgun(*args, **kwargs):
-    config = kwargs.pop('config', None)
-    return get_shotgun_class(*args, **kwargs)(**get_shotgun_kwargs(config))
+def get_shotgun(provider, *args, **kwargs):
+    config = kwargs.pop('config')
+    shotgun = get_shotgun_class(provider, *args, **kwargs)(**get_shotgun_kwargs(config))
+    if config['TESTING']:
+        if 'sgmock' not in shotgun.server_info:
+            raise RuntimeError('Can only use sgmock during testing')
+    return shotgun
 
 
 @contextlib.contextmanager

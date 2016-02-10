@@ -74,6 +74,9 @@ class Field(object):
     def _construct_schema(self, table):
         raise NotImplementedError()
 
+    def _clear(self, con):
+        pass
+
     def is_cached(self):
         return True
 

@@ -132,7 +132,7 @@ def json_api(params=None):
         method_params = params[1] if len(params) > 1 else {}
     except KeyError:
         return '', 400, []
-
+    
     # Log the base of the request.
     headline_chunks = ['Starting %s' % method_name]
     if isinstance(method_params, dict):
@@ -293,3 +293,4 @@ def api3_method(func):
     return func
 
 from . import api3
+from . import testing

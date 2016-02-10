@@ -1,18 +1,32 @@
-from shotgun_api3_registry import connect
+from tests import connect
 
-sg = connect()
-sg.pragma = {}
+from shotgun_api3 import Shotgun
 
-old_build_payload = sg._build_payload
-def build_payload(*args, **kwargs):
-    payload = old_build_payload(*args, **kwargs)
-    if sg.pragma:
-        payload['pragma'] = sg.pragma
-    return payload
-sg._build_payload = build_payload
+if True:
+    sg = connect()
+else:
+    sg = Shotgun('http://127.0.0.1:8020', 'name', 'key')
 
-sg.pragma['sgcache_local_only'] = True
+print sg.server_info
 
-print sg.find_one('Task', [], order=[
+
+proj =  sg.create('Project', {'name': 'Mock Project Test'})
+seq = sg.create('Sequence', {'code': 'AA', 'project': proj})
+shot = sg.create('Shot', {'code': 'AA_001', 'sg_sequence': seq})
+
+print proj
+print seq
+print shot
+#
+# print sg.find('Project', [('id', 'is_not', 0)], ['name'], order=[
+#     {'field_name': 'id', 'direction': 'asc'},
+# ])
+
+print sg._call_rpc('count', None)
+exit()
+
+print sg.create('Project', {'name': 'Test Project'})
+print sg.count()
+print sg.find_one('Project', [], order=[
     {'field_name': 'id', 'direction': 'asc'},
 ], fields=['task_assignees'])

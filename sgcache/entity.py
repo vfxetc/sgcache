@@ -54,7 +54,7 @@ class EntityType(collections.Mapping):
         return len(self.fields)
 
     def _construct_schema(self):
-        
+
         self.table = self.cache.metadata.tables.get(self.table_name)
 
         if self.table is None:
@@ -65,7 +65,7 @@ class EntityType(collections.Mapping):
                 sa.Column('_active', sa.Boolean, nullable=False, default=True),
             )
             self.table.create()
-        
+
         if '_cache_created_at' not in self.table.c:
             # TODO: make these not-nullable
             sa.Column('_cache_created_at', sa.DateTime, default=datetime.datetime.utcnow).create(self.table)
@@ -75,3 +75,8 @@ class EntityType(collections.Mapping):
 
         for field in self.fields.itervalues():
             field._construct_schema(self.table)
+
+    def _clear(self, con):
+        for field in self.fields.itervalues():
+            field._clear(con)
+        con.execute(self.table.delete())

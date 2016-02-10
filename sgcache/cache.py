@@ -43,7 +43,7 @@ class Cache(collections.Mapping):
             raise ValueError('provide either config, or db and schema')
 
         self.config = config
-        
+
         if config:
             db = sa.create_engine(config['SQLA_URL'], echo=bool(config['SQLA_ECHO']))
             schema = Schema.from_yaml(config['SCHEMA'])
@@ -105,6 +105,11 @@ class Cache(collections.Mapping):
 
     def __len__(self):
         return len(self._entity_types)
+
+    def _clear(self):
+        with self.db_begin() as con:
+            for entity_type in self._entity_types.itervalues():
+                entity_type._clear(con)
 
     def filter_cacheable_data(self, type_name, data=None):
 
