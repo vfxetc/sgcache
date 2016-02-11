@@ -55,6 +55,7 @@ class Api3ReadOperation(object):
         """
 
         selector = SelectBuilder(cache, self.entity_type_name)
+        selector.return_active = self.return_active
         selector.add_return_field('id')
         for field in self.return_fields:
             selector.add_return_field(field)

@@ -71,6 +71,12 @@ class SGTestCase(TestCase):
         self.direct = connect(os.environ.get('SGCACHE_SHOTGUN_URL', 'http://localhost:8020/'))
         self.cached = connect()
 
+    def poll_events(self):
+        self.cached.control('events', 'poll')
+
+    def poll_scanner(self):
+        self.cached.control('scanner', 'poll')
+
 
 def uuid(len_=32):
     return os.urandom(len_ / 2 + 1).encode('hex')[:len_]

@@ -3,11 +3,16 @@ from . import *
 
 class TestScanner(SGTestCase):
 
-    def test_create_basics(self):
-
+    def setUp(self):
+        self._was_watching = self.cached.control('events', 'stop')
         self.cached.clear()
         self.direct.clear()
-        self.cached.control('events', 'stop')
+
+    def tearDown(self):
+        if self._was_watching:
+            self.cached.control('events', 'start')
+
+    def test_create_basics(self):
 
         a = self.direct.create('Task', {'content': uuid(8)})
         self.cached.control('scanner', 'poll')

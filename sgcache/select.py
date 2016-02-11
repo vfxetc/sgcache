@@ -11,10 +11,11 @@ class SelectBuilder(object):
 
     """Assistant to create select queries, and then interpret their results."""
 
-    def __init__(self, cache, entity_type_name):
+    def __init__(self, cache, entity_type_name, return_active=True):
 
         self.cache = cache
         self.entity_type_name = entity_type_name
+        self.return_active = return_active
 
         # To keep track of what tables have already been aliased.
         self.aliases = {}
@@ -197,11 +198,6 @@ class SelectBuilder(object):
         if clauses:
             return (sa.and_ if filters['logical_operator'] == 'and' else sa.or_)(*clauses)
 
-    def set_return_active(self, return_active=True):
-        """Establish that returns rows must be active (or not)."""
-        self.where_clauses.append(self.base_table.c._active == return_active)
-
-
     def add_return_field(self, path):
 
         if isinstance(path, basestring):
@@ -234,6 +230,10 @@ class SelectBuilder(object):
         self.order_by_clauses.append(sort_expr)
 
     def finalize(self):
+
+        if self.return_active is not None:
+            self.where_clauses.append(self.base_table.c._active == self.return_active)
+
         query = sa.select(self.select_fields, use_labels=True).select_from(self.select_from)
         if self.where_clauses:
             query = query.where(sa.and_(*self.where_clauses))
