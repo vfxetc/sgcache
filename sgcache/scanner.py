@@ -25,7 +25,9 @@ class Scanner(object):
         self._log_counter = itertools.count(1)
         self.shotgun = get_shotgun('sgapi', config=config)
 
-        self._is_running = threading.Event()
+        self._allowed_to_run = threading.Event()
+        self._allowed_to_run.set()
+        self._is_sleeping = threading.Event()
         self._poll_signal = threading.Condition()
         self._sleep_signal = threading.Condition()
 
@@ -37,15 +39,17 @@ class Scanner(object):
 
         # Sleep until something wakes us up.
         delay = min(delay, 60)
+        self._is_sleeping.set()
         with self._poll_signal:
             self._poll_signal.wait(delay)
+        self._is_sleeping.clear()
 
         # Finally, make sure we are allowed to continue from here.
-        self._is_running.wait()
+        self._allowed_to_run.wait()
 
     def poll(self, wait=False, timeout=30.0):
         """Force a poll from another thread."""
-        self._is_running.set()
+        self._allowed_to_run.set()
         with self._poll_signal:
             self._poll_signal.notify_all()
         if wait:
@@ -54,14 +58,15 @@ class Scanner(object):
 
     def start(self):
         """Start the loop from another thread."""
-        state = self._is_running.is_set()
-        self._is_running.set()
+        state = self._allowed_to_run.is_set()
+        self._allowed_to_run.set()
         return not state
 
     def stop(self):
         """Stop the loop from another thread."""
-        state = self._is_running.is_set()
-        self._is_running.clear()
+        state = self._allowed_to_run.is_set()
+        self._allowed_to_run.clear()
+        self._is_sleeping.wait()
         return state
 
 
