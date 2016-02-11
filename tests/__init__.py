@@ -36,6 +36,9 @@ class Shotgun(_Shotgun):
     def count(self):
         return self._call_rpc('count', None)
 
+    def log(self, message):
+        return self._call_rpc('log', {'message': message})
+    
     def control(self, service, type, **kwargs):
         timeout = kwargs.pop('timeout', 5.0)
         wait = kwargs.pop('wait', True)

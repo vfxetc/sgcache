@@ -77,7 +77,7 @@ class Scanner(object):
 
             scan_start = datetime.datetime.utcnow() # would be great if this matched the sleep target
             self._scan()
-            self.last_time = scan_start
+            self.last_time = scan_start - datetime.timedelta(seconds=1) # need some leeway
 
             if not interval:
                 break

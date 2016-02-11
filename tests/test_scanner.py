@@ -14,8 +14,11 @@ class TestScanner(SGTestCase):
 
     def test_create_basics(self):
 
+        self.direct.log('>>> test_create_basics')
         a = self.direct.create('Task', {'content': uuid(8)})
-        self.cached.control('scanner', 'poll')
+        self.direct.log('scanning...')
+        self.poll_scanner()
+        self.direct.log('Done scanning.')
 
         b = self.cached.find_one('Task', [('id', 'is', a['id'])], ['content'])
 
