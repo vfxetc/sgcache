@@ -92,7 +92,7 @@ def passthrough(payload=None, params=None, raise_exceptions=True, stream=False, 
 
     else:
         response_data = json.loads(http_response.text)
-        if raise_exceptions and 'exception' in response_data:
+        if raise_exceptions and isinstance(response_data, dict) and 'exception' in response_data:
             raise ReturnResponse(http_response.text, 200, [('Content-Type', 'application/json')])
         else:
             return response_data
