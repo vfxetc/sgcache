@@ -268,6 +268,10 @@ Config.register('TESTING', False, ['core'], '''
     action='store_true',
 ))
 
+Config.register('SOCKET_PATH', 'var/%s.sock', ['core'], '''
+    Printf-style pattern for unix socket paths.
+''')
+
 
 if os.environ.get('IS_SPHINX'):
     # Build up the docstring.
