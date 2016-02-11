@@ -79,7 +79,7 @@ class Scanner(object):
             for entity in self._find_active_and_retired(entity_type.type_name, filters, return_fields, threads=1, per_page=100):
 
                 for key in return_fields:
-                    value = entity[key]
+                    value = entity.get(key)
                     if isinstance(value, datetime.datetime):
                         entity[key] = value.isoformat() + 'Z'
 

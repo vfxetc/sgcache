@@ -1,6 +1,6 @@
 import os
-from unittest import TestCase
 
+from sgmock.unittest import TestCase
 from shotgun_api3 import Shotgun as _Shotgun
 
 
@@ -13,12 +13,16 @@ class Shotgun(_Shotgun):
 
         # Absolutely make sure that we can use it.
         cache_info = self.server_info.get('sgcache')
-        if cache_info is None:
-            raise RuntimeError('%s is not a sgcache', self.base_url)
-        if not isinstance(cache_info, dict):
-            raise RuntimeError('%s is a pre-testable sgcache', self.base_url)
-        if not cache_info.get('testing'):
-            raise RuntimeError('%s is not in testing mode', self.base_url)
+        mock_info = self.server_info.get('sgmock')
+
+        if not (cache_info or mock_info):
+            raise RuntimeError('%s is not a sgcache or sgmock', self.base_url)
+
+        if cache_info:
+            if not isinstance(cache_info, dict):
+                raise RuntimeError('%s is a pre-testable sgcache', self.base_url)
+            if not cache_info.get('testing'):
+                raise RuntimeError('%s is not in testing mode', self.base_url)
 
     def _build_payload(self, *args, **kwargs):
         payload = super(Shotgun, self)._build_payload(*args, **kwargs)
@@ -40,3 +44,15 @@ def connect(url=None, script_name=None, api_key=None, **kwargs):
         api_key or os.environ.get('SGCACHE_TEST_API_KEY', 'not-a-key'),
         **kwargs
     )
+
+
+class SGTestCase(TestCase):
+
+    def __init__(self, *args):
+        super(SGTestCase, self).__init__(*args)
+        self.direct = connect(os.environ.get('SGCACHE_SHOTGUN_URL', 'http://localhost:8020/'))
+        self.cached = connect()
+
+
+def uuid(len_=32):
+    return os.urandom(len_ / 2 + 1).encode('hex')[:len_]
