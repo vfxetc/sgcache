@@ -12,6 +12,24 @@ class ScannerCommand(DaemonCommand):
         super(ScannerCommand, self).add_arguments(parser)
 
     def main(self, args):
+
+        controller = self.cache.build_control_server('scanner')
+
+        @controller.register
+        def poll(client, msg):
+            self.cache.scanner.poll(wait=True)
+            return True
+
+        @controller.register
+        def start(client, msg):
+            return self.cache.scanner.start()
+
+        @controller.register
+        def stop(client, msg):
+            return self.cache.scanner.stop()
+
+        controller.loop(async=True)
+
         self.cache.scan(
             auto_last_time=False if args.full else self.config['AUTO_LAST_ID'],
             last_time=0 if args.full else self.config['SCAN_SINCE'],

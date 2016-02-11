@@ -38,7 +38,7 @@ class Shotgun(_Shotgun):
 
     def control(self, service, type, **kwargs):
         timeout = kwargs.pop('timeout', 5.0)
-        wait = kwargs.pop('wait', False)
+        wait = kwargs.pop('wait', True)
         if isinstance(type, dict):
             msg = kwargs
             msg['type'] = type

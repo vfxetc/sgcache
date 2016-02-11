@@ -1,4 +1,5 @@
 import sys
+import json
 
 from . import DaemonCommand
 
@@ -21,8 +22,10 @@ class ControlCommand(DaemonCommand):
             return
 
         else:
-            print >> sys.stderr, 'unknown control type', repr(args.type)
-            return 1
+            res = client.send(args.type)
+            if res:
+                print json.dumps(res, indent=4, sort_keys=True)
+
 
 
 def main():

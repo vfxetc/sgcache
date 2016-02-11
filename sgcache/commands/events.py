@@ -7,10 +7,20 @@ class EventsCommand(DaemonCommand):
     def main(self, args):
 
         controller = self.cache.build_control_server('events')
+
         @controller.register
-        def wake_up(client, msg):
-            self.cache.event_log.wake_up(wait=True)
+        def poll(client, msg):
+            self.cache.event_log.poll(wait=True)
             return True
+
+        @controller.register
+        def start(client, msg):
+            return self.cache.event_log.start()
+
+        @controller.register
+        def stop(client, msg):
+            return self.cache.event_log.stop()
+
         controller.loop(async=True)
 
         self.cache.watch(
