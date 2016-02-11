@@ -4,6 +4,7 @@ import datetime
 import functools
 import json
 import logging
+import os
 import re
 import threading
 import time
@@ -23,7 +24,7 @@ from .logs import log_globals
 from .scanner import Scanner
 from .schema import Schema
 from .utils import log_exceptions, get_shotgun, try_call_except_traceback
-
+from .control import ControlServer, ControlClient
 
 log = logging.getLogger(__name__)
 
@@ -53,6 +54,8 @@ class Cache(collections.Mapping):
         self.schema = schema
 
         self.shotgun = get_shotgun('sgapi', config=config)
+
+        self.control_clients = {}
 
         # Build model objects from the schema; these will not be complete
         # until we reflect the database below.
@@ -358,3 +361,26 @@ class Cache(collections.Mapping):
             except:
                 log.exception('error during scan; sleeping for 30s')
                 time.sleep(30)
+
+
+    def get_control_path(self, name):
+        return os.path.join(self.config['DATA_ROOT'], 'control', name)
+
+    def build_control_server(self, name):
+        return ControlServer(self.get_control_path(name), name=name)
+
+    def get_control_client(self, name):
+        try:
+            return self.control_clients[name]
+        except KeyError:
+            client = ControlClient(self.get_control_path(name))
+            self.control_clients[name] = client
+            return client
+
+    def send_control_message(self, service, type, **kw):
+        client = self.get_control_client(service)
+        client.send(type, **kw)
+
+    def send_and_recv_control_message(self, service, type, **kw):
+        client = self.get_control_client(service)
+        return client.send_and_recv(type, **kw)

@@ -21,10 +21,7 @@ setup(
         'console_scripts': '''
 
             sgcache-auto = sgcache.commands.auto:main
-            
-            # For WesternX backwards compatibility (until I can remove it).
-            sgcache-ctrl = sgcache.commands.auto:main
-
+            sgcache-ctrl = sgcache.commands.ctrl:main
             sgcache-web = sgcache.commands.web:main
             sgcache-scanner = sgcache.commands.scanner:main
             sgcache-events = sgcache.commands.events:main

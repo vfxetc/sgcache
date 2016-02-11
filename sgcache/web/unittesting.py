@@ -9,23 +9,23 @@ from flask import current_app, g
 
 def testing_only(func):
     @functools.wraps(func)
-    def _testing_only(api3_request):
+    def _testing_only(params):
         cache = current_app.cache
         if not cache.config['TESTING']:
             raise Fault('%s only works when testing' % func.__name__, 1001)
-        return func(api3_request)
+        return func(params)
     return _testing_only
 
 
 @api3_method
 @testing_only
-def clear(api3_request):
+def clear(params):
     current_app.cache._clear()
 
 
 @api3_method
 @testing_only
-def count(api3_request):
+def count(params):
     res = {}
     cache = current_app.cache
     with cache.db_begin() as con:
@@ -35,3 +35,21 @@ def count(api3_request):
             if row[0]:
                 res[type_name] = row[0]
     return res
+
+
+@api3_method
+@testing_only
+def control(params):
+    service = params['service']
+    client = current_app.cache.get_control_client(service)
+    msg = params['message']
+    if params.get('wait'):
+        timeout = params.get('timeout')
+        if timeout is None:
+            timeout = 5.0
+        res = client.send_and_recv(msg, timeout=timeout)
+        if res:
+            res.pop('for', None)
+        return res
+    else:
+        client.send(msg)

@@ -230,8 +230,8 @@ Config.register('MAX_CONTENT_LENGTH', '1024**3', ['web'])
 Config.register('SQLA_ECHO', False, ['logging'], '''
     Should SQLA engines log everything they do? Useful for development and debugging.
 ''')
-Config.register('LOGGING_FILE_DIR', os.path.abspath(os.path.join(__file__, '..', '..', 'var', 'log')), ['logging'], '''
-    Directory for log files; defaults to ``var/log`` of the installation.
+Config.register('LOGGING_FILE_DIR', None, ['logging'], '''
+    Directory for log files, relative to :attr:`.DATA_ROOT`
 ''')
 Config.register('LOGGING_FILE_LEVEL', logging.INFO, ['logging'], '''
     Python logging level to capture into files; default os ``logging.INFO``.
@@ -268,8 +268,8 @@ Config.register('TESTING', False, ['core'], '''
     action='store_true',
 ))
 
-Config.register('SOCKET_PATH', 'var/%s.sock', ['core'], '''
-    Printf-style pattern for unix socket paths.
+Config.register('DATA_ROOT', os.path.abspath(os.path.join(__file__, '..', '..', 'var')), ['core'], '''
+    Where runtime data (logs, sockets, locks, etc..) is stored.
 ''')
 
 

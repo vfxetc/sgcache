@@ -1,4 +1,17 @@
 
+- unit test all the things!
+    - direct through the cache
+    - via events
+    - via the scanner
+
+- have a DATA config that will contain whatever runtime data we want, e.g.
+  sockets, queues, etc.. Config.get_path(name, **kwargs) joins onto DATA after
+  formatting with **kwargs
+
+- cache.send_control_message(context_name, msg_name, **kwargs, wait=False)
+    - when TESTING, respond to a `control` api call, to send a control message
+    - wait -> True implies that it should wait for a response to send back
+
 - Join through multi_entity fields.
 
     - Need to build a subquery, and run it in an EXISTS:

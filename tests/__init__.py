@@ -36,6 +36,24 @@ class Shotgun(_Shotgun):
     def count(self):
         return self._call_rpc('count', None)
 
+    def control(self, service, type, **kwargs):
+        timeout = kwargs.pop('timeout', 5.0)
+        wait = kwargs.pop('wait', False)
+        if isinstance(type, dict):
+            msg = kwargs
+            msg['type'] = type
+        elif kwargs:
+            raise TypeError('cannot specify message and kwargs')
+        else:
+            msg = type
+        return self._call_rpc('control', dict(
+            service=service,
+            message=msg,
+            timeout=timeout,
+            wait=wait,
+        ))
+
+
 
 def connect(url=None, script_name=None, api_key=None, **kwargs):
     return Shotgun(

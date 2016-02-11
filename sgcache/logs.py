@@ -12,6 +12,8 @@ try:
 except ImportError:
     request = None
 
+from .utils import makedirs
+
 
 log_globals = threading.local()
 
@@ -46,7 +48,7 @@ def setup_logs(app=None):
 
     # Silence requests
     logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.WARNING)
-    
+
     root = logging.getLogger()
     root.setLevel(logging.DEBUG if app and app.debug else logging.INFO)
 
@@ -74,9 +76,9 @@ def setup_logs(app=None):
 
     # File logging.
     if app and app.config['LOGGING_FILE_DIR']:
-        if not os.path.exists(app.config['LOGGING_FILE_DIR']):
-            os.makedirs(app.config['LOGGING_FILE_DIR'])
-        handler = PatternedFileHandler(os.path.join(app.config['LOGGING_FILE_DIR'], '{date}.{pid}.log'))
+        log_dir = os.path.join(app.config['DATA_ROOT'], app.config['LOGGING_FILE_DIR'])
+        makedirs(log_dir)
+        handler = PatternedFileHandler(os.path.join(log_dir, '{date}.{pid}.log'))
         handler.setLevel(app.config['LOGGING_FILE_LEVEL'])
         add_handler(handler)
 
@@ -123,5 +125,3 @@ class PatternedFileHandler(logging.FileHandler):
         if self._last_path and self._last_path != self._current_path():
             self.close()
         super(PatternedFileHandler, self).emit(record)
-
-

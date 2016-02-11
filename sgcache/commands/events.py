@@ -1,5 +1,4 @@
 from . import DaemonCommand
-from ..control import Controller
 
 class EventsCommand(DaemonCommand):
 
@@ -7,9 +6,9 @@ class EventsCommand(DaemonCommand):
 
     def main(self, args):
 
-        controller = Controller(self.cache.config['SOCKET_PATH'] % 'events')
+        controller = self.cache.build_control_server('events')
         @controller.register
-        def wake_up(**kw):
+        def wake_up(client, msg):
             self.cache.event_log.wake_up(wait=True)
             return True
         controller.loop(async=True)

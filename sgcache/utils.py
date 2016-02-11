@@ -4,7 +4,7 @@ import logging
 import os
 import re
 import traceback
-
+import errno
 
 try:
     import sgapi
@@ -20,6 +20,20 @@ except ImportError:
     shotgun_api3_registry = None
 
 
+
+def makedirs(path):
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+def unlink(path):
+    try:
+        os.unlink(path)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
 
 def get_shotgun_class(provider=None, strict=True):
 
