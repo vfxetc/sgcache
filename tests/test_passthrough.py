@@ -1,14 +1,10 @@
 from . import *
 
 
-class TestPassthroughs(SGTestCase):
+class TestPassthroughs(ApiTestCase):
 
-    def test_create_basics(self):
+    wants_events = False
+    wants_scanner = False
 
-        self.cached.clear()
-        self.direct.clear()
-        
-        a = self.cached.create('Task', {'content': uuid(8)})
-        b = self.direct.find_one('Task', [('id', 'is', a['id'])], ['content'])
-
-        self.assertSameEntity(a, b)
+    def test_basic_crud(self):
+        fixtures.task_crud(self, self.cached, self.poll_scanner)

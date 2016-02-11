@@ -1,25 +1,10 @@
 from . import *
 
 
-class TestScanner(SGTestCase):
+class TestScanner(ApiTestCase):
 
-    def setUp(self):
-        self._was_watching = self.cached.control('events', 'stop')
-        self.cached.clear()
-        self.direct.clear()
+    wants_events = False
+    wants_scanner = True
 
-    def tearDown(self):
-        if self._was_watching:
-            self.cached.control('events', 'start')
-
-    def test_create_basics(self):
-
-        self.direct.log('>>> test_create_basics')
-        a = self.direct.create('Task', {'content': uuid(8)})
-        self.direct.log('scanning...')
-        self.poll_scanner()
-        self.direct.log('Done scanning.')
-
-        b = self.cached.find_one('Task', [('id', 'is', a['id'])], ['content'])
-
-        self.assertSameEntity(a, b)
+    def test_basic_crud(self):
+        fixtures.task_crud(self, self.direct, self.poll_scanner)

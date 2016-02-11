@@ -4,6 +4,7 @@ from sgmock.unittest import TestCase
 from shotgun_api3 import Shotgun as _Shotgun
 
 
+
 class Shotgun(_Shotgun):
 
     def __init__(self, *args, **kwargs):
@@ -38,7 +39,7 @@ class Shotgun(_Shotgun):
 
     def log(self, message):
         return self._call_rpc('log', {'message': message})
-    
+
     def control(self, service, type, **kwargs):
         timeout = kwargs.pop('timeout', 5.0)
         wait = kwargs.pop('wait', True)
@@ -67,19 +68,45 @@ def connect(url=None, script_name=None, api_key=None, **kwargs):
     )
 
 
-class SGTestCase(TestCase):
+class ApiTestCase(TestCase):
+
+    wants_scanner = None
+    wants_events = None
 
     def __init__(self, *args):
-        super(SGTestCase, self).__init__(*args)
+        super(ApiTestCase, self).__init__(*args)
         self.direct = connect(os.environ.get('SGCACHE_SHOTGUN_URL', 'http://localhost:8020/'))
         self.cached = connect()
 
+    def setUp(self):
+        self.direct.log('Entering test: %s' % self.id())
+        if self.wants_events is not None:
+            self._toggled_events = self.cached.control('events', 'start' if self.wants_events else 'stop')
+        if self.wants_scanner is not None:
+            self._toggled_scanner = self.cached.control('scanner', 'start' if self.wants_scanner else 'stop')
+        self.direct.clear()
+        self.cached.clear()
+
+    def tearDown(self):
+        self.direct.log('Leaving test: %s' % self.id())
+        if self.wants_events is not None and self._toggled_events:
+            self.cached.control('events', 'stop' if self.wants_events else 'start')
+        if self.wants_scanner is not None and self._toggled_scanner:
+            self.cached.control('scanner', 'stop' if self.wants_scanner else 'start')
+
     def poll_events(self):
+        self.direct.log('Starting event poll...')
         self.cached.control('events', 'poll')
+        self.direct.log('Done event poll')
 
     def poll_scanner(self):
+        self.direct.log('Starting scanner poll...')
         self.cached.control('scanner', 'poll')
+        self.direct.log('Done scanner poll')
 
 
 def uuid(len_=32):
     return os.urandom(len_ / 2 + 1).encode('hex')[:len_]
+
+
+from . import fixtures
