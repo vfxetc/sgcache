@@ -6,6 +6,8 @@ import sys
 import time
 import threading
 
+from sgevents.loop import LoopController
+
 from .logs import log_globals
 from .utils import parse_interval, get_shotgun
 
@@ -25,50 +27,7 @@ class Scanner(object):
         self._log_counter = itertools.count(1)
         self.shotgun = get_shotgun('sgapi', config=config)
 
-        self._allowed_to_run = threading.Event()
-        self._allowed_to_run.set()
-        self._is_sleeping = threading.Event()
-        self._poll_signal = threading.Condition()
-        self._sleep_signal = threading.Condition()
-
-    def _sleep(self, delay):
-
-        # If anything is waiting for us to sleep, let them know.
-        with self._sleep_signal:
-            self._sleep_signal.notify_all()
-
-        # Sleep until something wakes us up.
-        delay = min(delay, 60)
-        self._is_sleeping.set()
-        with self._poll_signal:
-            self._poll_signal.wait(delay)
-        self._is_sleeping.clear()
-
-        # Finally, make sure we are allowed to continue from here.
-        self._allowed_to_run.wait()
-
-    def poll(self, wait=False, timeout=30.0):
-        """Force a poll from another thread."""
-        self._allowed_to_run.set()
-        with self._poll_signal:
-            self._poll_signal.notify_all()
-        if wait:
-            with self._sleep_signal:
-                self._sleep_signal.wait(timeout)
-
-    def start(self):
-        """Start the loop from another thread."""
-        state = self._allowed_to_run.is_set()
-        self._allowed_to_run.set()
-        return not state
-
-    def stop(self):
-        """Stop the loop from another thread."""
-        state = self._allowed_to_run.is_set()
-        self._allowed_to_run.clear()
-        self._is_sleeping.wait()
-        return state
-
+        self.loop_controller = LoopController()
 
     def scan(self, interval=None):
 
@@ -92,7 +51,7 @@ class Scanner(object):
                 sleep_target += interval
             delay = sleep_target - time.time()
             log.info('sleeping %ds until next scan' % delay)
-            self._sleep(delay)
+            self.loop_controller.sleep(delay)
 
     def _scan(self):
 

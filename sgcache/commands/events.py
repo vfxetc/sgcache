@@ -10,16 +10,16 @@ class EventsCommand(DaemonCommand):
 
         @controller.register
         def poll(client, msg):
-            self.cache.event_log.poll(wait=True)
+            self.cache.event_log.loop_controller.poll(wait=True)
             return True
 
         @controller.register
         def start(client, msg):
-            return self.cache.event_log.start()
+            return self.cache.event_log.loop_controller.start()
 
         @controller.register
         def stop(client, msg):
-            return self.cache.event_log.stop()
+            return self.cache.event_log.loop_controller.stop()
 
         controller.loop(async=True)
 

@@ -17,16 +17,16 @@ class ScannerCommand(DaemonCommand):
 
         @controller.register
         def poll(client, msg):
-            self.cache.scanner.poll(wait=True)
+            self.cache.scanner.loop_controller.poll(wait=True)
             return True
 
         @controller.register
         def start(client, msg):
-            return self.cache.scanner.start()
+            return self.cache.scanner.loop_controller.start()
 
         @controller.register
         def stop(client, msg):
-            return self.cache.scanner.stop()
+            return self.cache.scanner.loop_controller.stop()
 
         controller.loop(async=True)
 
