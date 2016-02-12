@@ -1,13 +1,13 @@
 
 - unit test all the things!
-    - direct through the cache
-    - via events
-    - via the scanner
+    - Shot.task_template
 
 - document missing filters:
     *.name_is
     *.name_contains
     *.name_not_contains
+
+    otherwise, entity and multi_entity fields are complete.
 
 - have a DATA config that will contain whatever runtime data we want, e.g.
   sockets, queues, etc.. Config.get_path(name, **kwargs) joins onto DATA after

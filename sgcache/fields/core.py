@@ -181,16 +181,21 @@ class Field(object):
 
         # TODO: How does case-insensitivity affect other comparisons?
 
+        if relation == 'in':
+            return column.in_(values)
+        elif relation == 'not_in':
+            return sa.not_(column.in_(values))
+
+
         if relation == 'is':
             return column == values[0]
         elif relation == 'is_not':
             return column != values[0]
-        elif relation == 'in':
-            return column.in_(values)
         elif relation == 'greater_than':
             return column > values[0]
         elif relation == 'less_than':
             return column < values[0]
+
         else:
             raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 
@@ -330,6 +335,10 @@ class Text(Scalar):
         if relation == 'ends_with':
             column = getattr(req.get_table(path).c, self.name)
             return column.like('%' + values[0].replace('%', '\\%'))
+        if relation in ('contains', 'not_contains'):
+            column = getattr(req.get_table(path).c, self.name)
+            clause = column.like('%' + values[0].replace('%', '\\%') + '%')
+            return sa.not_(clause) if 'not' in relation else clause
 
         return super(Text, self).prepare_filter(req, path, relation, values)
 
