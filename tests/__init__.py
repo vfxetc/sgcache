@@ -89,6 +89,7 @@ class ApiTestCase(TestCase):
 
     def tearDown(self):
         self.direct.log('Leaving test: %s' % self.id())
+        return
         if self.wants_events is not None and self._toggled_events:
             self.cached.control('events', 'stop' if self.wants_events else 'start')
         if self.wants_scanner is not None and self._toggled_scanner:

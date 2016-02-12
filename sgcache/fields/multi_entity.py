@@ -139,18 +139,22 @@ class MultiEntity(Field):
         # a join into the main query. We currently get away with this because
         # duplicate rows are filtered out.
 
+        # TODO: Make these all assert that the entities on the other side are _active.
+        # Right now it is likely that this will be okay, since the events/scanner
+        # should keep the association up to date.
+
         if relation in ('is', 'is_not', 'in', 'not_in'):
 
             # We could easily do this, but lets match Shotgun!
             if 'is' in relation and len(values) > 1:
-                raise Fault('more than one value for %s' % relation)
+                raise ClientFault('more than one value for %s' % relation)
 
             by_type = dict()
             for e in values:
                 try:
                     by_type.setdefault(e['type'], []).append(e['id'])
-                except KeyError:
-                    raise Fault('multi_entity is value must be an entity')
+                except (TypeError, KeyError, IndexError):
+                    raise ClientFault('multi_entity is value must be an entity')
 
             clauses = []
             for type_, ids in by_type.iteritems():
@@ -165,10 +169,10 @@ class MultiEntity(Field):
 
         if relation in ('type_is', 'type_is_not'):
             if len(values) > 1:
-                raise Fault('more than one value for %s' % relation)
+                raise ClientFault('more than one value for %s' % relation)
             clause = assoc.c.child_type == values[0]
             return sa.not_(clause) if 'not' in relation else clause
-        
+
         raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 
 

@@ -63,32 +63,52 @@ class Entity(Field):
         type_column = getattr(table.c, self.type_column.name)
         id_column = getattr(table.c, self.id_column.name)
 
-        if relation == 'is':
-            return sa.and_(
-                type_column == values[0]['type'],
-                id_column == values[0]['id']
-            )
+        if relation in ('is', 'is_not', 'in', 'not_in'):
 
-        if relation in ('in', 'not_in'):
-            types = set(v['type'] for v in values)
-            if len(types) == 1:
-                # We can be relatively efficient and use an "in".
-                clause = sa.and_(
-                    type_column == values[0]['type'],
-                    id_column.in_(set(v['id'] for v in values)),
-                )
-            else:
-                # Slightly gross.
-                clause = sa.or_(*(
-                    sa.and_(
-                        type_column == value['type'],
-                        id_column == value['id']
-                    ) for value in values
-                ))
-            if relation == 'in':
-                return clause
-            else:
-                return sa.not_(clause)
+            # We could easily do this, but lets match Shotgun!
+            if 'is' in relation and len(values) > 1:
+                raise ClientFault('more than one value for %s' % relation)
+
+            by_type = dict()
+            for e in values:
+                if e is None:
+                    by_type[None] = [None]
+                    continue
+                try:
+                    by_type.setdefault(e['type'], []).append(e['id'])
+                except (TypeError, KeyError, IndexError):
+                    raise ClientFault('multi_entity is value must be an entity')
+
+            clauses = []
+            for type_, ids in by_type.iteritems():
+                if type_ is None:
+                    clause = id_column == None
+                else:
+                    clause = sa.and_(
+                        type_column == type_,
+                        id_column.in_(ids)
+                    )
+                clauses.append(clause)
+
+            clause = clauses[0] if len(clauses) == 1 else sa.or_(*clauses)
+            if 'not' in relation:
+                clause = sa.not_(clause)
+                # We must specifically add a not-null.
+                if None not in by_type:
+                    clause = sa.or_(clause, id_column == None)
+
+            return clause
+
+        if relation in ('type_is', 'type_is_not'):
+            if len(values) > 1:
+                raise ClientFault('more than one value for %s' % relation)
+            clause = type_column == values[0]
+            if 'not' in relation:
+                clause = sa.not_(clause)
+                # We must specifically add a not-null.
+                if values[0] is not None:
+                    clause = sa.or_(clause, id_column == None)
+            return clause
 
         raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 

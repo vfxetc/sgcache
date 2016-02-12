@@ -4,6 +4,11 @@
     - via events
     - via the scanner
 
+- document missing filters:
+    *.name_is
+    *.name_contains
+    *.name_not_contains
+
 - have a DATA config that will contain whatever runtime data we want, e.g.
   sockets, queues, etc.. Config.get_path(name, **kwargs) joins onto DATA after
   formatting with **kwargs
