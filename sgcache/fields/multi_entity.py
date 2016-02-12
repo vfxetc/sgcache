@@ -135,6 +135,9 @@ class MultiEntity(Field):
         assoc = req.get_table(path, self.assoc_table, include_tail=True)
         req.join(assoc, table.c.id == assoc.c.parent_id)
 
+        # TODO: Make this more efficient by using EXISTS, instead of performing
+        # a join into the main query. We currently get away with this because
+        # duplicate rows are filtered out.
         if relation in ('is', 'is_not'):
             try:
                 clause = sa.and_(

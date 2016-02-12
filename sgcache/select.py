@@ -253,7 +253,19 @@ class SelectBuilder(object):
         :returns: iterator of entity dicts.
 
         """
+
+        seen = set()
+        id_col = self.base_table.c.id
+
         for raw_row in cur:
+
+            # Filter out duplicates. This allows for a MUCH easier implementation
+            # of multi_entity filters.
+            id_ = raw_row[id_col]
+            if id_ in seen:
+                continue
+            seen.add(id_)
+
             row = {'type': self.entity_type_name}
             for path, join_field, join_state, field, state in self.select_state:
 
