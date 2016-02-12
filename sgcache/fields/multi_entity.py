@@ -140,15 +140,19 @@ class MultiEntity(Field):
         # duplicate rows are filtered out.
 
         if relation in ('is', 'is_not', 'in', 'not_in'):
+
+            # We could easily do this, but lets match Shotgun!
             if 'is' in relation and len(values) > 1:
                 raise Fault('more than one value for %s' % relation)
-            clauses = []
+
             by_type = dict()
             for e in values:
                 try:
                     by_type.setdefault(e['type'], []).append(e['id'])
                 except KeyError:
                     raise Fault('multi_entity is value must be an entity')
+
+            clauses = []
             for type_, ids in by_type.iteritems():
                 clause = sa.and_(
                     assoc.c.child_type == type_,
@@ -159,6 +163,12 @@ class MultiEntity(Field):
 
             return sa.not_(clause) if 'not' in relation else clause
 
+        if relation in ('type_is', 'type_is_not'):
+            if len(values) > 1:
+                raise Fault('more than one value for %s' % relation)
+            clause = assoc.c.child_type == values[0]
+            return sa.not_(clause) if 'not' in relation else clause
+        
         raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 
 

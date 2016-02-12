@@ -10,7 +10,7 @@ else:
     from tests import Shotgun
     url = 'http://127.0.0.1:8010'
     sg = Shotgun(url,
-        os.environ.get('SGCACHE_SHOTGUN_SCRIPT_NAUSER', 'script_name'),
+        os.environ.get('SGCACHE_SHOTGUN_SCRIPT_name', 'script_name'),
         os.environ.get('SGCACHE_SHOTGUN_API_KEY', 'api_key'),
     )
 
@@ -68,136 +68,15 @@ HOLY SHIT!
 
 '''
 
-print '=== SANITY CHECK ==='
-assertTasks([], ['both', 'user', 'group', 'none'])
-
-
-
-
-print '=== IS ==='
+print '=== name_CONTAINS ==='
 assertTasks([
-    ('task_assignees', 'is', USER),
-],
-    ['both', 'user'],
-    'x in entities (user)',
-)
-
-exit()
-
-assertTasks([
-    ('task_assignees', 'is', GRP1),
-],
-    ['both', 'group'],
-    'x in entities (group)',
-)
-assertTasks([
-    ('task_assignees', 'is', GRP1),
-], [],
-    'x in entities (no match)',
-)
-
-print '=== IS_NOT ==='
-assertTasks([
-    ('task_assignees', 'is_not', USER),
-], ['group', 'none'])
-assertTasks([
-    ('task_assignees', 'is_not', GRP1),
-], ['user', 'none'])
-assertTasks([
-    ('task_assignees', 'is_not', GRP1),
-], ['both', 'user', 'group', 'none'])
-
-print '=== TYPE_IS ==='
-assertTasks([
-    ('task_assignees', 'type_is', 'HumanUser'),
+    ('task_assignees', 'name_contains', 'Mike'),
 ], ['both', 'user'])
 assertTasks([
-    ('task_assignees', 'type_is', 'Group'),
-], ['both', 'group'])
-assertTasks([
-    ('task_assignees', 'type_is', 'PublishEvent'),
-], [])
-
-print '=== TYPE_IS_NOT ==='
-assertTasks([
-    ('task_assignees', 'type_is_not', 'PublishEvent'),
-], ['both', 'user', 'group', 'none'])
-assertTasks([
-    ('task_assignees', 'type_is_not', 'Group'),
-], ['user', 'none'])
-
-print '=== IN ==='
-assertTasks([
-    ('task_assignees', 'in', USER),
-], ['both', 'user'])
-assertTasks([
-    ('task_assignees', 'in', GRP1),
-], ['both', 'group'])
-assertTasks([
-    ('task_assignees', 'in', GRP1),
-], [])
-assertTasks([
-    ('task_assignees', 'in', USER, GRP1),
-], ['both', 'user', 'group'], 'any(x in entities)')
-assertTasks([
-    ('task_assignees', 'not_in', USER, GRP1),
-], ['none'], 'not any(x in entities)')
-assertTasks([
-    ('task_assignees', 'not_in', USER, GRP1),
-], ['group', 'none'], 'not any(x in entities)')
-
-
-print '=== NOT_IN ==='
-assertTasks([
-    ('task_assignees', 'not_in', USER),
-], ['group', 'none'])
-assertTasks([
-    ('task_assignees', 'not_in', GRP1),
-], ['user', 'none'])
-assertTasks([
-    ('task_assignees', 'not_in', GRP1),
-], ['both', 'user', 'group', 'none'])
-
-print '=== NAUSER_CONTAINS ==='
-assertTasks([
-    ('task_assignees', 'naUSER_contains', 'Mike'),
-], ['both', 'user'])
-assertTasks([
-    ('task_assignees', 'naUSER_contains', 'GRP1'),
+    ('task_assignees', 'name_contains', 'GRP1'),
 ], ['both', 'group'])
 
-print '=== NAUSER_NOT_CONTAINS ==='
+print '=== name_NOT_CONTAINS ==='
 assertTasks([
-    ('task_assignees', 'naUSER_not_contains', 'GRP1'),
+    ('task_assignees', 'name_not_contains', 'GRP1'),
 ], ['user', 'none'])
-
-
-print '=== DEEP LINKS ==='
-
-
-assertTasks([
-    ('task_assignees.HumanUser.id', 'is', USER['id']),
-], ['both', 'user'])
-assertTasks([
-    ('task_assignees.Group.id', 'is', GRP1['id']),
-], ['both', 'group'])
-
-assertTasks([
-    ('task_assignees.HumanUser.id', 'is', USER['id']),
-    ('task_assignees.Group.id', 'is', GRP1['id']),
-], ['both'])
-
-# Invert the logic above.
-assertTasks([
-    ('task_assignees.HumanUser.id', 'is_not', USER['id']),
-], ['group', 'none'])
-assertTasks([
-    ('task_assignees.Group.id', 'is_not', GRP1['id']),
-], ['user', 'none'])
-
-# In order for this to work, I think they may *need* to be subqueries.
-assertTasks([
-    ('task_assignees.HumanUser.id', 'is_not', USER['id']),
-    ('task_assignees.Group.id', 'is_not', GRP1['id']),
-], ['none'])
-exit()

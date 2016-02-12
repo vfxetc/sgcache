@@ -2,7 +2,7 @@ from . import *
 
 class TestOrder(ApiTestCase):
 
-    def test_basics(self):
+    def test_number_order(self):
 
         sg = self.cached
 

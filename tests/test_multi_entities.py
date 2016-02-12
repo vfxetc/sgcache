@@ -117,3 +117,22 @@ class TestMultiEntities(ApiTestCase):
         self.assertTasks([
             ('task_assignees', 'not_in', self.GRP1),
         ], ['both', 'user', 'group', 'none'])
+
+    def test_type_is(self):
+        self.assertTasks([
+            ('task_assignees', 'type_is', 'HumanUser'),
+        ], ['both', 'user'])
+        self.assertTasks([
+            ('task_assignees', 'type_is', 'Group'),
+        ], ['both', 'group'])
+        self.assertTasks([
+            ('task_assignees', 'type_is', 'PublishEvent'),
+        ], [])
+
+    def test_type_is_not(self):
+        self.assertTasks([
+            ('task_assignees', 'type_is_not', 'PublishEvent'),
+        ], ['both', 'user', 'group', 'none'])
+        self.assertTasks([
+            ('task_assignees', 'type_is_not', 'Group'),
+        ], ['user', 'none'])
