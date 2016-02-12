@@ -38,6 +38,13 @@ class TestMultiEntities(ApiTestCase):
             ('task_assignees.Group.id', 'is', self.GRP1['id']),
         ], ['both'])
 
+        # Make sure that we only get one copy of 'multi'. In earlier implementations
+        # this could happen.
+        self.cached.create('Task', {'entity': self.SHOT, 'content': 'multi', 'task_assignees': [self.GRP1, self.GRP2]})
+        self.assertTasks([
+            ('task_assigness.Group.type', 'is', 'Group'),
+        ], ['group', 'both', 'multi'])
+
     def test_deep_filters_is_not(self):
         self.assertTasks([
             ('task_assignees.HumanUser.id', 'is_not', self.USER['id']),
@@ -78,4 +85,35 @@ class TestMultiEntities(ApiTestCase):
         ], ['user', 'none'])
         self.assertTasks([
             ('task_assignees', 'is_not', self.GRP1),
+        ], ['both', 'user', 'group', 'none'])
+
+    def test_in_filter(self):
+        self.assertTasks([
+            ('task_assignees', 'in', self.USER),
+        ], ['both', 'user'])
+        self.assertTasks([
+            ('task_assignees', 'in', self.GRP1),
+        ], ['both', 'group'])
+        self.assertTasks([
+            ('task_assignees', 'in', self.GRP1),
+        ], [])
+        self.assertTasks([
+            ('task_assignees', 'in', self.USER, self.GRP1),
+        ], ['both', 'user', 'group'], 'any(x in entities)')
+        self.assertTasks([
+            ('task_assignees', 'not_in', self.USER, self.GRP1),
+        ], ['none'], 'not any(x in entities)')
+        self.assertTasks([
+            ('task_assignees', 'not_in', self.USER, self.GRP1),
+        ], ['group', 'none'], 'not any(x in entities)')
+
+    def test_not_in_filter(self):
+        self.assertTasks([
+            ('task_assignees', 'not_in', self.USER),
+        ], ['group', 'none'])
+        self.assertTasks([
+            ('task_assignees', 'not_in', self.GRP1),
+        ], ['user', 'none'])
+        self.assertTasks([
+            ('task_assignees', 'not_in', self.GRP1),
         ], ['both', 'user', 'group', 'none'])

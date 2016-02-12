@@ -138,15 +138,26 @@ class MultiEntity(Field):
         # TODO: Make this more efficient by using EXISTS, instead of performing
         # a join into the main query. We currently get away with this because
         # duplicate rows are filtered out.
-        if relation in ('is', 'is_not'):
-            try:
+
+        if relation in ('is', 'is_not', 'in', 'not_in'):
+            if 'is' in relation and len(values) > 1:
+                raise Fault('more than one value for %s' % relation)
+            clauses = []
+            by_type = dict()
+            for e in values:
+                try:
+                    by_type.setdefault(e['type'], []).append(e['id'])
+                except KeyError:
+                    raise Fault('multi_entity is value must be an entity')
+            for type_, ids in by_type.iteritems():
                 clause = sa.and_(
-                    assoc.c.child_type == values[0]['type'],
-                    assoc.c.child_id   == values[0]['id'],
+                    assoc.c.child_type == type_,
+                    assoc.c.child_id.in_(ids)
                 )
-                return sa.not_(clause) if 'not' in relation else clause
-            except KeyError:
-                raise Fault('multi_entity is value must be an entity')
+                clauses.append(clause)
+            clause = clauses[0] if len(clauses) == 1 else sa.or_(*clauses)
+
+            return sa.not_(clause) if 'not' in relation else clause
 
         raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 
