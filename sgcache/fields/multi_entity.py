@@ -1,5 +1,5 @@
 import functools
-
+import re
 import sqlalchemy as sa
 
 from .core import sg_field_type, Field
@@ -31,11 +31,47 @@ class MultiEntity(Field):
     def _clear(self, con):
         con.execute(self.assoc_table.delete())
 
-    def prepare_join(self, req, self_path, next_path, for_filter):
+    def prepare_deep_filter(self, req, self_path, next_path, final_path, relation, values):
 
-        # We can only join through multi_entity for a filter.
-        if not for_filter:
-            return
+        self_table = req.get_table(self_path)
+        assoc_table = self.assoc_table.alias() # Must always be unique.
+
+        sub_builder = req.subquery(next_path)
+        rel_path = final_path[len(self_path):]
+
+        on_clause = sa.and_(
+            assoc_table.c.child_type == rel_path[0][0],
+            assoc_table.c.child_id == sub_builder.select_from.c.id
+        )
+
+        # Multi-entity fields appear to steal the negation of later filters.
+        is_negative = 'not' in relation
+        if is_negative:
+            relation = re.sub(r'_?not_?', '', relation)
+
+        sub_builder.select_from = assoc_table.join(sub_builder.select_from, on_clause)
+
+        sub_builder.add_api3_filters({'logical_operator': 'and', 'conditions': [{
+            'path': rel_path.format(),
+            'relation': relation,
+            'values': values,
+        }]})
+        sub_builder.select_fields.append(sa.literal(1))
+
+        sub_query = sub_builder.finalize()
+
+        # Attach it to the main query
+        sub_query = sub_query.where(assoc_table.c.parent_id == self_table.c.id)
+
+        clause = sa.exists(sub_query)
+        if is_negative:
+            clause = sa.not_(clause)
+
+        return clause
+
+
+    def prepare_join(self, req, self_path, next_path):
+        return
 
         raise FieldNotImplemented() # until we figure this out
 

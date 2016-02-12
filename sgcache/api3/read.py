@@ -63,6 +63,10 @@ class Api3ReadOperation(object):
         selector.add_api3_sorts(self.sorts)
         query = selector.finalize()
 
+        # print '========'
+        # print str(query)
+        # print '--------'
+
         if self.offset:
             query = query.offset(self.offset)
         if self.limit:

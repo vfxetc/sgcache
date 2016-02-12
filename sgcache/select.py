@@ -3,7 +3,7 @@ import cProfile as profile
 
 import sqlalchemy as sa
 
-from .exceptions import EntityMissing, FieldMissing, NoFieldData
+from .exceptions import EntityMissing, FieldMissing, NoFieldData, Fault
 from .path import FieldPath
 
 
@@ -11,11 +11,19 @@ class SelectBuilder(object):
 
     """Assistant to create select queries, and then interpret their results."""
 
-    def __init__(self, cache, entity_type_name, return_active=True):
+    def __init__(self, cache, entity_type_name, return_active=True, root=None):
 
         self.cache = cache
         self.entity_type_name = entity_type_name
         self.return_active = return_active
+
+        self._root_builder = root or self
+        self._subquery_count = 0
+        if root:
+            root._subquery_count += 1
+            self._subquery_id = root._subquery_count
+        else:
+            self._subquery_id = 0
 
         # To keep track of what tables have already been aliased.
         self.aliases = {}
@@ -35,6 +43,9 @@ class SelectBuilder(object):
         self.where_clauses = []
         self.group_by_clauses = []
         self.order_by_clauses = []
+
+    def subquery(self, path):
+        return self.__class__(self.cache, path[-1][0], root=self)
 
     def parse_path(self, path):
         """Get a :class:`.FieldPath` for the requested entity type.
@@ -92,19 +103,23 @@ class SelectBuilder(object):
 
         """
 
-        # Shortcut association tables.
-        if table is not None and table.name not in self.aliases:
-            self.aliases[table.name] = table
-            return table
-
+        # if table is not None: # For association tables.
+            # name = table.name
+        # else:
         name = path.format(head=True, tail=include_tail)
+        must_alias = False
+
+        # Namespace subqueries.
+        if self._subquery_id:
+            name = 'sub%d_%s' % (self._subquery_id, name)
+            must_alias = True
 
         if name not in self.aliases:
-            # we can return the real table the first path it is used from,
-            # but after that we must alias it
+            # We can usually return the real table the first path it is used from,
+            # but after that we must alias it.
             if table is None:
                 table = self.get_entity(path).table
-            if table.name in self.aliases:
+            if must_alias or table.name in self.aliases:
                 table = table.alias(name)
             self.aliases[name] = table
         return self.aliases[name]
@@ -123,48 +138,6 @@ class SelectBuilder(object):
             self.select_from = self.select_from.outerjoin(table, on)
             self.joined.add(table.name)
 
-    def prepare_joins(self, path, for_filter):
-        """Prepare all joins that will be required to access the tail of the given path.
-
-        If the given path is a deep-field, all tables along that path must be
-        joined into the query in order for the data to be accessed.
-
-        This calls :meth:`.Field.prepare_join` for every deep link in the path.
-
-        :param path: The :class:`FieldPath` to assert is joined.
-        :returns: A tuple of the last field, and the state returned from its
-            :meth:`~.Field.prepare_join` to be passed to its
-            :meth:`~.Field.check_for_join`.
-
-        """
-
-        field = state = None
-
-        for i in xrange(0, len(path) - 1):
-            field_path = path[:i+1]
-            field = self.get_field(field_path)
-            state = field.prepare_join(self, field_path, path[:i+2], for_filter)
-
-        # We only need to track the last join to check if it was successful,
-        # since the previous ones are a requirement of it
-        return field, state
-
-    def check_for_joins(self, row, state_tuple):
-        """Check if the joins setup by :meth:`prepare_joins` succeeded.
-
-        Used to filter out deep-fields that did not match.
-
-        :param row: SQLA result row.
-        :param state_tuple: Return value from :meth:`prepare_joins`.
-        :returns bool: true if the join occurred.
-
-        """
-        field, state = state_tuple
-        if field is not None:
-            return field.check_for_join(self, row, state)
-        else:
-            return True
-
     def prepare_api3_filters(self, filters):
         """Convert a set of Shotgun filters into a SQLA expression.
 
@@ -178,37 +151,64 @@ class SelectBuilder(object):
 
             if 'conditions' in filter_:
                 clause = self.prepare_api3_filters(filter_)
+                clauses.append(clause)
+                continue
+
+            raw_path = filter_['path']
+            relation = filter_['relation']
+            values = filter_['values']
+
+            path = self.parse_path(raw_path)
+            for i in xrange(0, len(path) - 1):
+
+                join_path = path[:i+1]
+                next_path = path[:i+2]
+                field = self.get_field(join_path)
+
+                # Multi-entity fields take over the filtering process
+                clause = field.prepare_deep_filter(self, join_path, next_path, path, relation, values)
+                if clause is not None:
+                    break
+
+                # Join through everything else; we don't care about the
+                # state returned from here.
+                state = field.prepare_join(self, join_path, next_path)
+                if state is None:
+                    raise Fault('cannot join through %s' % join_path.format())
+
             else:
-
-                raw_path = filter_['path']
-                relation = filter_['relation']
-                values = filter_['values']
-
-                # TODO: This must be refactored so the fields may capture the
-                # rest of the path. Perhaps by field.filters_in_subquery(self)??
-                path = self.parse_path(raw_path)
-                self.prepare_joins(path, for_filter=True) # make sure it is availible
-
                 field = self.get_field(path)
                 clause = field.prepare_filter(self, path, relation, values)
 
-            if clause is not None:
-                clauses.append(clause)
+            if clause is None:
+                raise Fault('cannot filter %s' % path.format())
+            clauses.append(clause)
 
         if clauses:
             return (sa.and_ if filters['logical_operator'] == 'and' else sa.or_)(*clauses)
 
-    def add_return_field(self, path):
+    def join_to_path(self, path):
+        join_state = join_field = None
+        for i in xrange(0, len(path) - 1):
+            join_path = path[:i+1]
+            join_field = self.get_field(join_path)
+            join_state = join_field.prepare_join(self, join_path, path[:i+2])
+            if join_state is None:
+                raise Fault('cannot join through %s' % join_path.format())
+        return join_field, join_state
 
+    def add_return_field(self, path):
         if isinstance(path, basestring):
             path = self.parse_path(path)
 
-        join_state = self.prepare_joins(path, for_filter=False) # make sure it is availible
+        try:
+            join_state, join_field = self.join_to_path(path)
+        except Fault:
+            return
 
         field = self.get_field(path)
         state = field.prepare_select(self, path)
-
-        self.select_state.append((path, join_state, field, state))
+        self.select_state.append((path, join_field, join_state, field, state))
 
     def add_api3_filters(self, filters):
         clause = self.prepare_api3_filters(filters)
@@ -222,7 +222,7 @@ class SelectBuilder(object):
     def add_sort(self, path, desc=False):
         if isinstance(path, basestring):
             path = self.parse_path(path)
-        self.prepare_joins(path, for_filter=False)
+        self.join_to_path(path)
         field = self.get_field(path)
         sort_expr = field.prepare_order(self, path)
         if desc:
@@ -241,6 +241,7 @@ class SelectBuilder(object):
             query = query.order_by(*self.order_by_clauses)
         if self.group_by_clauses:
             query = query.group_by(*self.group_by_clauses)
+
         return query
 
     def extract(self, cur):
@@ -254,9 +255,13 @@ class SelectBuilder(object):
         """
         for raw_row in cur:
             row = {'type': self.entity_type_name}
-            for path, join_state, field, state in self.select_state:
-                if not self.check_for_joins(raw_row, join_state):
-                    continue
+            for path, join_field, join_state, field, state in self.select_state:
+
+                # Assert required joins actually happened.
+                if join_field is not None:
+                    if not join_field.check_for_join(self, raw_row, join_state):
+                        continue
+
                 try:
                     value = field.extract_select(self, raw_row, state)
                 except NoFieldData:

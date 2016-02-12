@@ -61,6 +61,11 @@ class ReturnPassthroughError(ReturnResponse):
 
 def passthrough(payload=None, params=None, raise_exceptions=True, stream=False, final=False):
 
+    # Some tests want to assert that we don't pass-through the request.
+    # This asserts that.
+    if g.pragmas.get('deny_passthrough'):
+        raise Fault('passthrough denied via request pragmas')
+
     # Remove headers which we should not pass on.
     headers = [(k, v) for k, v in request.headers.iteritems() if k.lower() != 'host']
     remove_hop_by_hop_headers(headers)
@@ -122,6 +127,8 @@ def json_api(params=None):
 
     payload = g.api3_payload = json.loads(request.data)
 
+    #print json.dumps(payload, sort_keys=True, indent=4)
+
     if not isinstance(payload, dict):
         return '', 400, []
 
@@ -132,6 +139,8 @@ def json_api(params=None):
         method_params = params[1] if len(params) > 1 else {}
     except KeyError:
         return '', 400, []
+
+    g.pragmas = method_params.get('pragmas') or {}
 
     # Log the base of the request.
     headline_chunks = ['Starting %s' % method_name]

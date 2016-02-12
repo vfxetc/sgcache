@@ -30,7 +30,7 @@ class Entity(Field):
         self.type_column = self._create_or_check(table, type_column)
         self.id_column   = self._create_or_check(table, sa.Column('%s__id' % self.name, sa.Integer))
 
-    def prepare_join(self, req, self_path, next_path, for_filter):
+    def prepare_join(self, req, self_path, next_path):
         self_table = req.get_table(self_path)
         next_table = req.get_table(next_path)
         req.select_fields.append(next_table.c.id)

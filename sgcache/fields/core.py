@@ -83,7 +83,10 @@ class Field(object):
     # Query construction methods
     # ==========================
 
-    def prepare_join(self, read_op, self_path, next_path, for_filter):
+    def prepare_deep_filter(self, read_op, self_path, next_path, final_path, relation, values):
+        return None
+
+    def prepare_join(self, read_op, self_path, next_path):
         """Prepare any joins required through this field.
 
         Only expected to be implemented by the ``Entity`` field class, this
