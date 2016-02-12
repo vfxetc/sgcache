@@ -132,12 +132,12 @@ class TestMultiEntities(ApiTestCase):
             ('task_assignees', 'type_is', 'Group'),
         ], ['both', 'group'])
         self.assertFilters([
-            ('task_assignees', 'type_is', 'PublishEvent'),
+            ('task_assignees', 'type_is', 'Version'),
         ], [])
 
     def test_type_is_not(self):
         self.assertFilters([
-            ('task_assignees', 'type_is_not', 'PublishEvent'),
+            ('task_assignees', 'type_is_not', 'Version'),
         ], ['both', 'user', 'group', 'none'])
         self.assertFilters([
             ('task_assignees', 'type_is_not', 'Group'),

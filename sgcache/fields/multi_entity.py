@@ -140,18 +140,21 @@ class MultiEntity(Field):
         # Right now it is likely that this will be okay, since the events/scanner
         # should keep the association up to date.
 
-        if relation in ('is', 'is_not', 'in', 'not_in'):
+        if relation in ('is', 'is_not', 'in', 'not_in', 'type_is', 'type_is_not'):
 
             # We could easily do this, but lets match Shotgun!
             if 'is' in relation and len(values) > 1:
                 raise ClientFault('more than one value for %s' % relation)
 
-            by_type = dict()
-            for e in values:
-                try:
-                    by_type.setdefault(e['type'], []).append(e['id'])
-                except (TypeError, KeyError, IndexError):
-                    raise ClientFault('multi_entity is value must be an entity')
+            if 'type' in relation:
+                by_type = {values[0]: None}
+            else:
+                by_type = dict()
+                for e in values:
+                    try:
+                        by_type.setdefault(e['type'], []).append(e['id'])
+                    except (TypeError, KeyError, IndexError):
+                        raise ClientFault('multi_entity is value must be an entity')
 
             clauses = []
             for type_, ids in by_type.iteritems():
@@ -165,7 +168,8 @@ class MultiEntity(Field):
                     assoc.join(type_table, sa.and_(assoc.c.child_type == type_, assoc.c.child_id == type_table.c.id))
                 ).where(sa.and_(
                     table.c.id == assoc.c.parent_id,
-                    type_table.c.id.in_(ids),
+                    # Ugly shortcut here.
+                    True if ids is None else type_table.c.id.in_(ids),
                 ))
                 clauses.append(sa.exists(query))
 
@@ -173,15 +177,7 @@ class MultiEntity(Field):
             clause = sa.not_(clause) if 'not' in relation else clause
             return clause
 
-
         raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
-
-        if relation in ('type_is', 'type_is_not'):
-            if len(values) > 1:
-                raise ClientFault('more than one value for %s' % relation)
-            clause = assoc.c.child_type == values[0]
-            return sa.not_(clause) if 'not' in relation else clause
-
 
 
 
