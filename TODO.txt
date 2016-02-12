@@ -1,55 +1,30 @@
 
 - unit test all the things!
     - Shot.task_template
+    - every individual field type
+    - comprehensive sorting
+    - paging
+    - event edge cases
 
 - document missing filters:
-    *.name*
 
-    - between
-    - not_between
-    - in_last
-    - in_next
-    - in_calendar_day
-    - in_calendar_week
-    - in_calendar_month
+    We dont' support "name" at all:
+        - *.name*
+        If it appears that 'name' is always a name, then we can get away with
+        just that one field.
 
+    We don't support native date/time SQL functions:
+        - *in_last
+        - *in_next
+        - in_calendar_day
+        - in_calendar_week
+        - in_calendar_month
 
+- Docs:
+    - shotgun_api3_registry use
+    - full setup tutorial
 
-- have a DATA config that will contain whatever runtime data we want, e.g.
-  sockets, queues, etc.. Config.get_path(name, **kwargs) joins onto DATA after
-  formatting with **kwargs
-
-- cache.send_control_message(context_name, msg_name, **kwargs, wait=False)
-    - when TESTING, respond to a `control` api call, to send a control message
-    - wait -> True implies that it should wait for a response to send back
-
-- Join through multi_entity fields.
-
-    - Need to build a subquery, and run it in an EXISTS:
-        q = select([parent.c.id]).where(
-            exists().where(parent.c.id == child.c.pid)
-        )
-
-    - Refactor fields.py into a package of field types
-
-    - Refactor Api3ReadOperation into a SelectBuilder and the Api3ReadOperation.
-        - SelectBuilder has (from Api3ReadOperation)
-            - entity_type
-            - aliases
-            - select_fields
-            - select_from
-            - joined
-            - where_clauses
-            - group_by_clauses
-            - order_by_clauses
-        - assert all Field methods work with the SelectBuilder
-
-
-- Document the ping/pong feature, OR remove it after adding {'sgcache': true} to
-  the info call.
-
-- Restrict results of multi_entity to unique results. Shotgun does not allow
-  copies of the same entity, and it does not respect the order.
+- Remove the ping/pong feature after shotgun_api3_registry uses info['sgcache']
 
 - Contain the schema completely within the database itself. Column fields include:
     - db_name: The database column name.
@@ -91,11 +66,7 @@ OLDER (and not nessesarily still TODD)
   Passthrough find(s) could be augmented to return every field, such that we
   are able to cache those entities immediately.
 
-- multi_entity is_not None -> True if there is something in there
-
 - Skip change events that follow a create event.
-
-- split non-indempotent parts of Api3ReadOperation into Api3ReadQuery
 
 - return accurate paging info; currently we are cheating a bit
 
@@ -129,7 +100,6 @@ OLDER (and not nessesarily still TODD)
     dev ./bin/dump-data -p 66 -s schema/keystone-basic.yml | tee data.json
     PYTHONPATH=.:$PYTHONPATH bin/update-data -u sqlite:///test.db -s schema/keystone-basic.yml data.json
     SGCACHE_SQLA_URL=sqlite:///test.db PYTHONPATH="$PYTHONPATH:." python -m sgcache.web
-
 
     ./bin/dump-data -p 115 -s schema/keystone-basic.yml | tee all.json
     PYTHONPATH=.:$PYTHONPATH bin/update-data -u sqlite:///test.db -s schema/keystone-basic.yml all.json
