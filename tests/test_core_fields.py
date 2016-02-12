@@ -48,4 +48,23 @@ class TestEntities(ApiTestCase):
         self.assertFilter([
             ('code', 'not_contains', 'b')
         ], ['apple', 'xyz'])
-        
+
+    def test_between_filters(self):
+
+        X = [self.create_version(str(i)) for i in range(5)]
+
+        self.assertFilter([
+            ('id', 'between', X[0]['id'], X[4]['id'])
+        ], ['0', '1', '2', '3', '4'])
+
+        self.assertFilter([
+            ('id', 'not_between', X[0]['id'], X[4]['id'])
+        ], [])
+
+        self.assertFilter([
+            ('id', 'between', X[1]['id'], X[3]['id'])
+        ], ['1', '2', '3'])
+
+        self.assertFilter([
+            ('id', 'not_between', X[1]['id'], X[3]['id'])
+        ], ['0', '4'])

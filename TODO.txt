@@ -3,11 +3,17 @@
     - Shot.task_template
 
 - document missing filters:
-    *.name_is
-    *.name_contains
-    *.name_not_contains
+    *.name*
 
-    otherwise, entity and multi_entity fields are complete.
+    - between
+    - not_between
+    - in_last
+    - in_next
+    - in_calendar_day
+    - in_calendar_week
+    - in_calendar_month
+
+
 
 - have a DATA config that will contain whatever runtime data we want, e.g.
   sockets, queues, etc.. Config.get_path(name, **kwargs) joins onto DATA after

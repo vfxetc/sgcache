@@ -196,6 +196,15 @@ class Field(object):
         elif relation == 'less_than':
             return column < values[0]
 
+        elif relation in ('between', 'not_between'):
+            if len(values) != 2:
+                raise ClientFault('need 2 values for %s' % relation)
+            clause = sa.and_(
+                column >= values[0],
+                column <= values[1],
+            )
+            return sa.not_(clause) if 'not' in relation else clause
+
         else:
             raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
 
