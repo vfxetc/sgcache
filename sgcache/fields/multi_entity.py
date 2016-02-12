@@ -69,32 +69,10 @@ class MultiEntity(Field):
 
         return clause
 
-
     def prepare_join(self, req, self_path, next_path):
         return
 
-        raise FieldNotImplemented() # until we figure this out
-
-        self_table = req.get_table(self_path)
-        next_table = req.get_table(next_path)
-        join_table = self.assoc_table.alias() # Must always be unique.
-
-        req.join(join_table, self_table.c.id == join_table.c.parent_id)
-        req.join(next_table, sa.and_(
-            join_table.c.child_type == next_path[-1][0],
-            join_table.c.child_id   == next_table.c.id,
-            next_table.c._active == True, # `retired_only` only affects the top-level entity
-        ))
-
-        req.select_fields.append(join_table.c.parent_id)
-
-        # XXX: This no longer exists.
-        req.row_post_filters.append(lambda row: row[join_table.c.parent_id] is not None)
-
-
-
     def check_for_join(self, req, row, state):
-        # We don't return anything linked deeply through a multi_entity.
         pass
 
     def prepare_select(self, req, path):
@@ -152,7 +130,25 @@ class MultiEntity(Field):
         return [{'type': type_, 'id': int(id_)} for type_, id_ in iter_unique(zip(types, ids))]
 
     def prepare_filter(self, req, path, relation, values):
+
+        table = req.get_table(path)
+        assoc = req.get_table(path, self.assoc_table, include_tail=True)
+        req.join(assoc, table.c.id == assoc.c.parent_id)
+
+        if relation in ('is', 'is_not'):
+            try:
+                clause = sa.and_(
+                    assoc.c.child_type == values[0]['type'],
+                    assoc.c.child_id   == values[0]['id'],
+                )
+                return sa.not_(clause) if 'not' in relation else clause
+            except KeyError:
+                raise Fault('multi_entity is value must be an entity')
+
         raise FilterNotImplemented('%s on %s' % (relation, self.type_name))
+
+
+
 
     def prepare_upsert_data(self, req, value):
 
