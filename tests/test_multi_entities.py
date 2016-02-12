@@ -43,8 +43,8 @@ class TestMultiEntities(ApiTestCase):
         # this could happen.
         self.cached.create('Task', {'entity': self.SHOT, 'content': 'multi', 'task_assignees': [self.GRP1, self.GRP2]})
         self.assertFilters([
-            ('task_assigness.Group.type', 'is', 'Group'),
-        ], ['group', 'both', 'multi'])
+            ('task_assigness.Group.id', 'is_not', 0),
+        ], ['group', 'both', 'multi', 'none', 'user'])
 
     def test_deep_filters_is_not(self):
         self.assertFilters([
@@ -85,7 +85,7 @@ class TestMultiEntities(ApiTestCase):
             ('task_assignees', 'is_not', self.GRP1),
         ], ['user', 'none'])
         self.assertFilters([
-            ('task_assignees', 'is_not', self.GRP1),
+            ('task_assignees', 'is_not', self.GRP2),
         ], ['both', 'user', 'group', 'none'])
 
     def test_in_filter(self):
@@ -97,7 +97,7 @@ class TestMultiEntities(ApiTestCase):
             ('task_assignees', 'in', self.GRP1),
         ], ['both', 'group'])
         self.assertFilters([
-            ('task_assignees', 'in', self.GRP1),
+            ('task_assignees', 'in', self.GRP2),
         ], [])
 
         self.assertFilters([
@@ -114,14 +114,14 @@ class TestMultiEntities(ApiTestCase):
             ('task_assignees', 'not_in', self.GRP1),
         ], ['user', 'none'])
         self.assertFilters([
-            ('task_assignees', 'not_in', self.GRP1),
+            ('task_assignees', 'not_in', self.GRP2),
         ], ['both', 'user', 'group', 'none'])
 
         self.assertFilters([
             ('task_assignees', 'not_in', self.USER, self.GRP1),
         ], ['none'], 'not any(x in entities)')
         self.assertFilters([
-            ('task_assignees', 'not_in', self.USER, self.GRP1),
+            ('task_assignees', 'not_in', self.USER, self.GRP2),
         ], ['group', 'none'], 'not any(x in entities)')
 
     def test_type_is(self):
