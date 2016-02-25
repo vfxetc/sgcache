@@ -202,7 +202,7 @@ class SelectBuilder(object):
             path = self.parse_path(path)
 
         try:
-            join_state, join_field = self.join_to_path(path)
+            join_field, join_state = self.join_to_path(path)
         except Fault:
             return
 
