@@ -35,3 +35,11 @@ def task_crud(self, shotgun, trigger_poll=lambda: None):
     self.assertIs(x, None)
     x = self.cached.find_one('Task', [('id', 'is', task['id'])], ['content'], retired_only=True)
     self.assertSameEntity(task, x)
+
+    # Revive
+    shotgun.revive('Task', task['id'])
+    trigger_poll()
+    x = self.cached.find_one('Task', [('id', 'is', task['id'])], ['content'])
+    self.assertSameEntity(task, x, 'Should get revived task.')
+    x = self.cached.find_one('Task', [('id', 'is', task['id'])], ['content'], retired_only=True)
+    self.assertIs(x, None)
