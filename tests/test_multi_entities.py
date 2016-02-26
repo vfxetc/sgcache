@@ -76,6 +76,9 @@ class TestMultiEntities(ApiTestCase):
         ], [],
             'x in entities (no match)',
         )
+        self.assertFilters([
+            ('task_assignees', 'is', None),
+        ], ['none'])
 
     def test_is_not_filter(self):
         self.assertFilters([
@@ -87,6 +90,9 @@ class TestMultiEntities(ApiTestCase):
         self.assertFilters([
             ('task_assignees', 'is_not', self.GRP2),
         ], ['both', 'user', 'group', 'none'])
+        self.assertFilters([
+            ('task_assignees', 'is_not', None),
+        ], ['both', 'user', 'group'])
 
     def test_in_filter(self):
         # Same as is!
@@ -103,6 +109,13 @@ class TestMultiEntities(ApiTestCase):
         self.assertFilters([
             ('task_assignees', 'in', self.USER, self.GRP1),
         ], ['both', 'user', 'group'], 'any(x in entities)')
+
+        self.assertFilters([
+            ('task_assignees', 'in', None),
+        ], ['none'])
+        self.assertFilters([
+            ('task_assignees', 'in', self.USER, None),
+        ], ['both', 'user', 'none'])
 
     def test_not_in_filter(self):
 
@@ -123,6 +136,12 @@ class TestMultiEntities(ApiTestCase):
         self.assertFilters([
             ('task_assignees', 'not_in', self.USER, self.GRP2),
         ], ['group', 'none'], 'not any(x in entities)')
+        self.assertFilters([
+            ('task_assignees', 'not_in', None),
+        ], ['both', 'user', 'group'])
+        self.assertFilters([
+            ('task_assignees', 'not_in', self.USER, None),
+        ], ['group'])
 
     def test_type_is(self):
         self.assertFilters([
@@ -134,6 +153,9 @@ class TestMultiEntities(ApiTestCase):
         self.assertFilters([
             ('task_assignees', 'type_is', 'Version'),
         ], [])
+        self.assertFilters([
+            ('task_assignees', 'type_is', None),
+        ], ['none'])
 
     def test_type_is_not(self):
         self.assertFilters([
@@ -142,3 +164,6 @@ class TestMultiEntities(ApiTestCase):
         self.assertFilters([
             ('task_assignees', 'type_is_not', 'Group'),
         ], ['user', 'none'])
+        self.assertFilters([
+            ('task_assignees', 'type_is_not', None),
+        ], ['both', 'user', 'group'])

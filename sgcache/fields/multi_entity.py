@@ -146,15 +146,23 @@ class MultiEntity(Field):
             if 'is' in relation and len(values) > 1:
                 raise ClientFault('more than one value for %s' % relation)
 
+            check_empty = False
+            by_type = dict()
+
             if 'type' in relation:
-                by_type = {values[0]: None}
+                if values[0] is None:
+                    check_empty = True
+                else:
+                    by_type = {values[0]: None}
             else:
-                by_type = dict()
                 for e in values:
+                    if e is None:
+                        check_empty = True
+                        continue
                     try:
                         by_type.setdefault(e['type'], []).append(e['id'])
                     except (TypeError, KeyError, IndexError):
-                        raise ClientFault('multi_entity is value must be an entity')
+                        raise ClientFault('multi_entity %s value must be an entity or null' % relation)
 
             clauses = []
             for type_, ids in by_type.iteritems():
@@ -165,13 +173,24 @@ class MultiEntity(Field):
                 type_table = req.get_table(type_path)
 
                 query = sa.select([sa.literal(1)]).select_from(
-                    assoc.join(type_table, sa.and_(assoc.c.child_type == type_, assoc.c.child_id == type_table.c.id))
+                    assoc.join(type_table, sa.and_(
+                        assoc.c.child_id == type_table.c.id,
+                        # Ugly shortcut here.
+                        True if type_ is None else assoc.c.child_type == type_,
+                    ))
                 ).where(sa.and_(
                     table.c.id == assoc.c.parent_id,
                     # Ugly shortcut here.
                     True if ids is None else type_table.c.id.in_(ids),
                 ))
                 clauses.append(sa.exists(query))
+
+            if check_empty:
+                assoc = self.assoc_table.alias() # Must be clean.
+                query = sa.select([sa.literal(1)]).select_from(assoc).where(
+                    table.c.id == assoc.c.parent_id
+                )
+                clauses.append(sa.not_(sa.exists(query)))
 
             clause = clauses[0] if len(clauses) == 1 else sa.or_(*clauses)
             clause = sa.not_(clause) if 'not' in relation else clause
