@@ -1,10 +1,10 @@
-!!python/unicode 'ApiUser':
+ApiUser:
     code: absent
-    !!python/unicode 'created_at': !!python/unicode 'date_time'
-    !!python/unicode 'created_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
-    !!python/unicode 'description': !!python/unicode 'text'
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    description: text
     entity: absent
     link: absent
     name: absent
@@ -23,25 +23,25 @@
     short_name: absent
     status: absent
     status_list: absent
-    !!python/unicode 'updated_at': !!python/unicode 'date_time'
-    !!python/unicode 'updated_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
     user: absent
-!!python/unicode 'Asset':
-    !!python/unicode 'code': !!python/unicode 'text'
-    !!python/unicode 'created_at': !!python/unicode 'date_time'
-    !!python/unicode 'created_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
-    !!python/unicode 'description': !!python/unicode 'text'
+Asset:
+    code: text
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    description: text
     entity: absent
     link: absent
     name: absent
-    !!python/unicode 'project':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'Project']
-    !!python/unicode 'sg_asset_type': !!python/unicode 'list'
+    project:
+        data_type: entity
+        entity_types: [Project]
+    sg_asset_type: list
     sg_code: absent
     sg_directory: absent
     sg_entity: absent
@@ -52,29 +52,29 @@
     sg_path_to_movie: absent
     sg_slate: absent
     sg_status: absent
-    !!python/unicode 'sg_status_list': !!python/unicode 'status_list'
+    sg_status_list: status_list
     short_name: absent
     status: absent
     status_list: absent
-    !!python/unicode 'updated_at': !!python/unicode 'date_time'
-    !!python/unicode 'updated_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
     user: absent
-!!python/unicode 'HumanUser':
+HumanUser:
     code: absent
-    !!python/unicode 'created_at': !!python/unicode 'date_time'
-    !!python/unicode 'created_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
     description: absent
-    !!python/unicode 'email': !!python/unicode 'text'
+    email: text
     entity: absent
-    !!python/unicode 'firstname': !!python/unicode 'text'
-    !!python/unicode 'lastname': !!python/unicode 'text'
+    firstname: text
+    lastname: text
     link: absent
-    !!python/unicode 'login': !!python/unicode 'text'
-    !!python/unicode 'name': !!python/unicode 'text'
+    login: text
+    name: text
     project: absent
     sg_code: absent
     sg_directory: absent
@@ -86,37 +86,37 @@
     sg_path_to_movie: absent
     sg_slate: absent
     sg_status: absent
-    !!python/unicode 'sg_status_list': !!python/unicode 'status_list'
+    sg_status_list: status_list
     short_name: absent
     status: absent
     status_list: absent
-    !!python/unicode 'updated_at': !!python/unicode 'date_time'
-    !!python/unicode 'updated_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
     user: absent
 Group:
     code: text
     project: absent
     updated_at: date_time
     created_at: date_time
-    !!python/unicode 'created_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
-    !!python/unicode 'updated_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
 
-!!python/unicode 'Project':
+Project:
     code: absent
-    !!python/unicode 'created_at': !!python/unicode 'date_time'
-    !!python/unicode 'created_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
     description: absent
     entity: absent
     link: absent
-    !!python/unicode 'name': !!python/unicode 'text'
+    name: text
     project: absent
     sg_code: absent
     sg_directory: absent
@@ -127,32 +127,32 @@ Group:
     sg_path_to_frames: absent
     sg_path_to_movie: absent
     sg_slate: absent
-    !!python/unicode 'sg_status': !!python/unicode 'list'
+    sg_status: list
     sg_status_list: absent
     short_name: absent
     status: absent
     status_list: absent
-    !!python/unicode 'updated_at': !!python/unicode 'date_time'
-    !!python/unicode 'updated_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
     user: absent
-!!python/unicode 'Sequence':
-    !!python/unicode 'assets':
-        data_type: !!python/unicode 'multi_entity'
-        entity_types: [!!python/unicode 'Asset']
-    !!python/unicode 'code': !!python/unicode 'text'
-    !!python/unicode 'created_at': !!python/unicode 'date_time'
-    !!python/unicode 'created_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
-    !!python/unicode 'description': !!python/unicode 'text'
+Sequence:
+    assets:
+        data_type: multi_entity
+        entity_types: [Asset]
+    code: text
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    description: text
     entity: absent
     link: absent
     name: absent
-    !!python/unicode 'project':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'Project']
+    project:
+        data_type: entity
+        entity_types: [Project]
     sg_code: absent
     sg_directory: absent
     sg_entity: absent
@@ -163,31 +163,31 @@ Group:
     sg_path_to_movie: absent
     sg_slate: absent
     sg_status: absent
-    !!python/unicode 'sg_status_list': !!python/unicode 'status_list'
+    sg_status_list: status_list
     short_name: absent
     status: absent
     status_list: absent
-    !!python/unicode 'updated_at': !!python/unicode 'date_time'
-    !!python/unicode 'updated_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
     user: absent
-!!python/unicode 'Shot':
-    !!python/unicode 'assets':
-        data_type: !!python/unicode 'multi_entity'
-        entity_types: [!!python/unicode 'Asset']
-    !!python/unicode 'code': !!python/unicode 'text'
-    !!python/unicode 'created_at': !!python/unicode 'date_time'
-    !!python/unicode 'created_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
-    !!python/unicode 'description': !!python/unicode 'text'
+Shot:
+    assets:
+        data_type: multi_entity
+        entity_types: [Asset]
+    code: text
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    description: text
     entity: absent
     link: absent
     name: absent
-    !!python/unicode 'project':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'Project']
+    project:
+        data_type: entity
+        entity_types: [Project]
     sg_code: absent
     sg_directory: absent
     sg_entity: absent
@@ -197,31 +197,31 @@ Group:
     sg_path: absent
     sg_path_to_frames: absent
     sg_path_to_movie: absent
-    !!python/unicode 'sg_sequence':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'Sequence']
+    sg_sequence:
+        data_type: entity
+        entity_types: [Sequence]
     sg_shot_length: absent
     sg_slate: absent
     sg_status: absent
-    !!python/unicode 'sg_status_list': !!python/unicode 'status_list'
+    sg_status_list: status_list
     short_name: absent
     status: absent
     status_list: absent
-    !!python/unicode 'updated_at': !!python/unicode 'date_time'
-    !!python/unicode 'updated_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
     user: absent
-!!python/unicode 'Step':
-    !!python/unicode 'code': !!python/unicode 'text'
-    !!python/unicode 'color': !!python/unicode 'color'
-    !!python/unicode 'created_at': !!python/unicode 'date_time'
-    !!python/unicode 'created_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
-    !!python/unicode 'description': !!python/unicode 'text'
+Step:
+    code: text
+    color: color
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    description: text
     entity: absent
-    !!python/unicode 'entity_type': !!python/unicode 'entity_type'
+    entity_type: entity_type
     link: absent
     name: absent
     project: absent
@@ -236,33 +236,33 @@ Group:
     sg_slate: absent
     sg_status: absent
     sg_status_list: absent
-    !!python/unicode 'short_name': !!python/unicode 'text'
+    short_name: text
     status: absent
     status_list: absent
-    !!python/unicode 'updated_at': !!python/unicode 'date_time'
-    !!python/unicode 'updated_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
     user: absent
-!!python/unicode 'Task':
+Task:
     code: absent
-    !!python/unicode 'color': !!python/unicode 'color'
-    !!python/unicode 'content': !!python/unicode 'text'
-    !!python/unicode 'created_at': !!python/unicode 'date_time'
-    !!python/unicode 'created_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    color: color
+    content: text
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
     description: absent
-    !!python/unicode 'entity':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'Asset', !!python/unicode 'Element', !!python/unicode 'Scene',
-            !!python/unicode 'Sequence', !!python/unicode 'Shot', !!python/unicode 'PhysicalAsset',
-            !!python/unicode 'Project', !!python/unicode 'Tool', !!python/unicode 'CustomEntity01']
+    entity:
+        data_type: entity
+        entity_types: [Asset, Element, Scene,
+            Sequence, Shot, PhysicalAsset,
+            Project, Tool, CustomEntity01]
     link: absent
     name: absent
-    !!python/unicode 'project':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'Project']
+    project:
+        data_type: entity
+        entity_types: [Project]
     sg_assets: absent
     sg_code: absent
     sg_directory: absent
@@ -274,37 +274,37 @@ Group:
     sg_path_to_movie: absent
     sg_slate: absent
     sg_status: absent
-    !!python/unicode 'sg_status_list': !!python/unicode 'status_list'
+    sg_status_list: status_list
     short_name: absent
     status: absent
     status_list: absent
-    !!python/unicode 'step':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'Step']
-    !!python/unicode 'task_assignees':
-        data_type: !!python/unicode 'multi_entity'
-        entity_types: [!!python/unicode 'Group', !!python/unicode 'HumanUser']
-    !!python/unicode 'updated_at': !!python/unicode 'date_time'
-    !!python/unicode 'updated_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
+    step:
+        data_type: entity
+        entity_types: [Step]
+    task_assignees:
+        data_type: multi_entity
+        entity_types: [Group, HumanUser]
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
     user: absent
-!!python/unicode 'Version':
-    !!python/unicode 'code': !!python/unicode 'text'
-    !!python/unicode 'created_at': !!python/unicode 'date_time'
-    !!python/unicode 'created_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
-    !!python/unicode 'description': !!python/unicode 'text'
-    !!python/unicode 'entity':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'Asset', !!python/unicode 'Scene', !!python/unicode 'Sequence',
-            !!python/unicode 'Shot', !!python/unicode 'CustomEntity01']
+Version:
+    code: text
+    created_at: date_time
+    created_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    description: text
+    entity:
+        data_type: entity
+        entity_types: [Asset, Scene, Sequence,
+            Shot, CustomEntity01]
     link: absent
     name: absent
-    !!python/unicode 'project':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'Project']
+    project:
+        data_type: entity
+        entity_types: [Project]
     sg_code: absent
     sg_directory: absent
     sg_entity: absent
@@ -312,22 +312,22 @@ Group:
     sg_link: absent
     sg_name: absent
     sg_path: absent
-    !!python/unicode 'sg_path_to_frames': !!python/unicode 'text'
-    !!python/unicode 'sg_path_to_movie': !!python/unicode 'text'
+    sg_path_to_frames: text
+    sg_path_to_movie: text
     sg_qt: absent
     sg_slate: absent
     sg_status: absent
-    !!python/unicode 'sg_status_list': !!python/unicode 'status_list'
-    !!python/unicode 'sg_task':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'Task']
+    sg_status_list: status_list
+    sg_task:
+        data_type: entity
+        entity_types: [Task]
     short_name: absent
     status: absent
     status_list: absent
-    !!python/unicode 'updated_at': !!python/unicode 'date_time'
-    !!python/unicode 'updated_by':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser']
-    !!python/unicode 'user':
-        data_type: !!python/unicode 'entity'
-        entity_types: [!!python/unicode 'HumanUser', !!python/unicode 'ApiUser', !!python/unicode 'Group']
+    updated_at: date_time
+    updated_by:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser]
+    user:
+        data_type: entity
+        entity_types: [HumanUser, ApiUser, Group]
