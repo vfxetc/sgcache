@@ -1,14 +1,29 @@
 from . import *
 
+
 class TestEntities(ApiTestCase):
+
+    def test_join_to_self(self):
+        sg = self.cached
+
+        # Note that this is only really possible on the sgmock.
+        parent = sg.create('HumanUser', {'firstname': 'parent'})
+        child = sg.create('HumanUser', {'firstname': 'child', 'created_by': parent})
+
+        x = sg.find_one('HumanUser', [('id', 'is', child['id'])], ['firstname', 'created_by.HumanUser.firstname'])
+        self.assertEqual(x['firstname'], 'child')
+        self.assertEqual(x['created_by.HumanUser.firstname'], 'parent')
+
+
+class TestEntityFilters(ApiTestCase):
 
     wants_scanner = wants_events = False
 
     def setUp(self):
-        super(TestEntities, self).setUp()
+        super(TestEntityFilters, self).setUp()
         sg = self.cached
         self.SHOT = sg.create('Shot', {'code': 'entity_filter_test'})
-        self.USER = sg.create('HumanUser', {'first_name': 'theuser'})
+        self.USER = sg.create('HumanUser', {'firstname': 'theuser'})
         self.SCRIPT = sg.create('ApiUser', {'code': 'thescript'})
         sg.create('Version', {'entity': self.SHOT, 'code': 'none', 'user': None})
         sg.create('Version', {'entity': self.SHOT, 'code': 'user', 'user': self.USER})

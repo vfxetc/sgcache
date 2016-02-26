@@ -103,10 +103,13 @@ class SelectBuilder(object):
 
         """
 
-        # if table is not None: # For association tables.
-            # name = table.name
-        # else:
         name = path.format(head=True, tail=include_tail)
+
+        # For the first name, we absolutely MUST match the case that table.name
+        # would be below, otherwise deep links back to the top-level label will
+        # attempt to join back onto the same table.
+        name = name.lower()
+
         must_alias = False
 
         # Namespace subqueries.
@@ -122,6 +125,7 @@ class SelectBuilder(object):
             if must_alias or table.name in self.aliases:
                 table = table.alias(name)
             self.aliases[name] = table
+
         return self.aliases[name]
 
     def join(self, table, on):
