@@ -34,10 +34,12 @@ At this point in the project, it should be a drop-in replacement for your use
 of the Shotgun API, except in a few circumstances:
 
 1. There is a slight delay for changes made in the Shotgun web UI to propagate
-   to the cache. By default it averages to ~3 seconds.
+   to the cache as the cache must poll for changes. The default :data:`poll interval <sgcache.config.WATCH_IDLE_DELAY>`
+   is 5 seconds.
 
-2. API use which does not pass through the cache will not be immediately caught
-   if their API keys do not generate events.
+2. API use which does not pass through the cache will not be immediately reflected
+   in the cache if the API keys used do not generate events, and must wait for
+   a scan for changes. The default :data:`scan interval <sgcache.config.SCAN_INTERVAL>` is 5 minutes.
 
 3. The cache does not return the ``name`` :ref:`identifier_column` that Shotgun does.
    This is by design, but could be added as a configurable feature if there

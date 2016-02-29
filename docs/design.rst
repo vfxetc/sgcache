@@ -113,7 +113,7 @@ up to date (delayed only by the event loop) is that all script API keys
 must generate events.
 
 This is often disabled on some scripts in order to stop the massive amount of email
-they can generate. However, there is no other was for the cache to be
+they can generate. However, there is no other way for the cache to be
 immediately notified of changes.
 
 In the future (i.e. when these features are implemented), you can reduce the
