@@ -73,9 +73,9 @@ Shotgun also uses PostgreSQL, but is almost guaranteed to use it differently.
 
 .. _db_schema_rules:
 
+
 Schema Rules
 ^^^^^^^^^^^^
-
 
 - Basic entities are stored in tables sharing the name of the entity type, e.g.:
   ``asset`` and ``shot``.
@@ -104,7 +104,6 @@ Schema Rules
   and the id in ``{field_name}__id`` (note the double underscores).
 
 
-
 Caveats
 -------
 
@@ -120,12 +119,6 @@ In the future (i.e. when these features are implemented), you can reduce the
 effect of non-event-generating scripts by decreasing the
 delay between :ref:`update scans <periodic_scans>`, or you can
 :ref:`execute all requests <execute_all_requests>` asynchronously.
-
-
-
-
-
-
 
 
 

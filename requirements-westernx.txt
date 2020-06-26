@@ -1,2 +1,0 @@
--e git+git@github.com:westernx/sgapi#egg=sgapi
--e git+git@github.com:westernx/sgevents#egg=sgevents

@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import os
 import sys
 
 import yaml
 
-sys.path.append(os.path.abspath(os.path.join(__file__, '..', '..')))
 from sgcache.config import Config
 from sgcache.utils import get_shotgun
 
-config = Config()
-sg = get_shotgun(config=config)
 
+config = Config()
+sg = get_shotgun('shotgun_api3', config=config)
 
 raw_schema = sg.schema_read()
 our_schema = {}
@@ -29,4 +30,4 @@ for entity_type, raw_fields in raw_schema.iteritems():
         our_type[field_name] = our_field['data_type'] if len(our_field) == 1 else our_field
 
 
-print yaml.dump(our_schema, indent=4)
+print(yaml.dump(our_schema, indent=4))

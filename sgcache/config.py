@@ -156,7 +156,7 @@ Config.register('SQLA_URL', 'sqlite:///%s' % os.path.abspath(os.path.join(__file
         postgres:///sgcache
 ''')
 
-Config.register('SCHEMA', 'schema/default-basic.yml', ['core'], '''
+Config.register('SCHEMA', 'var/schema/basic.yml', ['core'], '''
     The relative path to the schema file to use.
 ''')
 

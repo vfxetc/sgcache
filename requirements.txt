@@ -6,8 +6,16 @@ pyyaml
 gunicorn
 gevent
 
-psycopg2
+psycopg2-binary
 futures
 
+-e git+ssh://git@github.com/shotgunsoftware/python-api#egg=shotgun_api3
+
 # this is the commit by zzzeek offering initial support for SQLA >= 1.0.0
--e git+git@github.com:stackforge/sqlalchemy-migrate@35832555#egg=migrate
+-e git+ssh://git@github.com/stackforge/sqlalchemy-migrate@35832555#egg=migrate
+
+-e git+ssh://git@github.com/vfxetc/sgapi#egg=sgapi
+-e git+ssh://git@github.com/vfxetc/sgevents#egg=sgevents
+-e git+ssh://git@github.com/vfxetc/sgmock#egg=sgmock
+
+-e .

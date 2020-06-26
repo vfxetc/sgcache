@@ -13,15 +13,13 @@ for a non-system install (as is recommended).
 A typical install looks like::
 
     # Grab the code
-    git clone git@github.com:westernx/sgcache
+    git clone git@github.com:vfxetc/sgcache
     cd sgcache
 
     # Create a virtualenv, and install the Python dependencies
     virtualenv venv
-    . venv/bin/activate
+    . activate.sh
     pip install -r requirements.txt
-    pip install -r requirements-westernx.txt
-
 
 Configuration
 -------------
@@ -33,7 +31,8 @@ Configuration is provided by a cascade of information sourced from:
 3. colon-delimited list of Python files specified by :attr:`~sgcache.config.CONFIG`
 
 The recommended configuration setup is to write your own Python file with
-your configuration changes, and refer to it via ``$SGCACHE_CONFIG``.
+your configuration changes, and refer to it via ``$SGCACHE_CONFIG``. The default
+``activate.sh`` will pull in a file at ``var/config.py``.
 
 
 Database
@@ -54,8 +53,9 @@ and set :attr:`~sgcache.config.SCHEMA` to point to the containing YAML file.
 The ``schema/keystone-basic.yml`` file demonstrates the format, and is
 generated from our live Shotgun and basic rules via::
 
-    ./schema/dump > schema/keystone-full.yml
-    ./schema/filter --absent -f schema/basic-filters.txt schema/keystone-full.yml > schema/keystone-basic.yml
+    mkdir -p var/schema
+    ./schema/dump > var/schema/full.yml
+    ./schema/filter --file schema/basic-filters.txt var/schema/full.yml > var/schema/basic.yml
 
 Changes
 .......
@@ -105,19 +105,19 @@ It is recommended to run SGCache behind an Nginx reverse proxy. This allows
 Nginx to directly transfer of large files, as we have experienced trouble with
 getting the cache to upload massive files itself.
 
-Here is the Nginx config at Western Post::
+Here is an example Nginx config::
 
     server {
         listen       80;
-        server_name  sgcache.westernx;
+        server_name  sgcache.EXAMPLE.com;
 
         # Fails fast with file uploads without this.
         client_max_body_size 1G;
 
         # Pass large uploads/downloads to Shotgun.
         location ~ ^/(upload|thumbnail|file_serve) {
-            proxy_set_header Host keystone.shotgunstudio.com;
-            proxy_pass https://keystone.shotgunstudio.com;
+            proxy_set_header Host EXAMPLE.shotgunstudio.com;
+            proxy_pass https://EXAMPLE.shotgunstudio.com;
         }
 
         # Everything else goes to SGCache.
